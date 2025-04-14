@@ -3,13 +3,17 @@ package grpc
 import (
 	"context"
 	"log/slog"
-
 	"time"
 
+	"github.com/golang-jwt/jwt/v4"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"google.golang.org/grpc"
+	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
+	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc/handlers"
 )
 
 // GRPCServer - структура инстанса gRPC сервера
@@ -24,7 +28,12 @@ type auth struct {
 }
 
 // NewServer создает инстанс gRPC сервера
-func NewServer(cryptoKey string, hashKey string, storageCommands *StorageCommands) *GRPCServer {
+func NewServer(cryptoKey string, hashKey string,
+	textHandler *handlers.TextHandler,
+	bankCardHandler *handlers.BankCardDataHandler,
+	metaDataHandler *handlers.MetaDataHandler,
+
+) *GRPCServer {
 	instance := &GRPCServer{
 		auth: &auth{
 			cryptoKey: cryptoKey,
@@ -36,13 +45,16 @@ func NewServer(cryptoKey string, hashKey string, storageCommands *StorageCommand
 	interceptors := []grpc.UnaryServerInterceptor{
 		instance.withLogger,
 		//instance.withHash,
+		instance.withAuth,
 	}
 
 	//Регистрация инстанса gRPC с перехватчиками
 	instance.Server = grpc.NewServer(
 		grpc.ChainUnaryInterceptor(interceptors...))
 
-	pb.RegisterHandlersServer(instance.Server, NewHandler(storageCommands))
+	pb.RegisterTextHandlersServer(instance.Server, textHandler)
+	pb.RegisterBankCardHandlersServer(instance.Server, bankCardHandler)
+	pb.RegisterMetaDataHandlersServer(instance.Server, metaDataHandler)
 
 	return instance
 }
@@ -63,6 +75,32 @@ func (g *GRPCServer) withLogger(ctx context.Context, req any,
 	slog.InfoContext(ctx, "Request completed ", slog.String("code", e.Code().String()), slog.Any("time spent", time.Since(start)))
 
 	return resp, err
+}
+
+func (g *GRPCServer) withAuth(ctx context.Context, req any,
+	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
+	meta, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil, status.Error(codes.Internal, "can't extract metadata from request")
+	}
+
+	header, ok := meta["JWT"]
+	if ok {
+		return nil, status.Error(codes.Unauthenticated, "can't found JWT header")
+	}
+
+	token, err := jwt.Parse(header[0], func(token *jwt.Token) (interface{}, error) {
+		return config.GetKeys().CryptoKey, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "can't parse JWT header")
+	}
+
+	if !token.Valid {
+		return nil, status.Error(codes.PermissionDenied, "JWT token is invalid")
+	}
+
+	return handler(ctx, req)
 }
 
 //// withHash - перехватчик проверяет наличие хеша в метаданных и сверяет с телом запроса

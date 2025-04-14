@@ -3,23 +3,21 @@ package psql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 )
 
-const (
-	migrationsDir = "file://./internal/server/storage/migrations"
-)
-
-type DB struct {
-	conn *sql.DB
+type Storage struct {
+	db *sql.DB
 }
 
-func New(dsn string, dbName string, migrationsDir string) (*DB, error) {
+func New(dsn string, dbName string, migrationsDir string) (*Storage, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("could not open postgres database: %w", err)
@@ -41,13 +39,41 @@ func New(dsn string, dbName string, migrationsDir string) (*DB, error) {
 		return nil, fmt.Errorf("could not apply migrations: %w", err)
 	}
 
-	return &DB{conn: db}, nil
+	return &Storage{db: db}, nil
 }
 
-func (db *DB) SaveUser(data *models.UserData) error {
+func (s *Storage) SaveUser(data *models.UserData) error {
 	return nil
 }
 
-func (db *DB) Close() error {
-	return db.conn.Close()
+func (s *Storage) SaveText(data string) error {
+	return nil
+}
+
+func (s *Storage) GetText(id uuid.UUID) (*models.TextData, error) {
+	return nil, nil
+}
+
+func (s *Storage) SaveBankCard(data *models.BankCardData) error {
+	return nil
+}
+
+func (s *Storage) GetBankCard(id uuid.UUID) (*models.BankCardData, error) {
+	return nil, nil
+}
+
+func (s *Storage) SaveMetaData(data *models.Meta) error {
+	return nil
+}
+
+func (s *Storage) GetMetaData(id uuid.UUID) (*models.Meta, error) {
+	return nil, nil
+}
+
+func (s *Storage) Close() error {
+	return s.db.Close()
+}
+
+func (s *Storage) Ping() error {
+	return s.db.Ping()
 }

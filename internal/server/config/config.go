@@ -41,6 +41,7 @@ type DB struct {
 type Keys struct {
 	HashKey   string
 	CryptoKey string
+	JWTKey    string
 }
 
 // Init - конструктор конфигурации сервера
@@ -85,10 +86,13 @@ func (s *ServerConfig) parseFlags() {
 	flag.StringVar(&s.DB.Address, "d", "", "Host which to connect to DB. Example: \"postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable\"")
 
 	// Флаги подписи и шифрования
-	flag.StringVar(&s.Keys.HashKey, "k", "", "Key")
+	flag.StringVar(&s.Keys.HashKey, "hash-key", "", "Key")
 
 	// Флаги приватного и публичного ключей
 	flag.StringVar(&s.Keys.CryptoKey, "crypto-key", "", "Path to private crypto key file")
+
+	// Флаги приватного и публичного ключей
+	flag.StringVar(&s.Keys.CryptoKey, "jwt-key", "", "jwt key")
 
 	// Флаг файла конфигурации
 	flag.StringVar(&s.configFile, "config", "", "Config file")
@@ -126,6 +130,10 @@ func (s *ServerConfig) parseEnv() error {
 
 	if privateKey := os.Getenv("CRYPTO_KEY"); privateKey != "" {
 		s.Keys.CryptoKey = privateKey
+	}
+
+	if jwtKey := os.Getenv("JWT_KEY"); jwtKey != "" {
+		s.Keys.JWTKey = jwtKey
 	}
 
 	if config := os.Getenv("CONFIG_FILE"); config != "" {

@@ -4,21 +4,16 @@ import (
 	"fmt"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc"
-	"github.com/sirupsen/logrus"
+	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc/handlers"
+	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage"
 
 	"net"
 )
 
 // Server - структура сервера
 type Server struct {
-	services services
-	logger   *logrus.Logger
-	auth     *auth
-}
-
-// services - структура команд БД и файла с бэкапом
-type services struct {
-	gRPCStorageCommands *grpc.StorageCommands
+	grpc *grpc.GRPCServer
+	auth *auth
 }
 
 type auth struct {
@@ -26,11 +21,17 @@ type auth struct {
 	hashKey   string
 }
 
-func New(gRPCStorageCommands *grpc.StorageCommands) *Server {
+func New(storageCommands storage.Commands) *Server {
+	gRPC := grpc.NewServer(
+		config.GetKeys().HashKey,
+		config.GetKeys().CryptoKey,
+		handlers.NewTextHandler(storageCommands, storageCommands),
+		handlers.NewBankCardDataHandler(storageCommands, storageCommands),
+		handlers.NewMetaDataHandler(storageCommands, storageCommands),
+	)
+	
 	return &Server{
-		services: services{
-			gRPCStorageCommands: gRPCStorageCommands,
-		},
+		grpc: gRPC,
 	}
 }
 
@@ -39,8 +40,6 @@ func (s *Server) Start() error {
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
-	//grpc server
-	gRPC := grpc.NewServer(config.GetKeys().HashKey, config.GetKeys().CryptoKey, s.services.gRPCStorageCommands)
 
-	return gRPC.Server.Serve(listen)
+	return s.grpc.Server.Serve(listen)
 }

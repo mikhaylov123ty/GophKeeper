@@ -19,329 +19,521 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Handlers_PostUserData_FullMethodName     = "/server_grpc.Handlers/PostUserData"
-	Handlers_PostTextData_FullMethodName     = "/server_grpc.Handlers/PostTextData"
-	Handlers_GetTextData_FullMethodName      = "/server_grpc.Handlers/GetTextData"
-	Handlers_PostBankCardData_FullMethodName = "/server_grpc.Handlers/PostBankCardData"
-	Handlers_GetBankCardData_FullMethodName  = "/server_grpc.Handlers/GetBankCardData"
-	Handlers_PostMetaData_FullMethodName     = "/server_grpc.Handlers/PostMetaData"
-	Handlers_GetMetaData_FullMethodName      = "/server_grpc.Handlers/GetMetaData"
+	UserHandlers_PostUserData_FullMethodName = "/server_grpc.UserHandlers/PostUserData"
 )
 
-// HandlersClient is the client API for Handlers service.
+// UserHandlersClient is the client API for UserHandlers service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type HandlersClient interface {
+type UserHandlersClient interface {
 	PostUserData(ctx context.Context, in *PostUserDataRequest, opts ...grpc.CallOption) (*PostUserDataResponse, error)
-	PostTextData(ctx context.Context, in *PostTextDataRequest, opts ...grpc.CallOption) (*PostTextDataResponse, error)
-	GetTextData(ctx context.Context, in *GetTextDataRequest, opts ...grpc.CallOption) (*GetTextDataResponse, error)
-	PostBankCardData(ctx context.Context, in *PostBankCardDataRequest, opts ...grpc.CallOption) (*PostBankCardDataResponse, error)
-	GetBankCardData(ctx context.Context, in *GetBankCardDataRequest, opts ...grpc.CallOption) (*GetBankCardDataResponse, error)
-	PostMetaData(ctx context.Context, in *PostMetaDataRequest, opts ...grpc.CallOption) (*PostMetaDataResponse, error)
-	GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error)
 }
 
-type handlersClient struct {
+type userHandlersClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewHandlersClient(cc grpc.ClientConnInterface) HandlersClient {
-	return &handlersClient{cc}
+func NewUserHandlersClient(cc grpc.ClientConnInterface) UserHandlersClient {
+	return &userHandlersClient{cc}
 }
 
-func (c *handlersClient) PostUserData(ctx context.Context, in *PostUserDataRequest, opts ...grpc.CallOption) (*PostUserDataResponse, error) {
+func (c *userHandlersClient) PostUserData(ctx context.Context, in *PostUserDataRequest, opts ...grpc.CallOption) (*PostUserDataResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PostUserDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_PostUserData_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, UserHandlers_PostUserData_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *handlersClient) PostTextData(ctx context.Context, in *PostTextDataRequest, opts ...grpc.CallOption) (*PostTextDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostTextDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_PostTextData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *handlersClient) GetTextData(ctx context.Context, in *GetTextDataRequest, opts ...grpc.CallOption) (*GetTextDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTextDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_GetTextData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *handlersClient) PostBankCardData(ctx context.Context, in *PostBankCardDataRequest, opts ...grpc.CallOption) (*PostBankCardDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostBankCardDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_PostBankCardData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *handlersClient) GetBankCardData(ctx context.Context, in *GetBankCardDataRequest, opts ...grpc.CallOption) (*GetBankCardDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetBankCardDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_GetBankCardData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *handlersClient) PostMetaData(ctx context.Context, in *PostMetaDataRequest, opts ...grpc.CallOption) (*PostMetaDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostMetaDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_PostMetaData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *handlersClient) GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetMetaDataResponse)
-	err := c.cc.Invoke(ctx, Handlers_GetMetaData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// HandlersServer is the server API for Handlers service.
-// All implementations must embed UnimplementedHandlersServer
+// UserHandlersServer is the server API for UserHandlers service.
+// All implementations must embed UnimplementedUserHandlersServer
 // for forward compatibility.
-type HandlersServer interface {
+type UserHandlersServer interface {
 	PostUserData(context.Context, *PostUserDataRequest) (*PostUserDataResponse, error)
-	PostTextData(context.Context, *PostTextDataRequest) (*PostTextDataResponse, error)
-	GetTextData(context.Context, *GetTextDataRequest) (*GetTextDataResponse, error)
-	PostBankCardData(context.Context, *PostBankCardDataRequest) (*PostBankCardDataResponse, error)
-	GetBankCardData(context.Context, *GetBankCardDataRequest) (*GetBankCardDataResponse, error)
-	PostMetaData(context.Context, *PostMetaDataRequest) (*PostMetaDataResponse, error)
-	GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error)
-	mustEmbedUnimplementedHandlersServer()
+	mustEmbedUnimplementedUserHandlersServer()
 }
 
-// UnimplementedHandlersServer must be embedded to have
+// UnimplementedUserHandlersServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedHandlersServer struct{}
+type UnimplementedUserHandlersServer struct{}
 
-func (UnimplementedHandlersServer) PostUserData(context.Context, *PostUserDataRequest) (*PostUserDataResponse, error) {
+func (UnimplementedUserHandlersServer) PostUserData(context.Context, *PostUserDataRequest) (*PostUserDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PostUserData not implemented")
 }
-func (UnimplementedHandlersServer) PostTextData(context.Context, *PostTextDataRequest) (*PostTextDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PostTextData not implemented")
-}
-func (UnimplementedHandlersServer) GetTextData(context.Context, *GetTextDataRequest) (*GetTextDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetTextData not implemented")
-}
-func (UnimplementedHandlersServer) PostBankCardData(context.Context, *PostBankCardDataRequest) (*PostBankCardDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PostBankCardData not implemented")
-}
-func (UnimplementedHandlersServer) GetBankCardData(context.Context, *GetBankCardDataRequest) (*GetBankCardDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBankCardData not implemented")
-}
-func (UnimplementedHandlersServer) PostMetaData(context.Context, *PostMetaDataRequest) (*PostMetaDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PostMetaData not implemented")
-}
-func (UnimplementedHandlersServer) GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetMetaData not implemented")
-}
-func (UnimplementedHandlersServer) mustEmbedUnimplementedHandlersServer() {}
-func (UnimplementedHandlersServer) testEmbeddedByValue()                  {}
+func (UnimplementedUserHandlersServer) mustEmbedUnimplementedUserHandlersServer() {}
+func (UnimplementedUserHandlersServer) testEmbeddedByValue()                      {}
 
-// UnsafeHandlersServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to HandlersServer will
+// UnsafeUserHandlersServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserHandlersServer will
 // result in compilation errors.
-type UnsafeHandlersServer interface {
-	mustEmbedUnimplementedHandlersServer()
+type UnsafeUserHandlersServer interface {
+	mustEmbedUnimplementedUserHandlersServer()
 }
 
-func RegisterHandlersServer(s grpc.ServiceRegistrar, srv HandlersServer) {
-	// If the following call pancis, it indicates UnimplementedHandlersServer was
+func RegisterUserHandlersServer(s grpc.ServiceRegistrar, srv UserHandlersServer) {
+	// If the following call pancis, it indicates UnimplementedUserHandlersServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&Handlers_ServiceDesc, srv)
+	s.RegisterService(&UserHandlers_ServiceDesc, srv)
 }
 
-func _Handlers_PostUserData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UserHandlers_PostUserData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostUserDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).PostUserData(ctx, in)
+		return srv.(UserHandlersServer).PostUserData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_PostUserData_FullMethodName,
+		FullMethod: UserHandlers_PostUserData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).PostUserData(ctx, req.(*PostUserDataRequest))
+		return srv.(UserHandlersServer).PostUserData(ctx, req.(*PostUserDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handlers_PostTextData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// UserHandlers_ServiceDesc is the grpc.ServiceDesc for UserHandlers service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var UserHandlers_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "server_grpc.UserHandlers",
+	HandlerType: (*UserHandlersServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PostUserData",
+			Handler:    _UserHandlers_PostUserData_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "internal/proto/handlers.proto",
+}
+
+const (
+	TextHandlers_PostTextData_FullMethodName = "/server_grpc.TextHandlers/PostTextData"
+	TextHandlers_GetTextData_FullMethodName  = "/server_grpc.TextHandlers/GetTextData"
+)
+
+// TextHandlersClient is the client API for TextHandlers service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type TextHandlersClient interface {
+	PostTextData(ctx context.Context, in *PostTextDataRequest, opts ...grpc.CallOption) (*PostTextDataResponse, error)
+	GetTextData(ctx context.Context, in *GetTextDataRequest, opts ...grpc.CallOption) (*GetTextDataResponse, error)
+}
+
+type textHandlersClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewTextHandlersClient(cc grpc.ClientConnInterface) TextHandlersClient {
+	return &textHandlersClient{cc}
+}
+
+func (c *textHandlersClient) PostTextData(ctx context.Context, in *PostTextDataRequest, opts ...grpc.CallOption) (*PostTextDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostTextDataResponse)
+	err := c.cc.Invoke(ctx, TextHandlers_PostTextData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *textHandlersClient) GetTextData(ctx context.Context, in *GetTextDataRequest, opts ...grpc.CallOption) (*GetTextDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetTextDataResponse)
+	err := c.cc.Invoke(ctx, TextHandlers_GetTextData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// TextHandlersServer is the server API for TextHandlers service.
+// All implementations must embed UnimplementedTextHandlersServer
+// for forward compatibility.
+type TextHandlersServer interface {
+	PostTextData(context.Context, *PostTextDataRequest) (*PostTextDataResponse, error)
+	GetTextData(context.Context, *GetTextDataRequest) (*GetTextDataResponse, error)
+	mustEmbedUnimplementedTextHandlersServer()
+}
+
+// UnimplementedTextHandlersServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedTextHandlersServer struct{}
+
+func (UnimplementedTextHandlersServer) PostTextData(context.Context, *PostTextDataRequest) (*PostTextDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostTextData not implemented")
+}
+func (UnimplementedTextHandlersServer) GetTextData(context.Context, *GetTextDataRequest) (*GetTextDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetTextData not implemented")
+}
+func (UnimplementedTextHandlersServer) mustEmbedUnimplementedTextHandlersServer() {}
+func (UnimplementedTextHandlersServer) testEmbeddedByValue()                      {}
+
+// UnsafeTextHandlersServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TextHandlersServer will
+// result in compilation errors.
+type UnsafeTextHandlersServer interface {
+	mustEmbedUnimplementedTextHandlersServer()
+}
+
+func RegisterTextHandlersServer(s grpc.ServiceRegistrar, srv TextHandlersServer) {
+	// If the following call pancis, it indicates UnimplementedTextHandlersServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&TextHandlers_ServiceDesc, srv)
+}
+
+func _TextHandlers_PostTextData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostTextDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).PostTextData(ctx, in)
+		return srv.(TextHandlersServer).PostTextData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_PostTextData_FullMethodName,
+		FullMethod: TextHandlers_PostTextData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).PostTextData(ctx, req.(*PostTextDataRequest))
+		return srv.(TextHandlersServer).PostTextData(ctx, req.(*PostTextDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handlers_GetTextData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _TextHandlers_GetTextData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetTextDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).GetTextData(ctx, in)
+		return srv.(TextHandlersServer).GetTextData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_GetTextData_FullMethodName,
+		FullMethod: TextHandlers_GetTextData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).GetTextData(ctx, req.(*GetTextDataRequest))
+		return srv.(TextHandlersServer).GetTextData(ctx, req.(*GetTextDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handlers_PostBankCardData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// TextHandlers_ServiceDesc is the grpc.ServiceDesc for TextHandlers service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var TextHandlers_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "server_grpc.TextHandlers",
+	HandlerType: (*TextHandlersServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PostTextData",
+			Handler:    _TextHandlers_PostTextData_Handler,
+		},
+		{
+			MethodName: "GetTextData",
+			Handler:    _TextHandlers_GetTextData_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "internal/proto/handlers.proto",
+}
+
+const (
+	BankCardHandlers_PostBankCardData_FullMethodName = "/server_grpc.BankCardHandlers/PostBankCardData"
+	BankCardHandlers_GetBankCardData_FullMethodName  = "/server_grpc.BankCardHandlers/GetBankCardData"
+)
+
+// BankCardHandlersClient is the client API for BankCardHandlers service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BankCardHandlersClient interface {
+	PostBankCardData(ctx context.Context, in *PostBankCardDataRequest, opts ...grpc.CallOption) (*PostBankCardDataResponse, error)
+	GetBankCardData(ctx context.Context, in *GetBankCardDataRequest, opts ...grpc.CallOption) (*GetBankCardDataResponse, error)
+}
+
+type bankCardHandlersClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBankCardHandlersClient(cc grpc.ClientConnInterface) BankCardHandlersClient {
+	return &bankCardHandlersClient{cc}
+}
+
+func (c *bankCardHandlersClient) PostBankCardData(ctx context.Context, in *PostBankCardDataRequest, opts ...grpc.CallOption) (*PostBankCardDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostBankCardDataResponse)
+	err := c.cc.Invoke(ctx, BankCardHandlers_PostBankCardData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *bankCardHandlersClient) GetBankCardData(ctx context.Context, in *GetBankCardDataRequest, opts ...grpc.CallOption) (*GetBankCardDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBankCardDataResponse)
+	err := c.cc.Invoke(ctx, BankCardHandlers_GetBankCardData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BankCardHandlersServer is the server API for BankCardHandlers service.
+// All implementations must embed UnimplementedBankCardHandlersServer
+// for forward compatibility.
+type BankCardHandlersServer interface {
+	PostBankCardData(context.Context, *PostBankCardDataRequest) (*PostBankCardDataResponse, error)
+	GetBankCardData(context.Context, *GetBankCardDataRequest) (*GetBankCardDataResponse, error)
+	mustEmbedUnimplementedBankCardHandlersServer()
+}
+
+// UnimplementedBankCardHandlersServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedBankCardHandlersServer struct{}
+
+func (UnimplementedBankCardHandlersServer) PostBankCardData(context.Context, *PostBankCardDataRequest) (*PostBankCardDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostBankCardData not implemented")
+}
+func (UnimplementedBankCardHandlersServer) GetBankCardData(context.Context, *GetBankCardDataRequest) (*GetBankCardDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBankCardData not implemented")
+}
+func (UnimplementedBankCardHandlersServer) mustEmbedUnimplementedBankCardHandlersServer() {}
+func (UnimplementedBankCardHandlersServer) testEmbeddedByValue()                          {}
+
+// UnsafeBankCardHandlersServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BankCardHandlersServer will
+// result in compilation errors.
+type UnsafeBankCardHandlersServer interface {
+	mustEmbedUnimplementedBankCardHandlersServer()
+}
+
+func RegisterBankCardHandlersServer(s grpc.ServiceRegistrar, srv BankCardHandlersServer) {
+	// If the following call pancis, it indicates UnimplementedBankCardHandlersServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&BankCardHandlers_ServiceDesc, srv)
+}
+
+func _BankCardHandlers_PostBankCardData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostBankCardDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).PostBankCardData(ctx, in)
+		return srv.(BankCardHandlersServer).PostBankCardData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_PostBankCardData_FullMethodName,
+		FullMethod: BankCardHandlers_PostBankCardData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).PostBankCardData(ctx, req.(*PostBankCardDataRequest))
+		return srv.(BankCardHandlersServer).PostBankCardData(ctx, req.(*PostBankCardDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handlers_GetBankCardData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _BankCardHandlers_GetBankCardData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetBankCardDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).GetBankCardData(ctx, in)
+		return srv.(BankCardHandlersServer).GetBankCardData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_GetBankCardData_FullMethodName,
+		FullMethod: BankCardHandlers_GetBankCardData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).GetBankCardData(ctx, req.(*GetBankCardDataRequest))
+		return srv.(BankCardHandlersServer).GetBankCardData(ctx, req.(*GetBankCardDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handlers_PostMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+// BankCardHandlers_ServiceDesc is the grpc.ServiceDesc for BankCardHandlers service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BankCardHandlers_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "server_grpc.BankCardHandlers",
+	HandlerType: (*BankCardHandlersServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "PostBankCardData",
+			Handler:    _BankCardHandlers_PostBankCardData_Handler,
+		},
+		{
+			MethodName: "GetBankCardData",
+			Handler:    _BankCardHandlers_GetBankCardData_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "internal/proto/handlers.proto",
+}
+
+const (
+	MetaDataHandlers_PostMetaData_FullMethodName = "/server_grpc.MetaDataHandlers/PostMetaData"
+	MetaDataHandlers_GetMetaData_FullMethodName  = "/server_grpc.MetaDataHandlers/GetMetaData"
+)
+
+// MetaDataHandlersClient is the client API for MetaDataHandlers service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type MetaDataHandlersClient interface {
+	PostMetaData(ctx context.Context, in *PostMetaDataRequest, opts ...grpc.CallOption) (*PostMetaDataResponse, error)
+	GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error)
+}
+
+type metaDataHandlersClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewMetaDataHandlersClient(cc grpc.ClientConnInterface) MetaDataHandlersClient {
+	return &metaDataHandlersClient{cc}
+}
+
+func (c *metaDataHandlersClient) PostMetaData(ctx context.Context, in *PostMetaDataRequest, opts ...grpc.CallOption) (*PostMetaDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PostMetaDataResponse)
+	err := c.cc.Invoke(ctx, MetaDataHandlers_PostMetaData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metaDataHandlersClient) GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetMetaDataResponse)
+	err := c.cc.Invoke(ctx, MetaDataHandlers_GetMetaData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// MetaDataHandlersServer is the server API for MetaDataHandlers service.
+// All implementations must embed UnimplementedMetaDataHandlersServer
+// for forward compatibility.
+type MetaDataHandlersServer interface {
+	PostMetaData(context.Context, *PostMetaDataRequest) (*PostMetaDataResponse, error)
+	GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error)
+	mustEmbedUnimplementedMetaDataHandlersServer()
+}
+
+// UnimplementedMetaDataHandlersServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedMetaDataHandlersServer struct{}
+
+func (UnimplementedMetaDataHandlersServer) PostMetaData(context.Context, *PostMetaDataRequest) (*PostMetaDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostMetaData not implemented")
+}
+func (UnimplementedMetaDataHandlersServer) GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMetaData not implemented")
+}
+func (UnimplementedMetaDataHandlersServer) mustEmbedUnimplementedMetaDataHandlersServer() {}
+func (UnimplementedMetaDataHandlersServer) testEmbeddedByValue()                          {}
+
+// UnsafeMetaDataHandlersServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MetaDataHandlersServer will
+// result in compilation errors.
+type UnsafeMetaDataHandlersServer interface {
+	mustEmbedUnimplementedMetaDataHandlersServer()
+}
+
+func RegisterMetaDataHandlersServer(s grpc.ServiceRegistrar, srv MetaDataHandlersServer) {
+	// If the following call pancis, it indicates UnimplementedMetaDataHandlersServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&MetaDataHandlers_ServiceDesc, srv)
+}
+
+func _MetaDataHandlers_PostMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PostMetaDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).PostMetaData(ctx, in)
+		return srv.(MetaDataHandlersServer).PostMetaData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_PostMetaData_FullMethodName,
+		FullMethod: MetaDataHandlers_PostMetaData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).PostMetaData(ctx, req.(*PostMetaDataRequest))
+		return srv.(MetaDataHandlersServer).PostMetaData(ctx, req.(*PostMetaDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Handlers_GetMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MetaDataHandlers_GetMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetMetaDataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HandlersServer).GetMetaData(ctx, in)
+		return srv.(MetaDataHandlersServer).GetMetaData(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Handlers_GetMetaData_FullMethodName,
+		FullMethod: MetaDataHandlers_GetMetaData_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HandlersServer).GetMetaData(ctx, req.(*GetMetaDataRequest))
+		return srv.(MetaDataHandlersServer).GetMetaData(ctx, req.(*GetMetaDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Handlers_ServiceDesc is the grpc.ServiceDesc for Handlers service.
+// MetaDataHandlers_ServiceDesc is the grpc.ServiceDesc for MetaDataHandlers service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Handlers_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "server_grpc.Handlers",
-	HandlerType: (*HandlersServer)(nil),
+var MetaDataHandlers_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "server_grpc.MetaDataHandlers",
+	HandlerType: (*MetaDataHandlersServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "PostUserData",
-			Handler:    _Handlers_PostUserData_Handler,
-		},
-		{
-			MethodName: "PostTextData",
-			Handler:    _Handlers_PostTextData_Handler,
-		},
-		{
-			MethodName: "GetTextData",
-			Handler:    _Handlers_GetTextData_Handler,
-		},
-		{
-			MethodName: "PostBankCardData",
-			Handler:    _Handlers_PostBankCardData_Handler,
-		},
-		{
-			MethodName: "GetBankCardData",
-			Handler:    _Handlers_GetBankCardData_Handler,
-		},
-		{
 			MethodName: "PostMetaData",
-			Handler:    _Handlers_PostMetaData_Handler,
+			Handler:    _MetaDataHandlers_PostMetaData_Handler,
 		},
 		{
 			MethodName: "GetMetaData",
-			Handler:    _Handlers_GetMetaData_Handler,
+			Handler:    _MetaDataHandlers_GetMetaData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-
 	"log"
 	"log/slog"
 
@@ -32,11 +31,11 @@ func main() {
 		slog.String("format", config.GetLogger().LogFormat),
 	)
 
-	storageInstance, err := storage.NewInstance(config.GetDB())
+	storageService, err := storage.NewInstance(config.GetDB())
 	if err != nil {
 		panic(err)
 	}
-	defer storageInstance.Close()
+	defer storageService.Close()
 
 	slog.Info("storage initialized",
 		slog.String("driver", "postgres"),
@@ -44,15 +43,13 @@ func main() {
 		slog.String("db_name", config.GetDB().Name),
 	)
 
-	//todo init grpc server
-
-	serverInstance := server.New(storageInstance.GRPCStorageCommands)
+	serverInstance := server.New(storageService)
 
 	go func() {
 		if err = serverInstance.Start(); err != nil {
 			panic(err)
 		}
 	}()
-	
+
 	fmt.Println("Hello i'm server")
 }

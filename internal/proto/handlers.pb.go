@@ -76,6 +76,7 @@ func (x *PostUserDataRequest) GetPassword() string {
 type PostUserDataResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Error         string                 `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"` // ошибка
+	Jwt           string                 `protobuf:"bytes,2,opt,name=jwt,proto3" json:"jwt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -113,6 +114,13 @@ func (*PostUserDataResponse) Descriptor() ([]byte, []int) {
 func (x *PostUserDataResponse) GetError() string {
 	if x != nil {
 		return x.Error
+	}
+	return ""
+}
+
+func (x *PostUserDataResponse) GetJwt() string {
+	if x != nil {
+		return x.Jwt
 	}
 	return ""
 }
@@ -924,9 +932,10 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x1dinternal/proto/handlers.proto\x12\vserver_grpc\"G\n" +
 	"\x13PostUserDataRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\",\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\">\n" +
 	"\x14PostUserDataResponse\x12\x14\n" +
-	"\x05error\x18\x01 \x01(\tR\x05error\")\n" +
+	"\x05error\x18\x01 \x01(\tR\x05error\x12\x10\n" +
+	"\x03jwt\x18\x02 \x01(\tR\x03jwt\")\n" +
 	"\x13PostTextDataRequest\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\"/\n" +
 	"\x14PostTextDataResponse\x12\x17\n" +
@@ -970,13 +979,16 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\tdata_type\x18\x04 \x01(\tR\bdataType\x12\x17\n" +
 	"\adata_id\x18\x05 \x01(\tR\x06dataId\x12\x18\n" +
 	"\acreated\x18\x06 \x01(\tR\acreated\x12\x1a\n" +
-	"\bmodified\x18\a \x01(\tR\bmodified2\xec\x04\n" +
-	"\bHandlers\x12S\n" +
-	"\fPostUserData\x12 .server_grpc.PostUserDataRequest\x1a!.server_grpc.PostUserDataResponse\x12S\n" +
+	"\bmodified\x18\a \x01(\tR\bmodified2c\n" +
+	"\fUserHandlers\x12S\n" +
+	"\fPostUserData\x12 .server_grpc.PostUserDataRequest\x1a!.server_grpc.PostUserDataResponse2\xb5\x01\n" +
+	"\fTextHandlers\x12S\n" +
 	"\fPostTextData\x12 .server_grpc.PostTextDataRequest\x1a!.server_grpc.PostTextDataResponse\x12P\n" +
-	"\vGetTextData\x12\x1f.server_grpc.GetTextDataRequest\x1a .server_grpc.GetTextDataResponse\x12_\n" +
+	"\vGetTextData\x12\x1f.server_grpc.GetTextDataRequest\x1a .server_grpc.GetTextDataResponse2\xd1\x01\n" +
+	"\x10BankCardHandlers\x12_\n" +
 	"\x10PostBankCardData\x12$.server_grpc.PostBankCardDataRequest\x1a%.server_grpc.PostBankCardDataResponse\x12\\\n" +
-	"\x0fGetBankCardData\x12#.server_grpc.GetBankCardDataRequest\x1a$.server_grpc.GetBankCardDataResponse\x12S\n" +
+	"\x0fGetBankCardData\x12#.server_grpc.GetBankCardDataRequest\x1a$.server_grpc.GetBankCardDataResponse2\xb9\x01\n" +
+	"\x10MetaDataHandlers\x12S\n" +
 	"\fPostMetaData\x12 .server_grpc.PostMetaDataRequest\x1a!.server_grpc.PostMetaDataResponse\x12P\n" +
 	"\vGetMetaData\x12\x1f.server_grpc.GetMetaDataRequest\x1a .server_grpc.GetMetaDataResponseB\x13Z\x11internal/protobufb\x06proto3"
 
@@ -1014,20 +1026,20 @@ var file_internal_proto_handlers_proto_goTypes = []any{
 	(*GetMetaDataResponse)(nil),      // 17: server_grpc.GetMetaDataResponse
 }
 var file_internal_proto_handlers_proto_depIdxs = []int32{
-	0,  // 0: server_grpc.Handlers.PostUserData:input_type -> server_grpc.PostUserDataRequest
-	2,  // 1: server_grpc.Handlers.PostTextData:input_type -> server_grpc.PostTextDataRequest
-	4,  // 2: server_grpc.Handlers.GetTextData:input_type -> server_grpc.GetTextDataRequest
-	6,  // 3: server_grpc.Handlers.PostBankCardData:input_type -> server_grpc.PostBankCardDataRequest
-	8,  // 4: server_grpc.Handlers.GetBankCardData:input_type -> server_grpc.GetBankCardDataRequest
-	14, // 5: server_grpc.Handlers.PostMetaData:input_type -> server_grpc.PostMetaDataRequest
-	16, // 6: server_grpc.Handlers.GetMetaData:input_type -> server_grpc.GetMetaDataRequest
-	1,  // 7: server_grpc.Handlers.PostUserData:output_type -> server_grpc.PostUserDataResponse
-	3,  // 8: server_grpc.Handlers.PostTextData:output_type -> server_grpc.PostTextDataResponse
-	5,  // 9: server_grpc.Handlers.GetTextData:output_type -> server_grpc.GetTextDataResponse
-	7,  // 10: server_grpc.Handlers.PostBankCardData:output_type -> server_grpc.PostBankCardDataResponse
-	9,  // 11: server_grpc.Handlers.GetBankCardData:output_type -> server_grpc.GetBankCardDataResponse
-	15, // 12: server_grpc.Handlers.PostMetaData:output_type -> server_grpc.PostMetaDataResponse
-	17, // 13: server_grpc.Handlers.GetMetaData:output_type -> server_grpc.GetMetaDataResponse
+	0,  // 0: server_grpc.UserHandlers.PostUserData:input_type -> server_grpc.PostUserDataRequest
+	2,  // 1: server_grpc.TextHandlers.PostTextData:input_type -> server_grpc.PostTextDataRequest
+	4,  // 2: server_grpc.TextHandlers.GetTextData:input_type -> server_grpc.GetTextDataRequest
+	6,  // 3: server_grpc.BankCardHandlers.PostBankCardData:input_type -> server_grpc.PostBankCardDataRequest
+	8,  // 4: server_grpc.BankCardHandlers.GetBankCardData:input_type -> server_grpc.GetBankCardDataRequest
+	14, // 5: server_grpc.MetaDataHandlers.PostMetaData:input_type -> server_grpc.PostMetaDataRequest
+	16, // 6: server_grpc.MetaDataHandlers.GetMetaData:input_type -> server_grpc.GetMetaDataRequest
+	1,  // 7: server_grpc.UserHandlers.PostUserData:output_type -> server_grpc.PostUserDataResponse
+	3,  // 8: server_grpc.TextHandlers.PostTextData:output_type -> server_grpc.PostTextDataResponse
+	5,  // 9: server_grpc.TextHandlers.GetTextData:output_type -> server_grpc.GetTextDataResponse
+	7,  // 10: server_grpc.BankCardHandlers.PostBankCardData:output_type -> server_grpc.PostBankCardDataResponse
+	9,  // 11: server_grpc.BankCardHandlers.GetBankCardData:output_type -> server_grpc.GetBankCardDataResponse
+	15, // 12: server_grpc.MetaDataHandlers.PostMetaData:output_type -> server_grpc.PostMetaDataResponse
+	17, // 13: server_grpc.MetaDataHandlers.GetMetaData:output_type -> server_grpc.GetMetaDataResponse
 	7,  // [7:14] is the sub-list for method output_type
 	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
@@ -1048,7 +1060,7 @@ func file_internal_proto_handlers_proto_init() {
 			NumEnums:      0,
 			NumMessages:   18,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   4,
 		},
 		GoTypes:           file_internal_proto_handlers_proto_goTypes,
 		DependencyIndexes: file_internal_proto_handlers_proto_depIdxs,
