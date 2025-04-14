@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package server_grpc;
+
+option go_package = "internal/protobuf";
+
+message PostUserDataRequest {
+	string login= 1;
+	string password= 2;
+}
+
+message PostUserDataResponse {
+	string error = 1; // ошибка
+	string jwt = 2;
+}
+
+message PostTextDataRequest {
+	string text= 1;
+}
+
+message PostTextDataResponse {
+	string data_id = 1;
+}
+
+message GetTextDataRequest {
+	string id = 1;
+}
+
+message GetTextDataResponse {
+	string text = 1;
+}
+
+message PostBankCardDataRequest {
+	string card_num = 1;
+	string expiry = 2;
+	string cvv = 3;
+}
+
+message PostBankCardDataResponse {
+	string data_id = 1;
+}
+
+message GetBankCardDataRequest {
+	string id = 1;
+}
+
+message GetBankCardDataResponse {
+	string card_num = 1;
+	string expiry = 2;
+	string cvv = 3;
+}
+
+message PostBinaryDataRequest {
+	string text= 1;
+}
+
+message PostBinaryDataResponse {
+	string error = 1;
+}
+
+message GetBinaryDataRequest {
+	string id = 1;
+}
+
+message GetBinaryDataResponse {
+	string text = 1;
+}
+
+message PostMetaDataRequest {
+	string title = 1;
+	string description = 2;
+	string data_type =3;
+}
+
+message PostMetaDataResponse {
+	string id = 1;
+}
+
+message GetMetaDataRequest {
+	string id = 1;
+}
+
+message GetMetaDataResponse {
+	string id = 1;
+	string title = 2;
+	string description = 3;
+	string data_type =4;
+	string data_id = 5;
+	string created = 6;
+	string modified = 7;
+}
+
+
+service UserHandlers {
+	rpc PostUserData(PostUserDataRequest) returns (PostUserDataResponse);
+}
+
+service TextHandlers{
+	rpc PostTextData(PostTextDataRequest) returns (PostTextDataResponse);
+	rpc GetTextData(GetTextDataRequest) returns (GetTextDataResponse);
+}
+
+service BankCardHandlers {
+	rpc PostBankCardData(PostBankCardDataRequest) returns (PostBankCardDataResponse);
+	rpc GetBankCardData(GetBankCardDataRequest) returns (GetBankCardDataResponse);
+}
+
+service MetaDataHandlers {
+	rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
+	rpc GetMetaData(GetMetaDataRequest) returns (GetMetaDataResponse);
+}
+//TODO add binary handler
