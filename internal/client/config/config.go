@@ -13,13 +13,13 @@ var cfg *ClientConfig
 
 // ClientConfig - структура конфигурации агента
 type ClientConfig struct {
-	Address    *Address
+	Address    *Address `json:"address"`
 	ConfigFile string
 	Key        string
 }
 type Address struct {
-	Host     string
-	GRPCPort string
+	Host     string `json:"host"`
+	GRPCPort string `json:"grpc_port"`
 }
 
 // New - конструктор конфигурации агента
@@ -42,6 +42,7 @@ func New() (*ClientConfig, error) {
 		return nil, fmt.Errorf("error parsing environment variables: %w", err)
 	}
 
+	cfg = config
 	return config, nil
 }
 
@@ -105,18 +106,18 @@ func (a *ClientConfig) initConfigFile() error {
 func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 	var err error
 	var cfg struct {
-		GRPCPort       string `json:"grpc_port"`
-		ReportInterval string `json:"report_interval"`
-		PollInterval   string `json:"poll_interval"`
-		CryptoKey      string `json:"crypto_key"`
+		Address        *Address `json:"address"`
+		ReportInterval string   `json:"report_interval"`
+		PollInterval   string   `json:"poll_interval"`
+		CryptoKey      string   `json:"crypto_key"`
 	}
 
 	if err = json.Unmarshal(b, &cfg); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
-	if a.Address.GRPCPort == "" && cfg.GRPCPort != "" {
-		a.Address.GRPCPort = cfg.GRPCPort
+	if a.Address.GRPCPort == "" && cfg.Address.GRPCPort != "" {
+		a.Address.GRPCPort = cfg.Address.GRPCPort
 	}
 
 	return nil
