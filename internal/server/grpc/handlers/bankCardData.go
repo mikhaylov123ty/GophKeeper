@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log/slog"
+
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"log/slog"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"

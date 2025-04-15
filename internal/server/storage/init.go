@@ -2,8 +2,9 @@ package storage
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"log/slog"
+
+	"github.com/google/uuid"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
