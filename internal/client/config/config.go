@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+var cfg *ClientConfig
+
 // ClientConfig - структура конфигурации агента
 type ClientConfig struct {
 	Address    *Address
@@ -136,4 +138,8 @@ func (a *Address) Set(value string) error {
 	a.GRPCPort = values[1]
 
 	return nil
+}
+
+func GetAddress() *Address {
+	return cfg.Address
 }
