@@ -1,0 +1,13 @@
+{
+  "db": {
+    "dsn": "postgres://postgres:postgres@localhost:5432/gopher_store?sslmode=disable",
+    "name": "gopher_store",
+    "migrations_dir": "file://./internal/server/storage/migrations"
+  },
+  "logger": {
+    "log_level": "debug"
+  },
+  "address": {
+    "grpc_port": ":4443"
+  }
+}

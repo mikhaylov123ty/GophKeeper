@@ -2,8 +2,9 @@ package storage
 
 import (
 	"fmt"
-
 	"github.com/google/uuid"
+	"log/slog"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage/psql"
@@ -11,17 +12,18 @@ import (
 
 type Commands interface {
 	SaveUser(*models.UserData) error
-	SaveText(string) error
-	GetText(uuid.UUID) (*models.TextData, error)
+	SaveText(*models.TextData) error
+	GetTextByID(uuid.UUID) (*models.TextData, error)
 	SaveBankCard(*models.BankCardData) error
-	GetBankCard(uuid.UUID) (*models.BankCardData, error)
+	GetBankCardById(uuid.UUID) (*models.BankCardData, error)
 	SaveMetaData(*models.Meta) error
-	GetMetaData(uuid.UUID) (*models.Meta, error)
+	GetMetaDataByUser(uuid.UUID, string) ([]*models.Meta, error)
 	Close() error
 }
 
 func NewInstance(cfg *config.DB) (Commands, error) {
-	conn, err := psql.New(cfg.Address, cfg.Name, cfg.MigrationsDir)
+	slog.Debug("db config", slog.Any("cfg", *cfg))
+	conn, err := psql.New(cfg.DSN, cfg.Name, cfg.MigrationsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres database instance: %w", err)
 	}

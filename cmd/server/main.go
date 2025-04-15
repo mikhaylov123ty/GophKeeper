@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"sync"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/server"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
@@ -39,17 +40,21 @@ func main() {
 
 	slog.Info("storage initialized",
 		slog.String("driver", "postgres"),
-		slog.String("dsn", config.GetDB().Address),
+		slog.String("dsn", config.GetDB().DSN),
 		slog.String("db_name", config.GetDB().Name),
 	)
 
 	serverInstance := server.New(storageService)
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		if err = serverInstance.Start(); err != nil {
 			panic(err)
 		}
 	}()
 
 	fmt.Println("Hello i'm server")
+	wg.Wait()
 }

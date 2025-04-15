@@ -31,9 +31,7 @@ type auth struct {
 func NewServer(cryptoKey string, hashKey string,
 	textHandler *handlers.TextHandler,
 	bankCardHandler *handlers.BankCardDataHandler,
-	metaDataHandler *handlers.MetaDataHandler,
-
-) *GRPCServer {
+	metaDataHandler *handlers.MetaDataHandler) *GRPCServer {
 	instance := &GRPCServer{
 		auth: &auth{
 			cryptoKey: cryptoKey,
@@ -45,7 +43,8 @@ func NewServer(cryptoKey string, hashKey string,
 	interceptors := []grpc.UnaryServerInterceptor{
 		instance.withLogger,
 		//instance.withHash,
-		instance.withAuth,
+		//instance.withAuth,
+		//instance.withEncrypt
 	}
 
 	//Регистрация инстанса gRPC с перехватчиками

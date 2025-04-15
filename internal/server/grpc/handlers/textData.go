@@ -2,11 +2,16 @@ package handlers
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"log/slog"
+
 	"github.com/google/uuid"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
 type TextHandler struct {
@@ -16,11 +21,11 @@ type TextHandler struct {
 }
 
 type textDataCreator interface {
-	SaveText(string) error
+	SaveText(*models.TextData) error
 }
 
 type textDataProvider interface {
-	GetText(uuid.UUID) (*models.TextData, error)
+	GetTextByID(uuid.UUID) (*models.TextData, error)
 }
 
 func NewTextHandler(textDataCreator textDataCreator, textDataProvider textDataProvider) *TextHandler {
@@ -30,11 +35,52 @@ func NewTextHandler(textDataCreator textDataCreator, textDataProvider textDataPr
 	}
 }
 
-func (t *TextHandler) PostTextData(context.Context, *pb.PostTextDataRequest) (*pb.PostTextDataResponse, error) {
+func (t *TextHandler) PostTextData(ctx context.Context, request *pb.PostTextDataRequest) (*pb.PostTextDataResponse, error) {
+	var textID uuid.UUID
 
-	return nil, status.Errorf(codes.Unimplemented, "method PostTextData not implemented")
+	if request.GetText() == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty text")
+	}
+
+	if request.GetTextId() == "" {
+		textID = uuid.New()
+	} else {
+		id, err := uuid.Parse(request.GetTextId())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetTextId())
+		}
+		textID = id
+	}
+
+	textData := models.TextData{
+		ID:   textID,
+		Text: request.GetText(),
+	}
+
+	if err := t.textDataCreator.SaveText(&textData); err != nil {
+		slog.ErrorContext(ctx, "could not save text", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.PostTextDataResponse{DataId: textID.String()}, status.Errorf(codes.OK, "text registered")
 }
-func (t *TextHandler) GetTextData(context.Context, *pb.GetTextDataRequest) (*pb.GetTextDataResponse, error) {
+func (t *TextHandler) GetTextData(ctx context.Context, request *pb.GetTextDataRequest) (*pb.GetTextDataResponse, error) {
+	textID, err := uuid.Parse(request.GetTextId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetTextId())
+	}
 
-	return nil, status.Errorf(codes.Unimplemented, "method GetTextData not implemented")
+	textItem, err := t.textDataProvider.GetTextByID(textID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			slog.ErrorContext(ctx, "no text found", slog.String("error", err.Error()))
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		slog.ErrorContext(ctx, "could not get text", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.GetTextDataResponse{
+			Text: textItem.Text},
+		status.Errorf(codes.OK, "text gathered")
 }

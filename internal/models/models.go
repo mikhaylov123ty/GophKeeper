@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type UserData struct {
@@ -18,7 +19,7 @@ type TextData struct {
 type BankCardData struct {
 	ID      uuid.UUID `json:"id"`
 	CardNum string    `json:"card_num"`
-	Expiry  time.Time `json:"expiry"`
+	Expiry  string    `json:"expiry"`
 	CVV     string    `json:"cvv"`
 }
 
@@ -34,6 +35,7 @@ type Meta struct {
 	Description string    `json:"description"`
 	Type        string    `json:"data_type"`
 	DataID      uuid.UUID `json:"data_id"`
+	UserID      uuid.UUID `json:"user_id"`
 	Created     time.Time `json:"created"`
 	Modified    time.Time `json:"modified"`
 }

@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc/handlers"
@@ -29,7 +30,7 @@ func New(storageCommands storage.Commands) *Server {
 		handlers.NewBankCardDataHandler(storageCommands, storageCommands),
 		handlers.NewMetaDataHandler(storageCommands, storageCommands),
 	)
-	
+
 	return &Server{
 		grpc: gRPC,
 	}
