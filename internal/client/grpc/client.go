@@ -27,6 +27,8 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("failed creating grpc client: %w", err)
 	}
 
+	fmt.Println("ADDRESS", config.GetAddress().String())
+
 	return &Client{TextHandler: pb.NewTextHandlersClient(conn)}, nil
 }
 
