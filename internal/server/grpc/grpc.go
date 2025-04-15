@@ -44,6 +44,7 @@ func NewServer(cryptoKey string, hashKey string,
 		instance.withLogger,
 		//instance.withHash,
 		//instance.withAuth,
+		//instance.withEncrypt
 	}
 
 	//Регистрация инстанса gRPC с перехватчиками
