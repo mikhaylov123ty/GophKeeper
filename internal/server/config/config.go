@@ -21,21 +21,21 @@ type ServerConfig struct {
 }
 
 type Address struct {
-	Host     string
-	GRPCPort string
+	Host     string `json:"host"`
+	GRPCPort string `json:"grpc_port"`
 }
 
 // Logger - структура конфигруации логгера
 type Logger struct {
-	LogLevel  string
-	LogFormat string
+	LogLevel  string `json:"log_level"`
+	LogFormat string `json:"log_format"`
 }
 
 // DB - структура конфигруации БД
 type DB struct {
-	Address       string
-	Name          string
-	MigrationsDir string
+	DSN           string `json:"dsn"`
+	Name          string `json:"name"`
+	MigrationsDir string `json:"migrations_dir"`
 }
 
 type Keys struct {
@@ -51,6 +51,7 @@ func Init() (*ServerConfig, error) {
 		Address: &Address{},
 		Logger:  &Logger{},
 		DB:      &DB{},
+		Keys:    &Keys{},
 	}
 
 	// Парсинг флагов
@@ -70,6 +71,9 @@ func Init() (*ServerConfig, error) {
 
 	cfg = config
 
+	fmt.Println("CONFIG DB", *cfg.DB)
+	fmt.Println("CONFIG Logger", *cfg.Logger)
+
 	return config, nil
 }
 
@@ -80,10 +84,10 @@ func (s *ServerConfig) parseFlags() {
 	flag.StringVar(&s.Address.GRPCPort, "grpc-port", "", "Port on which to listen gRPC requests. Example: \"4443\"")
 
 	// Флаги логирования
-	flag.StringVar(&s.Logger.LogLevel, "l", "info", "Log level. Example: \"info\"")
+	flag.StringVar(&s.Logger.LogLevel, "l", "", "Log level. Example: \"info\"")
 
 	// Флаги БД
-	flag.StringVar(&s.DB.Address, "d", "", "Host which to connect to DB. Example: \"postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable\"")
+	flag.StringVar(&s.DB.DSN, "d", "", "Host which to connect to DB. Example: \"postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable\"")
 
 	// Флаги подписи и шифрования
 	flag.StringVar(&s.Keys.HashKey, "hash-key", "", "Key")
@@ -121,7 +125,7 @@ func (s *ServerConfig) parseEnv() error {
 	}
 
 	if address := os.Getenv("DATABASE_DSN"); address != "" {
-		s.DB.Address = address
+		s.DB.DSN = address
 	}
 
 	if key := os.Getenv("HASH_KEY"); key != "" {
@@ -164,6 +168,7 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 	var cfgFile struct {
 		Address *Address `json:"address"`
 		DB      *DB      `json:"db"`
+		Logger  *Logger  `json:"logger"`
 	}
 
 	if err = json.Unmarshal(b, &cfgFile); err != nil {
@@ -175,14 +180,22 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 	}
 
 	// DB config file parsing
-	if s.DB.Address == "" && cfgFile.DB.Address != "" {
-		s.DB.Address = cfgFile.DB.Address
+	if s.DB.DSN == "" && cfgFile.DB.DSN != "" {
+		s.DB.DSN = cfgFile.DB.DSN
 	}
 	if s.DB.Name == "" && cfgFile.DB.Name != "" {
 		s.DB.Name = cfgFile.DB.Name
 	}
 	if s.DB.MigrationsDir == "" && cfgFile.DB.MigrationsDir != "" {
 		s.DB.MigrationsDir = cfgFile.DB.MigrationsDir
+	}
+
+	// Logger config file parsing
+	if s.Logger.LogLevel == "" && cfgFile.Logger.LogLevel != "" {
+		s.Logger.LogLevel = cfgFile.Logger.LogLevel
+	}
+	if s.Logger.LogFormat == "" && cfgFile.Logger.LogFormat != "" {
+		s.Logger.LogFormat = cfgFile.Logger.LogFormat
 	}
 
 	return nil
@@ -205,15 +218,6 @@ func (a *Address) Set(value string) error {
 
 	return nil
 }
-
-//type ServerConfig struct {
-//	Address    *Address
-//	Logger     *Logger
-//	DB         *DB
-//	Key        string
-//	CryptoKey  string
-//	ConfigFile string
-//}
 
 func GetAddress() *Address {
 	return cfg.Address

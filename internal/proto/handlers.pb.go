@@ -7,11 +7,12 @@
 package protobuf
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -687,9 +688,10 @@ func (x *GetBinaryDataResponse) GetText() string {
 
 type PostMetaDataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
-	DataType      string                 `protobuf:"bytes,3,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	DataType      string                 `protobuf:"bytes,4,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -722,6 +724,13 @@ func (x *PostMetaDataRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use PostMetaDataRequest.ProtoReflect.Descriptor instead.
 func (*PostMetaDataRequest) Descriptor() ([]byte, []int) {
 	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *PostMetaDataRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
 }
 
 func (x *PostMetaDataRequest) GetTitle() string {
@@ -963,11 +972,12 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x14GetBinaryDataRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"+\n" +
 	"\x15GetBinaryDataResponse\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\"j\n" +
-	"\x13PostMetaDataRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x1b\n" +
-	"\tdata_type\x18\x03 \x01(\tR\bdataType\"&\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"z\n" +
+	"\x13PostMetaDataRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1b\n" +
+	"\tdata_type\x18\x04 \x01(\tR\bdataType\"&\n" +
 	"\x14PostMetaDataResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"$\n" +
 	"\x12GetMetaDataRequest\x12\x0e\n" +

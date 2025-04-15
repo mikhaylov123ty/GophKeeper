@@ -8,26 +8,26 @@ CREATE TABLE IF NOT EXISTS users(
     modified_at TIMESTAMP NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS text_data(
+CREATE TABLE IF NOT EXISTS texts(
     id TEXT PRIMARY KEY NOT NULL,
     text TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS binary_data(
+CREATE TABLE IF NOT EXISTS binaries(
     id TEXT PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     file_path TEXT NOT NULL,
     content_type TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS bank_card_data(
+CREATE TABLE IF NOT EXISTS bank_cards(
     id TEXT PRIMARY KEY NOT NULL,
     card_num TEXT NOT NULL,
     expiry TIMESTAMP NOT NULL,
     cvv INT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS meta_data(
+CREATE TABLE IF NOT EXISTS metas(
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     description TEXT,

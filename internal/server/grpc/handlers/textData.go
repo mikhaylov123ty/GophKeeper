@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"context"
+
 	"github.com/google/uuid"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
 type TextHandler struct {

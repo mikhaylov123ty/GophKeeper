@@ -2,15 +2,24 @@ package psql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+)
+
+const (
+	metaTableName      = "metas"
+	textTableName      = "texts"
+	usersTableName     = "users"
+	bankCardsTableName = "bank_cards"
 )
 
 type Storage struct {
@@ -18,7 +27,7 @@ type Storage struct {
 }
 
 func New(dsn string, dbName string, migrationsDir string) (*Storage, error) {
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("could not open postgres database: %w", err)
 	}
@@ -35,7 +44,7 @@ func New(dsn string, dbName string, migrationsDir string) (*Storage, error) {
 		return nil, fmt.Errorf("could not init postgres migrate: %w", err)
 	}
 
-	if err = m.Up(); err != nil {
+	if err = m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		return nil, fmt.Errorf("could not apply migrations: %w", err)
 	}
 
@@ -63,6 +72,26 @@ func (s *Storage) GetBankCard(id uuid.UUID) (*models.BankCardData, error) {
 }
 
 func (s *Storage) SaveMetaData(data *models.Meta) error {
+	query, args, err := squirrel.Insert(metaTableName).Values(data.ID, data.Title, data.Description,
+		data.Type, data.DataID, data.Created, data.Modified).
+		Suffix("ON CONFLICT(id) DO UPDATE SET title = $2, description = $3, data_id = $5, modified_at = $7").
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("could not build save meta query: %w", err)
+	}
+
+	fmt.Println("QUERY", query)
+	fmt.Println("ARGS", args)
+
+	res, err := s.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not execute save meta query: %w", err)
+	}
+	i, err := res.RowsAffected()
+
+	fmt.Println("res", i)
+
 	return nil
 }
 
