@@ -43,6 +43,7 @@ func New() (*ClientConfig, error) {
 	}
 
 	cfg = config
+	fmt.Println(cfg)
 	return config, nil
 }
 
@@ -105,19 +106,19 @@ func (a *ClientConfig) initConfigFile() error {
 // позволяет десериализировать файл конфига с условиями
 func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 	var err error
-	var cfg struct {
+	var cfgFile struct {
 		Address        *Address `json:"address"`
 		ReportInterval string   `json:"report_interval"`
 		PollInterval   string   `json:"poll_interval"`
 		CryptoKey      string   `json:"crypto_key"`
 	}
 
-	if err = json.Unmarshal(b, &cfg); err != nil {
+	if err = json.Unmarshal(b, &cfgFile); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
-	if a.Address.GRPCPort == "" && cfg.Address.GRPCPort != "" {
-		a.Address.GRPCPort = cfg.Address.GRPCPort
+	if a.Address.GRPCPort == "" && cfgFile.Address.GRPCPort != "" {
+		a.Address.GRPCPort = cfgFile.Address.GRPCPort
 	}
 
 	return nil

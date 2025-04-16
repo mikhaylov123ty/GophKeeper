@@ -37,7 +37,7 @@ func New(storageCommands storage.Commands) *Server {
 }
 
 func (s *Server) Start() error {
-	listen, err := net.Listen("tcp", config.GetAddress().GRPCPort)
+	listen, err := net.Listen("tcp", config.GetAddress().String())
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)
 	}
