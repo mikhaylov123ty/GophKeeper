@@ -73,6 +73,7 @@ func Init() (*ServerConfig, error) {
 
 	fmt.Println("CONFIG DB", *cfg.DB)
 	fmt.Println("CONFIG Logger", *cfg.Logger)
+	fmt.Println("CONFIG address", *cfg.Address)
 
 	return config, nil
 }

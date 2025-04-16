@@ -1,5 +1,5 @@
 {
   "address": {
-    "grpc_port": ":4443"
+    "grpc_port": "4443"
   }
 }
