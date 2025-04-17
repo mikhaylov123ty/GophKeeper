@@ -20,7 +20,7 @@ func New(grpcClient *grpc.Client) *App {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	tui := tui.NewItemManager()
+	tui := tui.NewItemManager(a.grpcClient)
 	prog := tea.NewProgram(tui)
 	if _, err := prog.Run(); err != nil {
 		fmt.Println("Error starting program:", err)

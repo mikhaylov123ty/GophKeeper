@@ -1,14 +1,20 @@
 package tui
 
 import (
+	"context"
 	"fmt"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+	"log/slog"
 	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Model struct {
 	currentScreen Screen
+	grpcClient    *grpc.Client
 }
 
 type Screen interface {
@@ -32,7 +38,8 @@ type MainMenu struct {
 }
 
 type ItemManager struct {
-	items []string
+	items       []string
+	textHandler pb.TextHandlersClient
 }
 
 type CategoryMenu struct {
@@ -43,6 +50,8 @@ type CategoryMenu struct {
 }
 
 type ViewItemsScreen struct {
+	options     []string
+	cursor      int
 	itemManager *ItemManager
 	backScreen  Screen
 }
@@ -64,6 +73,16 @@ const (
 	AddOption    = "Add an item"
 	DeleteOption = "Delete an item"
 	BackOption   = "Back"
+)
+
+// Style definitions
+var (
+	cursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))                     // Bright purple
+	selectedStyle   = lipgloss.NewStyle().Padding(1).Foreground(lipgloss.Color("2")).Bold(true) // Green
+	unselectedStyle = lipgloss.NewStyle().Padding(1).Foreground(lipgloss.Color("7"))            // White
+	backgroundStyle = lipgloss.NewStyle().Background(lipgloss.Color("235"))                     // Grey background
+	titleStyle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("65"))           // Bold yellow
+	separatorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))                     // Light grey
 )
 
 func (m MainMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
@@ -91,15 +110,15 @@ func (m MainMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 }
 
 func (m MainMenu) View() string {
-	s := "Main Menu:\n\n"
+	s := titleStyle.Render("Main Menu:\n\n")
 	for i, category := range m.categories {
-		cursor := " "
 		if m.cursor == i {
-			cursor = ">"
+			s += selectedStyle.Render(fmt.Sprintf("[x] %s\n", string(category))) // Selected option with color
+		} else {
+			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", category)) // Unselected option with color
 		}
-		s += fmt.Sprintf("%s %s\n", cursor, category)
 	}
-	s += "\nUse arrow keys to navigate and enter to select.\n"
+	//s += separatorStyle.Render("Use arrow keys to navigate and enter to select.\n") // Navigation instructions
 	return s
 }
 
@@ -130,25 +149,35 @@ func (cm CategoryMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 }
 
 func (cm CategoryMenu) View() string {
-	s := "Category Menu:\n\n"
+	s := titleStyle.Render("Category Menu:\n\n")
 	for i, option := range cm.options {
-		cursor := " "
 		if cm.cursor == i {
-			cursor = ">"
+			s += selectedStyle.Render(fmt.Sprintf("[x] %s\n", option)) // Selected option with color
+		} else {
+			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", option)) // Unselected option with color
 		}
-		s += fmt.Sprintf("%s %s\n", cursor, option)
 	}
-	s += "\nPress ESC to go back to the main menu.\n"
+	s += separatorStyle.Render("Press ESC to go back to the main menu.\n") // Navigation instructions
 	return s
 }
 
 func (screen ViewItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "esc" {
+
+		switch msg.String() {
+
+		case "down":
+			screen.cursor = (screen.cursor + 1) % len(screen.itemManager.items)
+		case "up":
+			screen.cursor = (screen.cursor - 1 + len(screen.itemManager.items)) % len(screen.itemManager.items)
+		//case "enter":
+		//	switch screen.cursor {
+		//	}
+
+		case "q":
 			return screen.backScreen, nil // Go back when ESC is pressed
 		}
-		return screen.backScreen, nil // Default behavior to go back
 	}
 	return screen, nil
 }
@@ -157,12 +186,15 @@ func (screen ViewItemsScreen) View() string {
 	if len(screen.itemManager.items) == 0 {
 		return "No items to display.\n\nPress ESC to go back.\n"
 	}
-
 	s := "Items:\n\n"
 	for i, item := range screen.itemManager.items {
-		s += fmt.Sprintf("%d: %s\n", i+1, item)
+		if screen.cursor == i {
+			s += selectedStyle.Render(fmt.Sprintf("[x] %s\n", item)) // Selected option with color
+		} else {
+			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", item)) // Unselected option with color
+		}
 	}
-	s += "\nPress ESC to go back.\n"
+	s += "Press ESC to go back.\n" // Navigation instructions
 	return s
 }
 
@@ -172,13 +204,21 @@ func (screen AddItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "enter":
 			if screen.newItem != "" {
 				screen.itemManager.items = append(screen.itemManager.items, screen.newItem)
+				fmt.Println("ADD ITEM:", screen.newItem)
+				resp, err := screen.itemManager.textHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{Text: screen.newItem})
+				if err != nil {
+					slog.Error(err.Error())
+				}
+				if resp != nil {
+					fmt.Println(resp.DataId)
+				}
 			}
 			return screen.backScreen, nil // Go back to category menu
 		case "backspace":
 			if len(screen.newItem) > 0 {
 				screen.newItem = screen.newItem[:len(screen.newItem)-1]
 			}
-		case "esc": // Go back to the previous menu
+		case "q": // Go back to the previous menu
 			return screen.backScreen, nil
 		default:
 			screen.newItem += keyMsg.String()
@@ -219,15 +259,15 @@ func (screen DeleteItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 func (screen DeleteItemScreen) View() string {
 	s := "Delete an item:\n\n"
 	for i, item := range screen.itemManager.items {
-		s += fmt.Sprintf("%d: %s\n", i+1, item)
+		s += fmt.Sprintf("  - %d: %s\n", i+1, item) // Use bullet points for items
 	}
-	s += "\nSelect the item number to delete (Press ESC to go back):\n"
+	s += "Select the item number to delete (Press ESC to go back):\n" // Navigation instructions
 	return s
 }
 
-func NewItemManager() *Model {
+func NewItemManager(grpcClient *grpc.Client) *Model {
 	itemManagers := map[Category]*ItemManager{
-		TextCategory: {items: []string{}},
+		TextCategory: {items: []string{}, textHandler: grpcClient.TextHandler},
 		FileCategory: {items: []string{}},
 		CardCategory: {items: []string{}},
 	}
@@ -238,6 +278,7 @@ func NewItemManager() *Model {
 			cursor:     0,
 			managers:   itemManagers,
 		},
+		grpcClient: grpcClient,
 	}
 	return &model
 }
