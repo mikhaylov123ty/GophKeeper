@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -20,8 +21,10 @@ type TextHandler struct {
 	textDataProvider textDataProvider
 }
 
+// TODO ADD TX
 type textDataCreator interface {
 	SaveText(*models.TextData) error
+	SaveMetaData(*models.Meta) error
 }
 
 type textDataProvider interface {
@@ -52,17 +55,47 @@ func (t *TextHandler) PostTextData(ctx context.Context, request *pb.PostTextData
 		textID = id
 	}
 
+	if request.GetMetaData() == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty meta data")
+	}
+
+	metaID, err := uuid.Parse(request.GetMetaData().Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetMetaData().Id)
+	}
+
+	metaData := models.Meta{
+		ID:          metaID,
+		Title:       request.GetMetaData().Title,
+		Description: request.GetMetaData().Description,
+		Type:        request.GetMetaData().DataType,
+		DataID:      textID,
+		Created:     time.Now(), // Current time
+		Modified:    time.Now(), // Current time
+	}
+
 	textData := models.TextData{
 		ID:   textID,
 		Text: request.GetText(),
 	}
 
-	if err := t.textDataCreator.SaveText(&textData); err != nil {
+	// TODO open TX
+	if err = t.textDataCreator.SaveText(&textData); err != nil {
 		slog.ErrorContext(ctx, "could not save text", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.PostTextDataResponse{DataId: textID.String()}, status.Errorf(codes.OK, "text registered")
+	if err = t.textDataCreator.SaveMetaData(&metaData); err != nil {
+		slog.ErrorContext(ctx, "could not save meta data", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.PostTextDataResponse{
+			DataId:   textID.String(),
+			Created:  metaData.Created.Format(time.RFC3339),
+			Modified: metaData.Modified.Format(time.RFC3339),
+		},
+		status.Errorf(codes.OK, "text registered")
 }
 func (t *TextHandler) GetTextData(ctx context.Context, request *pb.GetTextDataRequest) (*pb.GetTextDataResponse, error) {
 	textID, err := uuid.Parse(request.GetTextId())

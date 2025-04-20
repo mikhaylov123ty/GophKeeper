@@ -8,7 +8,6 @@ package protobuf
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -402,15 +401,14 @@ var BankCardHandlers_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	MetaDataHandlers_PostMetaData_FullMethodName = "/server_grpc.MetaDataHandlers/PostMetaData"
-	MetaDataHandlers_GetMetaData_FullMethodName  = "/server_grpc.MetaDataHandlers/GetMetaData"
+	MetaDataHandlers_GetMetaData_FullMethodName = "/server_grpc.MetaDataHandlers/GetMetaData"
 )
 
 // MetaDataHandlersClient is the client API for MetaDataHandlers service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetaDataHandlersClient interface {
-	PostMetaData(ctx context.Context, in *PostMetaDataRequest, opts ...grpc.CallOption) (*PostMetaDataResponse, error)
+	// rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
 	GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error)
 }
 
@@ -420,16 +418,6 @@ type metaDataHandlersClient struct {
 
 func NewMetaDataHandlersClient(cc grpc.ClientConnInterface) MetaDataHandlersClient {
 	return &metaDataHandlersClient{cc}
-}
-
-func (c *metaDataHandlersClient) PostMetaData(ctx context.Context, in *PostMetaDataRequest, opts ...grpc.CallOption) (*PostMetaDataResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(PostMetaDataResponse)
-	err := c.cc.Invoke(ctx, MetaDataHandlers_PostMetaData_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *metaDataHandlersClient) GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error) {
@@ -446,7 +434,7 @@ func (c *metaDataHandlersClient) GetMetaData(ctx context.Context, in *GetMetaDat
 // All implementations must embed UnimplementedMetaDataHandlersServer
 // for forward compatibility.
 type MetaDataHandlersServer interface {
-	PostMetaData(context.Context, *PostMetaDataRequest) (*PostMetaDataResponse, error)
+	// rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
 	GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error)
 	mustEmbedUnimplementedMetaDataHandlersServer()
 }
@@ -458,9 +446,6 @@ type MetaDataHandlersServer interface {
 // pointer dereference when methods are called.
 type UnimplementedMetaDataHandlersServer struct{}
 
-func (UnimplementedMetaDataHandlersServer) PostMetaData(context.Context, *PostMetaDataRequest) (*PostMetaDataResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PostMetaData not implemented")
-}
 func (UnimplementedMetaDataHandlersServer) GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetaData not implemented")
 }
@@ -483,24 +468,6 @@ func RegisterMetaDataHandlersServer(s grpc.ServiceRegistrar, srv MetaDataHandler
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&MetaDataHandlers_ServiceDesc, srv)
-}
-
-func _MetaDataHandlers_PostMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PostMetaDataRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MetaDataHandlersServer).PostMetaData(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MetaDataHandlers_PostMetaData_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MetaDataHandlersServer).PostMetaData(ctx, req.(*PostMetaDataRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _MetaDataHandlers_GetMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -528,10 +495,6 @@ var MetaDataHandlers_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "server_grpc.MetaDataHandlers",
 	HandlerType: (*MetaDataHandlersServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "PostMetaData",
-			Handler:    _MetaDataHandlers_PostMetaData_Handler,
-		},
 		{
 			MethodName: "GetMetaData",
 			Handler:    _MetaDataHandlers_GetMetaData_Handler,
