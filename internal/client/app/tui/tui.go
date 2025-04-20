@@ -3,13 +3,13 @@ package tui
 import (
 	"context"
 	"fmt"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"log/slog"
-	"strconv"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/google/uuid"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+	"strconv"
+	"time"
 )
 
 type Model struct {
@@ -29,41 +29,111 @@ const (
 	FileCategory Category = "Files"
 	CardCategory Category = "Cards"
 	ExitCategory Category = "Exit" // New exit category
+
 )
 
 type MainMenu struct {
 	categories []Category
 	cursor     int
-	managers   map[Category]*ItemManager
+	manager    *ItemManager
+	nextScreen Screen
+}
+
+type ActionsMenu struct {
+	options     []string
+	cursor      int
+	category    Category
+	itemManager *ItemManager
+	backScreen  Screen
 }
 
 type ItemManager struct {
-	items       []string
+	metaItems   map[Category][]*MetaItem
 	textHandler pb.TextHandlersClient
 }
 
-type CategoryMenu struct {
+func (im *ItemManager) getItemData(dataID string, category Category) (any, error) {
+	switch category {
+	case TextCategory:
+		response, err := im.textHandler.GetTextData(context.Background(), &pb.GetTextDataRequest{
+			TextId: dataID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		return &textItemData{
+			text: response.GetText(),
+		}, nil
+	}
+	return nil, nil
+}
+
+type MetaItem struct {
+	Num         int
+	Id          uuid.UUID
+	Title       string
+	dataID      string
+	Description string
+	Created     string // You can use time.Time for actual timestamp
+	Modified    string // Same as above
+}
+
+type ViewTextItemsScreen struct {
 	options     []string
 	cursor      int
+	category    Category
 	itemManager *ItemManager
 	backScreen  Screen
 }
 
-type ViewItemsScreen struct {
+type ViewTextDataScreen struct {
+	backScreen Screen
+	itemData   string
+}
+
+type ViewBankCardItemsScreen struct {
 	options     []string
 	cursor      int
+	category    Category
 	itemManager *ItemManager
 	backScreen  Screen
 }
 
-type AddItemScreen struct {
+type AddTextItemScreen struct {
 	itemManager *ItemManager
-	newItem     string
+	category    Category
+	newTitle    string
+	newDesc     string
+	newItemData *textItemData
+	createdTime string // Set this to current time when item is created
+	cursor      int    // 0 for Title, 1 for Description
 	backScreen  Screen
+}
+
+type textItemData struct {
+	text string
+}
+
+type AddBankCardItemScreen struct {
+	itemManager *ItemManager
+	category    Category
+	newTitle    string
+	newDesc     string
+	newItemData *bankCardItemData
+	createdTime string // Set this to current time when item is created
+	cursor      int    // 0 for Title, 1 for Description
+	backScreen  Screen
+}
+
+type bankCardItemData struct {
+	cardNum string
+	expiry  time.Time
+	cvv     string
 }
 
 type DeleteItemScreen struct {
 	itemManager *ItemManager
+	category    Category
 	deleteIndex int
 	backScreen  Screen
 }
@@ -98,14 +168,16 @@ func (m MainMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			if category == ExitCategory {
 				return m, tea.Quit // Exit the application
 			}
-			return CategoryMenu{
+			m.nextScreen = &ActionsMenu{
 				options:     []string{ViewOption, AddOption, DeleteOption, BackOption},
-				cursor:      0,
-				itemManager: m.managers[category],
+				category:    category,
+				itemManager: m.manager,
 				backScreen:  m,
-			}, nil
+			}
+			return m.nextScreen, nil
 		}
 	}
+
 	return m, nil
 }
 
@@ -118,11 +190,11 @@ func (m MainMenu) View() string {
 			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", category)) // Unselected option with color
 		}
 	}
-	//s += separatorStyle.Render("Use arrow keys to navigate and enter to select.\n") // Navigation instructions
+	s += separatorStyle.Render("Use arrow keys to navigate and enter to select.\n") // Navigation instructions
 	return s
 }
 
-func (cm CategoryMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (cm ActionsMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -133,11 +205,21 @@ func (cm CategoryMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "enter":
 			switch cm.cursor {
 			case 0: // View items
-				return ViewItemsScreen{itemManager: cm.itemManager, backScreen: cm}, nil
+				switch cm.category {
+				case TextCategory:
+					return ViewTextItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				case CardCategory:
+					return ViewBankCardItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				}
 			case 1: // Add item
-				return AddItemScreen{itemManager: cm.itemManager, backScreen: cm}, nil
+				switch cm.category {
+				case TextCategory:
+					return &AddTextItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				case CardCategory:
+					return AddBankCardItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				}
 			case 2: // Delete item
-				return DeleteItemScreen{itemManager: cm.itemManager, deleteIndex: -1, backScreen: cm}, nil
+				return DeleteItemScreen{itemManager: cm.itemManager, deleteIndex: -1, backScreen: cm, category: cm.category}, nil
 			case 3: // Back
 				return cm.backScreen, nil
 			}
@@ -148,7 +230,7 @@ func (cm CategoryMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return cm, nil
 }
 
-func (cm CategoryMenu) View() string {
+func (cm ActionsMenu) View() string {
 	s := titleStyle.Render("Category Menu:\n\n")
 	for i, option := range cm.options {
 		if cm.cursor == i {
@@ -157,23 +239,89 @@ func (cm CategoryMenu) View() string {
 			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", option)) // Unselected option with color
 		}
 	}
+
 	s += separatorStyle.Render("Press ESC to go back to the main menu.\n") // Navigation instructions
 	return s
 }
 
-func (screen ViewItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen ViewTextItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		switch msg.String() {
+		case "down":
+			if len(screen.itemManager.metaItems[screen.category]) > 0 {
+				screen.cursor = (screen.cursor + 1) % len(screen.itemManager.metaItems[screen.category])
+			}
+		case "up":
+			if len(screen.itemManager.metaItems[screen.category]) > 0 {
+				screen.cursor = (screen.cursor - 1 + len(screen.itemManager.metaItems[screen.category])) % len(screen.itemManager.metaItems[screen.category])
+			}
+		case "enter":
+			itemData, err := screen.itemManager.getItemData(screen.itemManager.metaItems[screen.category][screen.cursor].dataID, screen.category)
+			if err != nil {
+				return ViewTextDataScreen{
+					backScreen: screen,
+					itemData:   err.Error(),
+				}, nil
+			}
+			return ViewTextDataScreen{
+				backScreen: screen,
+				itemData:   itemData.(*textItemData).text,
+			}, nil
+		case "q":
+			return screen.backScreen, nil // Go back when ESC is pressed
+		}
+	}
+	return screen, nil
+}
 
+func (screen ViewTextItemsScreen) View() string {
+	if len(screen.itemManager.metaItems[screen.category]) == 0 {
+		return cursorStyle.Render("No items to display.\n\nPress ESC to go back.\n")
+	}
+	s := "Items:\n\n"
+	for i, item := range screen.itemManager.metaItems[screen.category] {
+		if screen.cursor == i {
+			s += selectedStyle.Render(fmt.Sprintf("[x] %d.\n Title: %s\n    Description: %s\n    Created: %s\n    Modified: %s\n",
+				item.Num, item.Title, item.Description, item.Created, item.Modified)) // Display item details
+		} else {
+			s += unselectedStyle.Render(fmt.Sprintf("[ ] %d.\n Title: %s\n    Description: %s\n    Created: %s\n    Modified: %s\n",
+				item.Num, item.Title, item.Description, item.Created, item.Modified))
+		}
+	}
+
+	s += separatorStyle.Render("Press ESC to go back.\n") // Navigation instructions
+	return s
+}
+
+func (screen ViewTextDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q":
+			return screen.backScreen, nil
+		}
+	}
+	return screen, nil
+}
+
+func (screen ViewTextDataScreen) View() string {
+	return screen.itemData
+}
+
+func (screen ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
 		switch msg.String() {
 
 		case "down":
-			screen.cursor = (screen.cursor + 1) % len(screen.itemManager.items)
+			screen.cursor = (screen.cursor + 1) % len(screen.itemManager.metaItems[screen.category])
 		case "up":
-			screen.cursor = (screen.cursor - 1 + len(screen.itemManager.items)) % len(screen.itemManager.items)
+			screen.cursor = (screen.cursor - 1 + len(screen.itemManager.metaItems[screen.category])) % len(screen.itemManager.metaItems[screen.category])
 		//case "enter":
-		//	switch screen.cursor {
-		//	}
+		//
+		//	item := screen.itemManager.metaItems[screen.category][screen.cursor]
+		//	screen.itemManager.GetItemData(screen.category, item.dataID)
 
 		case "q":
 			return screen.backScreen, nil // Go back when ESC is pressed
@@ -182,53 +330,225 @@ func (screen ViewItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen ViewItemsScreen) View() string {
-	if len(screen.itemManager.items) == 0 {
+func (screen ViewBankCardItemsScreen) View() string {
+	if len(screen.itemManager.metaItems[screen.category]) == 0 {
 		return "No items to display.\n\nPress ESC to go back.\n"
 	}
+
 	s := "Items:\n\n"
-	for i, item := range screen.itemManager.items {
+	for i, item := range screen.itemManager.metaItems[screen.category] {
 		if screen.cursor == i {
-			s += selectedStyle.Render(fmt.Sprintf("[x] %s\n", item)) // Selected option with color
+			s += selectedStyle.Render(fmt.Sprintf("[x] %d.\n Title: %s\n    Description: %s\n    Created: %s\n    Modified: %s\n",
+				item.Num, item.Title, item.Description, item.Created, item.Modified)) // Display item details
 		} else {
-			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", item)) // Unselected option with color
+			s += unselectedStyle.Render(fmt.Sprintf("[ ] %d.\n Title: %s\n    Description: %s\n    Created: %s\n    Modified: %s\n",
+				item.Num, item.Title, item.Description, item.Created, item.Modified))
 		}
 	}
-	s += "Press ESC to go back.\n" // Navigation instructions
+
+	s += separatorStyle.Render("Press ESC to go back.\n") // Navigation instructions
 	return s
 }
 
-func (screen AddItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newItem != "" {
-				screen.itemManager.items = append(screen.itemManager.items, screen.newItem)
-				fmt.Println("ADD ITEM:", screen.newItem)
-				resp, err := screen.itemManager.textHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{Text: screen.newItem})
-				if err != nil {
-					slog.Error(err.Error())
+			if screen.newTitle != "" && screen.newDesc != "" {
+				// Create new item and add to the manager
+				newItem := MetaItem{
+					Num:         len(screen.itemManager.metaItems[screen.category]) + 1, // Set item number
+					Id:          uuid.New(),
+					Title:       screen.newTitle,
+					Description: screen.newDesc,
 				}
-				if resp != nil {
-					fmt.Println(resp.DataId)
+
+				if screen.newItemData != nil {
+
+					//TODO maybe let server comnstruct metaD
+					resp, err := screen.itemManager.textHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{
+						Text:   screen.newItemData.text,
+						TextId: "",
+						MetaData: &pb.MetaData{
+							Id:          newItem.Id.String(),
+							Title:       newItem.Title,
+							Description: newItem.Description,
+							DataType:    string(screen.category),
+						},
+					})
+					if err != nil {
+						return screen.backScreen, func() tea.Msg {
+							newItem.Title = err.Error()
+							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
+
+							return fmt.Sprintf("ERROR %s,", err.Error())
+						}
+					}
+
+					newItem.dataID = resp.DataId
+					newItem.Created = resp.Created
+					newItem.Modified = resp.Modified
+
+					//TODO store to local storage
+					screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
 				}
 			}
 			return screen.backScreen, nil // Go back to category menu
 		case "backspace":
-			if len(screen.newItem) > 0 {
-				screen.newItem = screen.newItem[:len(screen.newItem)-1]
+			switch screen.cursor {
+			case 0:
+				if len(screen.newTitle) > 0 {
+					screen.newTitle = screen.newTitle[:len(screen.newTitle)-1]
+				}
+			case 1:
+				if len(screen.newDesc) > 0 {
+					screen.newDesc = screen.newDesc[:len(screen.newDesc)-1]
+				}
+			case 2:
+				if len(screen.newItemData.text) > 0 {
+					screen.newItemData.text = screen.newItemData.text[:len(screen.newItemData.text)-1]
+				}
 			}
-		case "q": // Go back to the previous menu
+
+		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
-		default:
-			screen.newItem += keyMsg.String()
+		case "up":
+			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
+		case "down":
+			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+		}
+
+		// Handle character inputs depending on the focused field
+		// TODO cursor item to var and use it in operations such these and other buttons
+		if screen.cursor == 0 {
+			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" && keyMsg.String() != "backspace" { // Ignore special keys
+				screen.newTitle += keyMsg.String()
+			}
+		} else if screen.cursor == 1 {
+			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" && keyMsg.String() != "backspace" { // Ignore special keys
+				screen.newDesc += keyMsg.String()
+			}
+		} else if screen.cursor == 2 {
+			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" && keyMsg.String() != "backspace" {
+				screen.newItemData.text += keyMsg.String()
+			}
 		}
 	}
 	return screen, nil
 }
 
-func (screen AddItemScreen) View() string {
-	return fmt.Sprintf("Add a new item:\n\n%s\n\nPress Enter to save, ESC to cancel, or Backspace to delete the last character.\n", screen.newItem)
+func (screen *AddTextItemScreen) View() string {
+	if screen.newItemData == nil {
+		screen.newItemData = &textItemData{}
+	}
+	var titleStyle, descStyle, text lipgloss.Style
+	switch screen.cursor {
+	case 0:
+		titleStyle = selectedStyle // Highlight title when focused
+		descStyle = unselectedStyle
+		text = unselectedStyle
+
+	case 1:
+		titleStyle = unselectedStyle
+		descStyle = selectedStyle // Highlight description when focused
+		text = unselectedStyle
+	case 2:
+		titleStyle = unselectedStyle
+		descStyle = unselectedStyle // Highlight description when focused
+		text = selectedStyle
+	}
+
+	res := fmt.Sprintf("Add a new item:\n\n%s %s\n%s %s\n\n %s\n%s\n",
+		titleStyle.Render("Title:"), titleStyle.Render(screen.newTitle),
+		descStyle.Render("Description:"), descStyle.Render(screen.newDesc),
+		text.Render("Text:"), text.Render(screen.newItemData.text),
+	)
+
+	res += separatorStyle.Render(fmt.Sprintf("Press Enter to save, ESC to cancel, or Backspace to delete the last character.\n"))
+
+	return res
+}
+
+func (screen AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		switch keyMsg.String() {
+		case "enter":
+			if screen.newTitle != "" && screen.newDesc != "" {
+				// Create new item and add to the manager
+				newItem := MetaItem{
+					Num:         len(screen.itemManager.metaItems[screen.category]) + 1, // Set item number
+					Title:       screen.newTitle,
+					Description: screen.newDesc,
+					Created:     time.Now().Format(time.RFC3339), // Current time
+					Modified:    time.Now().Format(time.RFC3339), // Current time
+				}
+
+				if screen.newItemData != nil {
+					//todo send itemdata to server, get id, complete meta and send meta
+					screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
+				}
+
+			}
+			return screen.backScreen, nil // Go back to category menu
+		case "backspace":
+			if len(screen.newTitle) > 0 {
+				screen.newTitle = screen.newTitle[:len(screen.newTitle)-1]
+			}
+		case "ctrl+q": // Go back to the previous menu
+			return screen.backScreen, nil
+			// TODO roll
+		case "up":
+			screen.cursor = 0 // Focus on Title
+		case "down":
+			screen.cursor = 1 // Focus on Description
+		}
+		// Handle character inputs depending on the focused field
+		if screen.cursor == 0 {
+			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" { // Ignore special keys
+				screen.newTitle += keyMsg.String()
+			}
+		} else if screen.cursor == 1 {
+			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" { // Ignore special keys
+				screen.newDesc += keyMsg.String()
+			}
+		} else if screen.cursor == 2 {
+			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" {
+				screen.newItemData.cardNum += keyMsg.String()
+			}
+		}
+	}
+	return screen, nil
+}
+
+func (screen AddBankCardItemScreen) View() string {
+	var titleStyle, descStyle, text lipgloss.Style
+	screen.newItemData = &bankCardItemData{}
+
+	switch screen.cursor {
+	case 0:
+		titleStyle = selectedStyle // Highlight title when focused
+		descStyle = unselectedStyle
+		text = unselectedStyle
+
+	case 1:
+		titleStyle = unselectedStyle
+		descStyle = selectedStyle // Highlight description when focused
+		text = unselectedStyle
+	case 2:
+		titleStyle = unselectedStyle
+		descStyle = unselectedStyle // Highlight description when focused
+		text = selectedStyle
+	}
+
+	res := fmt.Sprintf("Add a new item:\n\n%s %s\n%s %s\n\n %s\n%s\n %s\n%s\n %s\n%s\n",
+		titleStyle.Render("Title:"), titleStyle.Render(screen.newTitle),
+		descStyle.Render("Description:"), descStyle.Render(screen.newDesc),
+		text.Render("Card Num:"), descStyle.Render(screen.newItemData.cardNum),
+		text.Render("Expiry:"), descStyle.Render(screen.newItemData.expiry.String()),
+		text.Render("CVV:"), descStyle.Render(screen.newItemData.cvv),
+	)
+
+	return fmt.Sprintf("%s\n\nPress Enter to save, ESC to cancel, or Backspace to delete the last character.\n", res)
 }
 
 func (screen DeleteItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
@@ -236,16 +556,16 @@ func (screen DeleteItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			if screen.deleteIndex >= 0 && screen.deleteIndex < len(screen.itemManager.items) {
+			if screen.deleteIndex >= 0 && screen.deleteIndex < len(screen.itemManager.metaItems[screen.category]) {
 				// Delete the selected item
-				screen.itemManager.items = append(screen.itemManager.items[:screen.deleteIndex], screen.itemManager.items[screen.deleteIndex+1:]...)
+				screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category][:screen.deleteIndex], screen.itemManager.metaItems[screen.category][screen.deleteIndex+1:]...)
 			}
 			return screen.backScreen, nil // Go back to category menu
 		case "backspace":
 			if screen.deleteIndex >= 1 {
 				screen.deleteIndex--
 			}
-		case "esc": // Go back to the previous menu
+		case "q": // Go back to the previous menu
 			return screen.backScreen, nil
 		default:
 			if key, err := strconv.Atoi(msg.String()); err == nil && key > 0 {
@@ -258,27 +578,23 @@ func (screen DeleteItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 func (screen DeleteItemScreen) View() string {
 	s := "Delete an item:\n\n"
-	for i, item := range screen.itemManager.items {
-		s += fmt.Sprintf("  - %d: %s\n", i+1, item) // Use bullet points for items
+	for i, item := range screen.itemManager.metaItems[screen.category] {
+		s += fmt.Sprintf("  - %d: %v\n", i+1, item) // Use bullet points for items
 	}
 	s += "Select the item number to delete (Press ESC to go back):\n" // Navigation instructions
 	return s
 }
 
 func NewItemManager(grpcClient *grpc.Client) *Model {
-	itemManagers := map[Category]*ItemManager{
-		TextCategory: {items: []string{}, textHandler: grpcClient.TextHandler},
-		FileCategory: {items: []string{}},
-		CardCategory: {items: []string{}},
-	}
-
 	model := Model{
 		currentScreen: MainMenu{
 			categories: []Category{TextCategory, FileCategory, CardCategory, ExitCategory}, // Include exit category
 			cursor:     0,
-			managers:   itemManagers,
+			manager: &ItemManager{
+				metaItems:   map[Category][]*MetaItem{},
+				textHandler: grpcClient.TextHandler,
+			},
 		},
-		grpcClient: grpcClient,
 	}
 	return &model
 }

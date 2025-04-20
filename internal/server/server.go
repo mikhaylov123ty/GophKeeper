@@ -28,7 +28,7 @@ func New(storageCommands storage.Commands) *Server {
 		config.GetKeys().CryptoKey,
 		handlers.NewTextHandler(storageCommands, storageCommands),
 		handlers.NewBankCardDataHandler(storageCommands, storageCommands),
-		handlers.NewMetaDataHandler(storageCommands, storageCommands),
+		handlers.NewMetaDataHandler(storageCommands),
 	)
 
 	return &Server{

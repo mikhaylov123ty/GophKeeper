@@ -7,12 +7,11 @@
 package protobuf
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -130,6 +129,7 @@ type PostTextDataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
 	TextId        string                 `protobuf:"bytes,2,opt,name=text_id,json=textId,proto3" json:"text_id,omitempty"`
+	MetaData      *MetaData              `protobuf:"bytes,3,opt,name=meta_data,json=metaData,proto3" json:"meta_data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -178,9 +178,18 @@ func (x *PostTextDataRequest) GetTextId() string {
 	return ""
 }
 
+func (x *PostTextDataRequest) GetMetaData() *MetaData {
+	if x != nil {
+		return x.MetaData
+	}
+	return nil
+}
+
 type PostTextDataResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DataId        string                 `protobuf:"bytes,1,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
+	Created       string                 `protobuf:"bytes,2,opt,name=created,proto3" json:"created,omitempty"`
+	Modified      string                 `protobuf:"bytes,3,opt,name=modified,proto3" json:"modified,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -218,6 +227,20 @@ func (*PostTextDataResponse) Descriptor() ([]byte, []int) {
 func (x *PostTextDataResponse) GetDataId() string {
 	if x != nil {
 		return x.DataId
+	}
+	return ""
+}
+
+func (x *PostTextDataResponse) GetCreated() string {
+	if x != nil {
+		return x.Created
+	}
+	return ""
+}
+
+func (x *PostTextDataResponse) GetModified() string {
+	if x != nil {
+		return x.Modified
 	}
 	return ""
 }
@@ -316,6 +339,7 @@ type PostBankCardDataRequest struct {
 	Expiry        string                 `protobuf:"bytes,2,opt,name=expiry,proto3" json:"expiry,omitempty"`
 	Cvv           string                 `protobuf:"bytes,3,opt,name=cvv,proto3" json:"cvv,omitempty"`
 	CardId        string                 `protobuf:"bytes,4,opt,name=card_id,json=cardId,proto3" json:"card_id,omitempty"`
+	MetaData      *MetaData              `protobuf:"bytes,5,opt,name=meta_data,json=metaData,proto3" json:"meta_data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -376,6 +400,13 @@ func (x *PostBankCardDataRequest) GetCardId() string {
 		return x.CardId
 	}
 	return ""
+}
+
+func (x *PostBankCardDataRequest) GetMetaData() *MetaData {
+	if x != nil {
+		return x.MetaData
+	}
+	return nil
 }
 
 type PostBankCardDataResponse struct {
@@ -802,134 +833,6 @@ func (x *MetaData) GetModified() string {
 	return ""
 }
 
-type PostMetaDataRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Description   string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	DataType      string                 `protobuf:"bytes,4,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
-	DataId        string                 `protobuf:"bytes,5,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
-	UserId        string                 `protobuf:"bytes,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PostMetaDataRequest) Reset() {
-	*x = PostMetaDataRequest{}
-	mi := &file_internal_proto_handlers_proto_msgTypes[15]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PostMetaDataRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PostMetaDataRequest) ProtoMessage() {}
-
-func (x *PostMetaDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_handlers_proto_msgTypes[15]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PostMetaDataRequest.ProtoReflect.Descriptor instead.
-func (*PostMetaDataRequest) Descriptor() ([]byte, []int) {
-	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{15}
-}
-
-func (x *PostMetaDataRequest) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
-func (x *PostMetaDataRequest) GetTitle() string {
-	if x != nil {
-		return x.Title
-	}
-	return ""
-}
-
-func (x *PostMetaDataRequest) GetDescription() string {
-	if x != nil {
-		return x.Description
-	}
-	return ""
-}
-
-func (x *PostMetaDataRequest) GetDataType() string {
-	if x != nil {
-		return x.DataType
-	}
-	return ""
-}
-
-func (x *PostMetaDataRequest) GetDataId() string {
-	if x != nil {
-		return x.DataId
-	}
-	return ""
-}
-
-func (x *PostMetaDataRequest) GetUserId() string {
-	if x != nil {
-		return x.UserId
-	}
-	return ""
-}
-
-type PostMetaDataResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PostMetaDataResponse) Reset() {
-	*x = PostMetaDataResponse{}
-	mi := &file_internal_proto_handlers_proto_msgTypes[16]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PostMetaDataResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PostMetaDataResponse) ProtoMessage() {}
-
-func (x *PostMetaDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_handlers_proto_msgTypes[16]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PostMetaDataResponse.ProtoReflect.Descriptor instead.
-func (*PostMetaDataResponse) Descriptor() ([]byte, []int) {
-	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{16}
-}
-
-func (x *PostMetaDataResponse) GetId() string {
-	if x != nil {
-		return x.Id
-	}
-	return ""
-}
-
 type GetMetaDataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
@@ -940,7 +843,7 @@ type GetMetaDataRequest struct {
 
 func (x *GetMetaDataRequest) Reset() {
 	*x = GetMetaDataRequest{}
-	mi := &file_internal_proto_handlers_proto_msgTypes[17]
+	mi := &file_internal_proto_handlers_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -952,7 +855,7 @@ func (x *GetMetaDataRequest) String() string {
 func (*GetMetaDataRequest) ProtoMessage() {}
 
 func (x *GetMetaDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_handlers_proto_msgTypes[17]
+	mi := &file_internal_proto_handlers_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -965,7 +868,7 @@ func (x *GetMetaDataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetaDataRequest.ProtoReflect.Descriptor instead.
 func (*GetMetaDataRequest) Descriptor() ([]byte, []int) {
-	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{17}
+	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *GetMetaDataRequest) GetUserId() string {
@@ -991,7 +894,7 @@ type GetMetaDataResponse struct {
 
 func (x *GetMetaDataResponse) Reset() {
 	*x = GetMetaDataResponse{}
-	mi := &file_internal_proto_handlers_proto_msgTypes[18]
+	mi := &file_internal_proto_handlers_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1003,7 +906,7 @@ func (x *GetMetaDataResponse) String() string {
 func (*GetMetaDataResponse) ProtoMessage() {}
 
 func (x *GetMetaDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_proto_handlers_proto_msgTypes[18]
+	mi := &file_internal_proto_handlers_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1016,7 +919,7 @@ func (x *GetMetaDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetMetaDataResponse.ProtoReflect.Descriptor instead.
 func (*GetMetaDataResponse) Descriptor() ([]byte, []int) {
-	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{18}
+	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetMetaDataResponse) GetItems() []*MetaData {
@@ -1036,21 +939,25 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\">\n" +
 	"\x14PostUserDataResponse\x12\x14\n" +
 	"\x05error\x18\x01 \x01(\tR\x05error\x12\x10\n" +
-	"\x03jwt\x18\x02 \x01(\tR\x03jwt\"B\n" +
+	"\x03jwt\x18\x02 \x01(\tR\x03jwt\"v\n" +
 	"\x13PostTextDataRequest\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x17\n" +
-	"\atext_id\x18\x02 \x01(\tR\x06textId\"/\n" +
+	"\atext_id\x18\x02 \x01(\tR\x06textId\x122\n" +
+	"\tmeta_data\x18\x03 \x01(\v2\x15.server_grpc.MetaDataR\bmetaData\"e\n" +
 	"\x14PostTextDataResponse\x12\x17\n" +
-	"\adata_id\x18\x01 \x01(\tR\x06dataId\"-\n" +
+	"\adata_id\x18\x01 \x01(\tR\x06dataId\x12\x18\n" +
+	"\acreated\x18\x02 \x01(\tR\acreated\x12\x1a\n" +
+	"\bmodified\x18\x03 \x01(\tR\bmodified\"-\n" +
 	"\x12GetTextDataRequest\x12\x17\n" +
 	"\atext_id\x18\x01 \x01(\tR\x06textId\")\n" +
 	"\x13GetTextDataResponse\x12\x12\n" +
-	"\x04text\x18\x01 \x01(\tR\x04text\"w\n" +
+	"\x04text\x18\x01 \x01(\tR\x04text\"\xab\x01\n" +
 	"\x17PostBankCardDataRequest\x12\x19\n" +
 	"\bcard_num\x18\x01 \x01(\tR\acardNum\x12\x16\n" +
 	"\x06expiry\x18\x02 \x01(\tR\x06expiry\x12\x10\n" +
 	"\x03cvv\x18\x03 \x01(\tR\x03cvv\x12\x17\n" +
-	"\acard_id\x18\x04 \x01(\tR\x06cardId\"3\n" +
+	"\acard_id\x18\x04 \x01(\tR\x06cardId\x122\n" +
+	"\tmeta_data\x18\x05 \x01(\v2\x15.server_grpc.MetaDataR\bmetaData\"3\n" +
 	"\x18PostBankCardDataResponse\x12\x17\n" +
 	"\adata_id\x18\x01 \x01(\tR\x06dataId\"1\n" +
 	"\x16GetBankCardDataRequest\x12\x17\n" +
@@ -1075,16 +982,7 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\adata_id\x18\x05 \x01(\tR\x06dataId\x12\x17\n" +
 	"\auser_id\x18\x06 \x01(\tR\x06userId\x12\x18\n" +
 	"\acreated\x18\a \x01(\tR\acreated\x12\x1a\n" +
-	"\bmodified\x18\b \x01(\tR\bmodified\"\xac\x01\n" +
-	"\x13PostMetaDataRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +
-	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x1b\n" +
-	"\tdata_type\x18\x04 \x01(\tR\bdataType\x12\x17\n" +
-	"\adata_id\x18\x05 \x01(\tR\x06dataId\x12\x17\n" +
-	"\auser_id\x18\x06 \x01(\tR\x06userId\"&\n" +
-	"\x14PostMetaDataResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\"J\n" +
+	"\bmodified\x18\b \x01(\tR\bmodified\"J\n" +
 	"\x12GetMetaDataRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tdata_type\x18\x02 \x01(\tR\bdataType\"B\n" +
@@ -1097,9 +995,8 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\vGetTextData\x12\x1f.server_grpc.GetTextDataRequest\x1a .server_grpc.GetTextDataResponse2\xd1\x01\n" +
 	"\x10BankCardHandlers\x12_\n" +
 	"\x10PostBankCardData\x12$.server_grpc.PostBankCardDataRequest\x1a%.server_grpc.PostBankCardDataResponse\x12\\\n" +
-	"\x0fGetBankCardData\x12#.server_grpc.GetBankCardDataRequest\x1a$.server_grpc.GetBankCardDataResponse2\xb9\x01\n" +
-	"\x10MetaDataHandlers\x12S\n" +
-	"\fPostMetaData\x12 .server_grpc.PostMetaDataRequest\x1a!.server_grpc.PostMetaDataResponse\x12P\n" +
+	"\x0fGetBankCardData\x12#.server_grpc.GetBankCardDataRequest\x1a$.server_grpc.GetBankCardDataResponse2d\n" +
+	"\x10MetaDataHandlers\x12P\n" +
 	"\vGetMetaData\x12\x1f.server_grpc.GetMetaDataRequest\x1a .server_grpc.GetMetaDataResponseB\x13Z\x11internal/protobufb\x06proto3"
 
 var (
@@ -1114,7 +1011,7 @@ func file_internal_proto_handlers_proto_rawDescGZIP() []byte {
 	return file_internal_proto_handlers_proto_rawDescData
 }
 
-var file_internal_proto_handlers_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_internal_proto_handlers_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_internal_proto_handlers_proto_goTypes = []any{
 	(*PostUserDataRequest)(nil),      // 0: server_grpc.PostUserDataRequest
 	(*PostUserDataResponse)(nil),     // 1: server_grpc.PostUserDataResponse
@@ -1131,32 +1028,30 @@ var file_internal_proto_handlers_proto_goTypes = []any{
 	(*GetBinaryDataRequest)(nil),     // 12: server_grpc.GetBinaryDataRequest
 	(*GetBinaryDataResponse)(nil),    // 13: server_grpc.GetBinaryDataResponse
 	(*MetaData)(nil),                 // 14: server_grpc.MetaData
-	(*PostMetaDataRequest)(nil),      // 15: server_grpc.PostMetaDataRequest
-	(*PostMetaDataResponse)(nil),     // 16: server_grpc.PostMetaDataResponse
-	(*GetMetaDataRequest)(nil),       // 17: server_grpc.GetMetaDataRequest
-	(*GetMetaDataResponse)(nil),      // 18: server_grpc.GetMetaDataResponse
+	(*GetMetaDataRequest)(nil),       // 15: server_grpc.GetMetaDataRequest
+	(*GetMetaDataResponse)(nil),      // 16: server_grpc.GetMetaDataResponse
 }
 var file_internal_proto_handlers_proto_depIdxs = []int32{
-	14, // 0: server_grpc.GetMetaDataResponse.items:type_name -> server_grpc.MetaData
-	0,  // 1: server_grpc.UserHandlers.PostUserData:input_type -> server_grpc.PostUserDataRequest
-	2,  // 2: server_grpc.TextHandlers.PostTextData:input_type -> server_grpc.PostTextDataRequest
-	4,  // 3: server_grpc.TextHandlers.GetTextData:input_type -> server_grpc.GetTextDataRequest
-	6,  // 4: server_grpc.BankCardHandlers.PostBankCardData:input_type -> server_grpc.PostBankCardDataRequest
-	8,  // 5: server_grpc.BankCardHandlers.GetBankCardData:input_type -> server_grpc.GetBankCardDataRequest
-	15, // 6: server_grpc.MetaDataHandlers.PostMetaData:input_type -> server_grpc.PostMetaDataRequest
-	17, // 7: server_grpc.MetaDataHandlers.GetMetaData:input_type -> server_grpc.GetMetaDataRequest
-	1,  // 8: server_grpc.UserHandlers.PostUserData:output_type -> server_grpc.PostUserDataResponse
-	3,  // 9: server_grpc.TextHandlers.PostTextData:output_type -> server_grpc.PostTextDataResponse
-	5,  // 10: server_grpc.TextHandlers.GetTextData:output_type -> server_grpc.GetTextDataResponse
-	7,  // 11: server_grpc.BankCardHandlers.PostBankCardData:output_type -> server_grpc.PostBankCardDataResponse
-	9,  // 12: server_grpc.BankCardHandlers.GetBankCardData:output_type -> server_grpc.GetBankCardDataResponse
-	16, // 13: server_grpc.MetaDataHandlers.PostMetaData:output_type -> server_grpc.PostMetaDataResponse
-	18, // 14: server_grpc.MetaDataHandlers.GetMetaData:output_type -> server_grpc.GetMetaDataResponse
-	8,  // [8:15] is the sub-list for method output_type
-	1,  // [1:8] is the sub-list for method input_type
-	1,  // [1:1] is the sub-list for extension type_name
-	1,  // [1:1] is the sub-list for extension extendee
-	0,  // [0:1] is the sub-list for field type_name
+	14, // 0: server_grpc.PostTextDataRequest.meta_data:type_name -> server_grpc.MetaData
+	14, // 1: server_grpc.PostBankCardDataRequest.meta_data:type_name -> server_grpc.MetaData
+	14, // 2: server_grpc.GetMetaDataResponse.items:type_name -> server_grpc.MetaData
+	0,  // 3: server_grpc.UserHandlers.PostUserData:input_type -> server_grpc.PostUserDataRequest
+	2,  // 4: server_grpc.TextHandlers.PostTextData:input_type -> server_grpc.PostTextDataRequest
+	4,  // 5: server_grpc.TextHandlers.GetTextData:input_type -> server_grpc.GetTextDataRequest
+	6,  // 6: server_grpc.BankCardHandlers.PostBankCardData:input_type -> server_grpc.PostBankCardDataRequest
+	8,  // 7: server_grpc.BankCardHandlers.GetBankCardData:input_type -> server_grpc.GetBankCardDataRequest
+	15, // 8: server_grpc.MetaDataHandlers.GetMetaData:input_type -> server_grpc.GetMetaDataRequest
+	1,  // 9: server_grpc.UserHandlers.PostUserData:output_type -> server_grpc.PostUserDataResponse
+	3,  // 10: server_grpc.TextHandlers.PostTextData:output_type -> server_grpc.PostTextDataResponse
+	5,  // 11: server_grpc.TextHandlers.GetTextData:output_type -> server_grpc.GetTextDataResponse
+	7,  // 12: server_grpc.BankCardHandlers.PostBankCardData:output_type -> server_grpc.PostBankCardDataResponse
+	9,  // 13: server_grpc.BankCardHandlers.GetBankCardData:output_type -> server_grpc.GetBankCardDataResponse
+	16, // 14: server_grpc.MetaDataHandlers.GetMetaData:output_type -> server_grpc.GetMetaDataResponse
+	9,  // [9:15] is the sub-list for method output_type
+	3,  // [3:9] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_internal_proto_handlers_proto_init() }
@@ -1170,7 +1065,7 @@ func file_internal_proto_handlers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_handlers_proto_rawDesc), len(file_internal_proto_handlers_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   4,
 		},
