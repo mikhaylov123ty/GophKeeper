@@ -412,6 +412,8 @@ func (x *PostBankCardDataRequest) GetMetaData() *MetaData {
 type PostBankCardDataResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	DataId        string                 `protobuf:"bytes,1,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
+	Created       string                 `protobuf:"bytes,2,opt,name=created,proto3" json:"created,omitempty"`
+	Modified      string                 `protobuf:"bytes,3,opt,name=modified,proto3" json:"modified,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -449,6 +451,20 @@ func (*PostBankCardDataResponse) Descriptor() ([]byte, []int) {
 func (x *PostBankCardDataResponse) GetDataId() string {
 	if x != nil {
 		return x.DataId
+	}
+	return ""
+}
+
+func (x *PostBankCardDataResponse) GetCreated() string {
+	if x != nil {
+		return x.Created
+	}
+	return ""
+}
+
+func (x *PostBankCardDataResponse) GetModified() string {
+	if x != nil {
+		return x.Modified
 	}
 	return ""
 }
@@ -836,7 +852,6 @@ func (x *MetaData) GetModified() string {
 type GetMetaDataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	DataType      string                 `protobuf:"bytes,2,opt,name=data_type,json=dataType,proto3" json:"data_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -874,13 +889,6 @@ func (*GetMetaDataRequest) Descriptor() ([]byte, []int) {
 func (x *GetMetaDataRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
-	}
-	return ""
-}
-
-func (x *GetMetaDataRequest) GetDataType() string {
-	if x != nil {
-		return x.DataType
 	}
 	return ""
 }
@@ -957,9 +965,11 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x06expiry\x18\x02 \x01(\tR\x06expiry\x12\x10\n" +
 	"\x03cvv\x18\x03 \x01(\tR\x03cvv\x12\x17\n" +
 	"\acard_id\x18\x04 \x01(\tR\x06cardId\x122\n" +
-	"\tmeta_data\x18\x05 \x01(\v2\x15.server_grpc.MetaDataR\bmetaData\"3\n" +
+	"\tmeta_data\x18\x05 \x01(\v2\x15.server_grpc.MetaDataR\bmetaData\"i\n" +
 	"\x18PostBankCardDataResponse\x12\x17\n" +
-	"\adata_id\x18\x01 \x01(\tR\x06dataId\"1\n" +
+	"\adata_id\x18\x01 \x01(\tR\x06dataId\x12\x18\n" +
+	"\acreated\x18\x02 \x01(\tR\acreated\x12\x1a\n" +
+	"\bmodified\x18\x03 \x01(\tR\bmodified\"1\n" +
 	"\x16GetBankCardDataRequest\x12\x17\n" +
 	"\acard_id\x18\x01 \x01(\tR\x06cardId\"^\n" +
 	"\x17GetBankCardDataResponse\x12\x19\n" +
@@ -982,10 +992,9 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\adata_id\x18\x05 \x01(\tR\x06dataId\x12\x17\n" +
 	"\auser_id\x18\x06 \x01(\tR\x06userId\x12\x18\n" +
 	"\acreated\x18\a \x01(\tR\acreated\x12\x1a\n" +
-	"\bmodified\x18\b \x01(\tR\bmodified\"J\n" +
+	"\bmodified\x18\b \x01(\tR\bmodified\"-\n" +
 	"\x12GetMetaDataRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
-	"\tdata_type\x18\x02 \x01(\tR\bdataType\"B\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"B\n" +
 	"\x13GetMetaDataResponse\x12+\n" +
 	"\x05items\x18\x01 \x03(\v2\x15.server_grpc.MetaDataR\x05items2c\n" +
 	"\fUserHandlers\x12S\n" +

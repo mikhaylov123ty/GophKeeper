@@ -27,6 +27,8 @@ type textDataCreator interface {
 	SaveMetaData(*models.Meta) error
 }
 
+// TODO separate metadata to interface
+
 type textDataProvider interface {
 	GetTextByID(uuid.UUID) (*models.TextData, error)
 }

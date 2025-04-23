@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS binaries(
 CREATE TABLE IF NOT EXISTS bank_cards(
     id UUID PRIMARY KEY NOT NULL,
     card_num TEXT NOT NULL,
-    expiry TIMESTAMP NOT NULL,
+    expiry TEXT NOT NULL,
     cvv INT NOT NULL
 );
 

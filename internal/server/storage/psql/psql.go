@@ -174,13 +174,13 @@ func (s *Storage) SaveMetaData(data *models.Meta) error {
 	return nil
 }
 
-func (s *Storage) GetMetaDataByUser(userID uuid.UUID, dataType string) ([]*models.Meta, error) {
+func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	query, args, err := squirrel.Select("*").
 		From(metaTableName).
 		Where(
 			squirrel.And{
 				squirrel.Eq{"user_id": userID},
-				squirrel.Eq{"type": dataType}}).
+			}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
