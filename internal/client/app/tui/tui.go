@@ -15,7 +15,7 @@ import (
 
 type Model struct {
 	currentScreen Screen
-	grpcClient    *grpc.Client
+	//grpcClient    *grpc.Client
 }
 
 type Screen interface {
@@ -54,6 +54,25 @@ type ItemManager struct {
 	metaHandler      pb.MetaDataHandlersClient
 	textHandler      pb.TextHandlersClient
 	bankCardsHandler pb.BankCardHandlersClient
+}
+
+func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
+	im := ItemManager{
+		metaItems:        map[Category][]*MetaItem{},
+		textHandler:      grpcClient.TextHandler,
+		metaHandler:      grpcClient.MetaHandler,
+		bankCardsHandler: grpcClient.BankCardsHandler,
+	}
+
+	mainMenu := MainMenu{
+		categories: []Category{TextCategory, FileCategory, CardCategory, ExitCategory}, // Include exit category
+		cursor:     0,
+		manager:    &im,
+	}
+
+	auth := NewAuthScreen(&mainMenu, im)
+
+	return auth, nil
 }
 
 func (im *ItemManager) getItemData(dataID string, category Category) (any, error) {
@@ -265,29 +284,6 @@ func (screen DeleteItemScreen) View() string {
 	}
 	s += "Select the item number to delete (Press ESC to go back):\n" // Navigation instructions
 	return s
-}
-
-func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
-	im := ItemManager{
-		metaItems:        map[Category][]*MetaItem{},
-		textHandler:      grpcClient.TextHandler,
-		metaHandler:      grpcClient.MetaHandler,
-		bankCardsHandler: grpcClient.BankCardsHandler,
-	}
-
-	if err := im.syncMeta(); err != nil {
-		return nil, fmt.Errorf("failed sync meta for user: %w", err)
-	}
-
-	model := Model{
-		currentScreen: MainMenu{
-			categories: []Category{TextCategory, FileCategory, CardCategory, ExitCategory}, // Include exit category
-			cursor:     0,
-			manager:    &im,
-		},
-	}
-
-	return &model, nil
 }
 
 func (m Model) Init() tea.Cmd {
