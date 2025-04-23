@@ -18,7 +18,7 @@ type Commands interface {
 	SaveBankCard(*models.BankCardData) error
 	GetBankCardById(uuid.UUID) (*models.BankCardData, error)
 	SaveMetaData(*models.Meta) error
-	GetMetaDataByUser(uuid.UUID, string) ([]*models.Meta, error)
+	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
 	Close() error
 }
 

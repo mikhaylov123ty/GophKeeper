@@ -20,8 +20,11 @@ func New(grpcClient *grpc.Client) *App {
 }
 
 func (a *App) Run(ctx context.Context) error {
-	tui := tui.NewItemManager(a.grpcClient)
-	prog := tea.NewProgram(tui)
+	itemManager, err := tui.NewItemManager(a.grpcClient)
+	if err != nil {
+		return fmt.Errorf("could not create tui: %w", err)
+	}
+	prog := tea.NewProgram(itemManager)
 	if _, err := prog.Run(); err != nil {
 		fmt.Println("Error starting program:", err)
 		os.Exit(1)

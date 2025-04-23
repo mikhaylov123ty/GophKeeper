@@ -44,6 +44,8 @@ message PostBankCardDataRequest {
 
 message PostBankCardDataResponse {
 	string data_id = 1;
+	string created = 2;
+	string modified = 3;
 }
 
 message GetBankCardDataRequest {
@@ -98,7 +100,6 @@ message MetaData {
 
 message GetMetaDataRequest {
 	string user_id = 1;
-	string data_type = 2;
 }
 
 message GetMetaDataResponse {
