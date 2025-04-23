@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -22,6 +23,7 @@ type BankCardDataHandler struct {
 
 type bankCardDataCreator interface {
 	SaveBankCard(*models.BankCardData) error
+	SaveMetaData(*models.Meta) error
 }
 
 type bankCardDataProvider interface {
@@ -54,6 +56,25 @@ func (b *BankCardDataHandler) PostBankCardData(ctx context.Context, request *pb.
 		bankCardID = id
 	}
 
+	if request.GetMetaData() == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty meta data")
+	}
+
+	metaID, err := uuid.Parse(request.GetMetaData().Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetMetaData().Id)
+	}
+
+	metaData := models.Meta{
+		ID:          metaID,
+		Title:       request.GetMetaData().Title,
+		Description: request.GetMetaData().Description,
+		Type:        request.GetMetaData().DataType,
+		DataID:      bankCardID,
+		Created:     time.Now(), // Current time
+		Modified:    time.Now(), // Current time
+	}
+
 	cardData := models.BankCardData{
 		ID:      bankCardID,
 		CardNum: request.GetCardNum(),
@@ -66,7 +87,17 @@ func (b *BankCardDataHandler) PostBankCardData(ctx context.Context, request *pb.
 		return nil, status.Error(codes.Internal, "save card")
 	}
 
-	return &pb.PostBankCardDataResponse{DataId: bankCardID.String()}, status.Errorf(codes.OK, "card registered ")
+	if err = b.bankCardDataCreator.SaveMetaData(&metaData); err != nil {
+		slog.ErrorContext(ctx, "could not save meta data", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &pb.PostBankCardDataResponse{
+			DataId:   bankCardID.String(),
+			Created:  metaData.Created.Format(time.RFC3339),
+			Modified: metaData.Modified.Format(time.RFC3339),
+		},
+		status.Errorf(codes.OK, "card registered ")
 }
 func (b *BankCardDataHandler) GetBankCardData(ctx context.Context, request *pb.GetBankCardDataRequest) (*pb.GetBankCardDataResponse, error) {
 	cardID, err := uuid.Parse(request.GetCardId())

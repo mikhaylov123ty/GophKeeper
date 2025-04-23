@@ -25,31 +25,9 @@ func (a *App) Run(ctx context.Context) error {
 		return fmt.Errorf("could not create tui: %w", err)
 	}
 	prog := tea.NewProgram(itemManager)
-	if _, err := prog.Run(); err != nil {
+	if _, err = prog.Run(); err != nil {
 		fmt.Println("Error starting program:", err)
 		os.Exit(1)
 	}
-	//for {
-	//	scanner := bufio.NewScanner(os.Stdin)
-	//	scanner.Scan()
-	//	err := scanner.Err()
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//
-	//	fmt.Println("INPUT:", scanner.Text())
-	//
-	//	switch scanner.Text() {
-	//	case "add text":
-	//		fmt.Println("Enter Text")
-	//		scanner.Scan()
-	//		err = scanner.Err()
-	//		if err != nil {
-	//			log.Fatal(err)
-	//		}
-	//
-	//		a.grpcClient.PostText(ctx, scanner.Text())
-	//	}
-	//}
 	return nil
 }
