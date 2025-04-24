@@ -65,12 +65,18 @@ func (b *BankCardDataHandler) PostBankCardData(ctx context.Context, request *pb.
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetMetaData().Id)
 	}
 
+	userID, err := uuid.Parse(request.GetMetaData().UserId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid user id %s", request.GetMetaData().UserId)
+	}
+
 	metaData := models.Meta{
 		ID:          metaID,
 		Title:       request.GetMetaData().Title,
 		Description: request.GetMetaData().Description,
 		Type:        request.GetMetaData().DataType,
 		DataID:      bankCardID,
+		UserID:      userID,
 		Created:     time.Now(), // Current time
 		Modified:    time.Now(), // Current time
 	}

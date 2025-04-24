@@ -118,8 +118,8 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 
 				if screen.newItemData != nil {
-
 					//TODO maybe let server comnstruct metaD
+					//TODO create dedicated func
 					resp, err := screen.itemManager.textHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{
 						Text:   screen.newItemData.text,
 						TextId: "",
@@ -128,6 +128,7 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 							Title:       newItem.Title,
 							Description: newItem.Description,
 							DataType:    string(screen.category),
+							UserId:      screen.itemManager.userID,
 						},
 					})
 					if err != nil {

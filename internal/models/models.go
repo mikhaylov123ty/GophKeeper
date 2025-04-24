@@ -7,8 +7,11 @@ import (
 )
 
 type UserData struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	ID       uuid.UUID `json:"id"`
+	Login    string    `json:"login"`
+	Password string    `json:"password"`
+	Created  time.Time `json:"created"`
+	Modified time.Time `json:"modified"`
 }
 
 type TextData struct {
