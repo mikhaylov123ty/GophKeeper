@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"strings"
 )
 
@@ -17,11 +19,11 @@ type AuthScreen struct {
 }
 
 // NewAuthScreen initializes the AuthScreen
-func NewAuthScreen(next Screen, itemManager ItemManager) *Model {
+func NewAuthScreen(next Screen, itemManager *ItemManager) *Model {
 	return &Model{
 		currentScreen: &AuthScreen{
 			next:        next,
-			itemManager: &itemManager,
+			itemManager: itemManager,
 		},
 	}
 }
@@ -34,13 +36,18 @@ func (s *AuthScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "tab": // Change focus between fields
 			s.focusedField = (s.focusedField + 1) % 2
 		case "enter": // Submit the form
-			if s.username == "admin" && s.password == "password" {
-				if err := s.itemManager.syncMeta(); err != nil {
-					return s, nil
-				}
-				return s.next, nil // Go to main menu if authenticated
+			if err := s.login(); err != nil {
+				//todo return failed login screen
+				return s, nil
 			}
-			s.errorMsg = "Invalid username or password"
+
+			if err := s.itemManager.syncMeta(); err != nil {
+				//todo return failed sync screen
+				return s, nil
+			}
+
+			return s.next, nil // Go to main menu if authenticated
+
 		case "backspace":
 			switch s.focusedField {
 			case 0:
@@ -53,7 +60,7 @@ func (s *AuthScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 			}
 		case "ctrl+q":
-			return nil, tea.Quit // Exit on ESC
+			return s, tea.Quit // Exit on ESC
 		default:
 			// Handle character input based on the currently focused field
 			if s.focusedField == 0 { // Username field
@@ -95,4 +102,26 @@ func (s *AuthScreen) View() string {
 // Init method for AuthScreen
 func (s AuthScreen) Init() tea.Cmd {
 	return nil // No command to run initially
+}
+
+func (s *AuthScreen) login() error {
+	res, err := s.itemManager.authHandler.PostUserData(context.Background(), &pb.PostUserDataRequest{
+		Login:    s.username,
+		Password: s.password,
+	})
+	if err != nil {
+		return fmt.Errorf("failed login: %w", err)
+	}
+
+	if res.Error != "" {
+		return fmt.Errorf("failed login: %s", res.Error)
+	}
+
+	if res.UserId == "" {
+		return fmt.Errorf("failed login: empty user id")
+	}
+
+	s.itemManager.userID = res.UserId
+
+	return nil
 }

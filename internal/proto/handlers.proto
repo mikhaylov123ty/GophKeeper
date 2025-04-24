@@ -12,6 +12,7 @@ message PostUserDataRequest {
 message PostUserDataResponse {
 	string error = 1; // ошибка
 	string jwt = 2;
+	string user_id = 3;
 }
 
 message PostTextDataRequest {

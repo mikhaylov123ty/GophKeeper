@@ -31,7 +31,9 @@ type auth struct {
 func NewServer(cryptoKey string, hashKey string,
 	textHandler *handlers.TextHandler,
 	bankCardHandler *handlers.BankCardDataHandler,
-	metaDataHandler *handlers.MetaDataHandler) *GRPCServer {
+	metaDataHandler *handlers.MetaDataHandler,
+	authHandler *handlers.AuthHandler,
+) *GRPCServer {
 	instance := &GRPCServer{
 		auth: &auth{
 			cryptoKey: cryptoKey,
@@ -54,6 +56,7 @@ func NewServer(cryptoKey string, hashKey string,
 	pb.RegisterTextHandlersServer(instance.Server, textHandler)
 	pb.RegisterBankCardHandlersServer(instance.Server, bankCardHandler)
 	pb.RegisterMetaDataHandlersServer(instance.Server, metaDataHandler)
+	pb.RegisterUserHandlersServer(instance.Server, authHandler)
 
 	return instance
 }

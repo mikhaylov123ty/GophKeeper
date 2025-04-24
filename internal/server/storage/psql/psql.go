@@ -54,7 +54,53 @@ func New(dsn string, dbName string, migrationsDir string) (*Storage, error) {
 }
 
 func (s *Storage) SaveUser(data *models.UserData) error {
+	query, args, err := squirrel.Insert(usersTableName).
+		Values(data.ID, data.Login, data.Password, data.Created, data.Modified).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("could not build save user query: %w", err)
+	}
+
+	slog.Debug("saving user", slog.String("query", query), slog.Any("args", args))
+
+	_, err = s.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not save user: %w", err)
+	}
+
 	return nil
+}
+
+func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
+	query, args, err := squirrel.Select("*").
+		From(usersTableName).
+		Where(squirrel.Eq{"login": login}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("could not build get user query: %w", err)
+	}
+
+	slog.Debug("getting user query", slog.String("query", query), slog.Any("args", args))
+
+	row := s.db.QueryRow(query, args...)
+	if row.Err() != nil {
+		return nil, fmt.Errorf("could not execute get user query: %w", row.Err())
+	}
+
+	var user models.UserData
+	if err = row.Scan(
+		&user.ID,
+		&user.Login,
+		&user.Password,
+		&user.Created,
+		&user.Modified,
+	); err != nil {
+		return nil, fmt.Errorf("could not scan get user data: %w", err)
+	}
+
+	return &user, nil
 }
 
 func (s *Storage) SaveText(data *models.TextData) error {
@@ -155,6 +201,7 @@ func (s *Storage) GetBankCardById(id uuid.UUID) (*models.BankCardData, error) {
 }
 
 func (s *Storage) SaveMetaData(data *models.Meta) error {
+	fmt.Printf("META: %+v", *data)
 	query, args, err := squirrel.Insert(metaTableName).
 		Values(data.ID, data.Title, data.Description, data.Type, data.DataID, data.UserID, data.Created, data.Modified).
 		Suffix("ON CONFLICT(id) DO UPDATE SET title = $2, description = $3, data_id = $5, modified_at = $7").

@@ -12,6 +12,7 @@ type Client struct {
 	TextHandler      pb.TextHandlersClient
 	MetaHandler      pb.MetaDataHandlersClient
 	BankCardsHandler pb.BankCardHandlersClient
+	AuthHandelr      pb.UserHandlersClient
 }
 
 func NewClient() (*Client, error) {
@@ -29,6 +30,7 @@ func NewClient() (*Client, error) {
 		TextHandler:      pb.NewTextHandlersClient(conn),
 		MetaHandler:      pb.NewMetaDataHandlersClient(conn),
 		BankCardsHandler: pb.NewBankCardHandlersClient(conn),
+		AuthHandelr:      pb.NewUserHandlersClient(conn),
 	}, nil
 }
 

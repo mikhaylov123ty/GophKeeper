@@ -13,6 +13,7 @@ import (
 
 type Commands interface {
 	SaveUser(*models.UserData) error
+	GetUserByLogin(string) (*models.UserData, error)
 	SaveText(*models.TextData) error
 	GetTextByID(uuid.UUID) (*models.TextData, error)
 	SaveBankCard(*models.BankCardData) error

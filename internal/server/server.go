@@ -29,6 +29,7 @@ func New(storageCommands storage.Commands) *Server {
 		handlers.NewTextHandler(storageCommands, storageCommands),
 		handlers.NewBankCardDataHandler(storageCommands, storageCommands),
 		handlers.NewMetaDataHandler(storageCommands),
+		handlers.NewAuthHandler(storageCommands, storageCommands),
 	)
 
 	return &Server{

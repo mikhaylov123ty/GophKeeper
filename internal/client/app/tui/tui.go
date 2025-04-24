@@ -54,6 +54,8 @@ type ItemManager struct {
 	metaHandler      pb.MetaDataHandlersClient
 	textHandler      pb.TextHandlersClient
 	bankCardsHandler pb.BankCardHandlersClient
+	authHandler      pb.UserHandlersClient
+	userID           string
 }
 
 func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
@@ -62,6 +64,7 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 		textHandler:      grpcClient.TextHandler,
 		metaHandler:      grpcClient.MetaHandler,
 		bankCardsHandler: grpcClient.BankCardsHandler,
+		authHandler:      grpcClient.AuthHandelr,
 	}
 
 	mainMenu := MainMenu{
@@ -70,7 +73,8 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 		manager:    &im,
 	}
 
-	auth := NewAuthScreen(&mainMenu, im)
+	//TODO wrap
+	auth := NewAuthScreen(&mainMenu, &im)
 
 	return auth, nil
 }
@@ -106,7 +110,7 @@ func (im *ItemManager) getItemData(dataID string, category Category) (any, error
 
 func (im *ItemManager) syncMeta() error {
 	metaItems, err := im.metaHandler.GetMetaData(context.Background(),
-		&pb.GetMetaDataRequest{UserId: "00000000-0000-0000-0000-000000000000"})
+		&pb.GetMetaDataRequest{UserId: im.userID})
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
 			if e.Code() == codes.NotFound {

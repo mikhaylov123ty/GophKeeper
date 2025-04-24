@@ -77,6 +77,7 @@ type PostUserDataResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Error         string                 `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"` // ошибка
 	Jwt           string                 `protobuf:"bytes,2,opt,name=jwt,proto3" json:"jwt,omitempty"`
+	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -121,6 +122,13 @@ func (x *PostUserDataResponse) GetError() string {
 func (x *PostUserDataResponse) GetJwt() string {
 	if x != nil {
 		return x.Jwt
+	}
+	return ""
+}
+
+func (x *PostUserDataResponse) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -944,10 +952,11 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x1dinternal/proto/handlers.proto\x12\vserver_grpc\"G\n" +
 	"\x13PostUserDataRequest\x12\x14\n" +
 	"\x05login\x18\x01 \x01(\tR\x05login\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\">\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"W\n" +
 	"\x14PostUserDataResponse\x12\x14\n" +
 	"\x05error\x18\x01 \x01(\tR\x05error\x12\x10\n" +
-	"\x03jwt\x18\x02 \x01(\tR\x03jwt\"v\n" +
+	"\x03jwt\x18\x02 \x01(\tR\x03jwt\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\tR\x06userId\"v\n" +
 	"\x13PostTextDataRequest\x12\x12\n" +
 	"\x04text\x18\x01 \x01(\tR\x04text\x12\x17\n" +
 	"\atext_id\x18\x02 \x01(\tR\x06textId\x122\n" +
