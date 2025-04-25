@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,6 +11,14 @@ import (
 	"github.com/google/uuid"
 
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+)
+
+const (
+	ColorReset  = "\033[0m"
+	ColorBold   = "\033[1m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
+	ColorRed    = "\033[31m"
 )
 
 type ViewTextItemsScreen struct {
@@ -104,7 +113,15 @@ func (screen ViewTextDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 }
 
 func (screen ViewTextDataScreen) View() string {
-	return screen.itemData.text
+	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
+	return fmt.Sprintf(
+		"%sText Information%s\n"+
+			"=======================%s"+
+			"%s%s\n",
+		ColorBold, ColorReset,
+		separator,
+		ColorGreen, screen.itemData.text,
+	)
 }
 
 func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
@@ -151,21 +168,6 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 			}
 			return screen.backScreen, nil // Go back to category menu
-		case "backspace":
-			switch screen.cursor {
-			case 0:
-				if len(screen.newTitle) > 0 {
-					screen.newTitle = screen.newTitle[:len(screen.newTitle)-1]
-				}
-			case 1:
-				if len(screen.newDesc) > 0 {
-					screen.newDesc = screen.newDesc[:len(screen.newDesc)-1]
-				}
-			case 2:
-				if len(screen.newItemData.text) > 0 {
-					screen.newItemData.text = screen.newItemData.text[:len(screen.newItemData.text)-1]
-				}
-			}
 
 		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
@@ -173,24 +175,12 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
 		case "down":
 			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+		default:
+			screen.handleInput(keyMsg.String())
 		}
 
-		// Handle character inputs depending on the focused field
-		// TODO cursor item to var and use it in operations such these and other buttons
-		if screen.cursor == 0 {
-			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" && keyMsg.String() != "backspace" { // Ignore special keys
-				screen.newTitle += keyMsg.String()
-			}
-		} else if screen.cursor == 1 {
-			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" && keyMsg.String() != "backspace" { // Ignore special keys
-				screen.newDesc += keyMsg.String()
-			}
-		} else if screen.cursor == 2 {
-			if keyMsg.String() != "up" && keyMsg.String() != "down" && keyMsg.String() != "esc" && keyMsg.String() != "backspace" {
-				screen.newItemData.text += keyMsg.String()
-			}
-		}
 	}
+
 	return screen, nil
 }
 
@@ -198,30 +188,50 @@ func (screen *AddTextItemScreen) View() string {
 	if screen.newItemData == nil {
 		screen.newItemData = &textItemData{}
 	}
-	var titleStyle, descStyle, text lipgloss.Style
-	switch screen.cursor {
-	case 0:
-		titleStyle = selectedStyle // Highlight title when focused
-		descStyle = unselectedStyle
-		text = unselectedStyle
 
-	case 1:
-		titleStyle = unselectedStyle
-		descStyle = selectedStyle // Highlight description when focused
-		text = unselectedStyle
-	case 2:
-		titleStyle = unselectedStyle
-		descStyle = unselectedStyle // Highlight description when focused
-		text = selectedStyle
+	// Define an array of elements to hold the rendered strings
+	var lines []string
+
+	// Define a function for creating the styled label lines
+	addLine := func(label string, value string, style lipgloss.Style) {
+		lines = append(lines, fmt.Sprintf("%s %s", style.Render(label), style.Render(value)))
 	}
 
-	res := fmt.Sprintf("Add a new item:\n\n%s %s\n%s %s\n\n %s\n%s\n",
-		titleStyle.Render("Title:"), titleStyle.Render(screen.newTitle),
-		descStyle.Render("Description:"), descStyle.Render(screen.newDesc),
-		text.Render("Text:"), text.Render(screen.newItemData.text),
-	)
+	// Set styles based on cursor position
+	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
+	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
 
-	res += separatorStyle.Render(fmt.Sprintf("Press Enter to save, ESC to cancel, or Backspace to delete the last character.\n"))
+	// Build each line
+	addLine("Title:", screen.newTitle, styles[0])
+	addLine("Description:", screen.newDesc, styles[1])
+	addLine("Text:", screen.newItemData.text, styles[2])
 
-	return res
+	// Combine the lines with newlines
+	result := strings.Join(lines, "\n")
+
+	// Add instructions at the end
+	instructions := "Press Enter to save, Q to cancel, or Backspace to delete the last character."
+
+	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
+}
+
+func (screen *AddTextItemScreen) handleInput(input string) {
+	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.text}
+
+	// Backspace logic
+	if input == "backspace" {
+		if len(fields[screen.cursor]) > 0 {
+			fields[screen.cursor] = fields[screen.cursor][:len(fields[screen.cursor])-1]
+		}
+	} else {
+		// Ignore special keys
+		if input != "up" && input != "down" && input != "esc" {
+			fields[screen.cursor] += input
+		}
+	}
+
+	// Update the fields back to the screen state
+	screen.newTitle = fields[0]
+	screen.newDesc = fields[1]
+	screen.newItemData.text = fields[2]
 }

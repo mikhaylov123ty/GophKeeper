@@ -43,6 +43,7 @@ func (s *AuthScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				return s, nil
 			}
 
+			// TODO make this goroutine outside authscreen
 			if err := s.itemManager.syncMeta(); err != nil {
 				//todo return failed sync screen
 				return s, nil
