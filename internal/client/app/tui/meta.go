@@ -2,12 +2,13 @@ package tui
 
 import (
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
-	"io"
-	"strings"
 )
 
 // TODO make unexport fields

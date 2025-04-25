@@ -3,10 +3,12 @@ package tui
 import (
 	"context"
 	"fmt"
-	"github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
 type AuthScreen struct {
@@ -105,7 +107,7 @@ func (s AuthScreen) Init() tea.Cmd {
 }
 
 func (s *AuthScreen) login() error {
-	res, err := s.itemManager.authHandler.PostUserData(context.Background(), &pb.PostUserDataRequest{
+	res, err := s.itemManager.grpcClient.Handlers.AuthHandler.PostUserData(context.Background(), &pb.PostUserDataRequest{
 		Login:    s.username,
 		Password: s.password,
 	})
@@ -122,6 +124,9 @@ func (s *AuthScreen) login() error {
 	}
 
 	s.itemManager.userID = res.UserId
+	s.itemManager.grpcClient.JWTToken = res.Jwt
+
+	fmt.Println("TOKEN", s.itemManager.grpcClient.JWTToken)
 
 	return nil
 }

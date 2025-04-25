@@ -3,14 +3,16 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strconv"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
 type Model struct {
@@ -50,21 +52,15 @@ type ActionsMenu struct {
 }
 
 type ItemManager struct {
-	metaItems        map[Category][]*MetaItem
-	metaHandler      pb.MetaDataHandlersClient
-	textHandler      pb.TextHandlersClient
-	bankCardsHandler pb.BankCardHandlersClient
-	authHandler      pb.UserHandlersClient
-	userID           string
+	metaItems  map[Category][]*MetaItem
+	grpcClient *grpc.Client
+	userID     string
 }
 
 func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 	im := ItemManager{
-		metaItems:        map[Category][]*MetaItem{},
-		textHandler:      grpcClient.TextHandler,
-		metaHandler:      grpcClient.MetaHandler,
-		bankCardsHandler: grpcClient.BankCardsHandler,
-		authHandler:      grpcClient.AuthHandelr,
+		metaItems:  map[Category][]*MetaItem{},
+		grpcClient: grpcClient,
 	}
 
 	mainMenu := MainMenu{
@@ -82,7 +78,7 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 func (im *ItemManager) getItemData(dataID string, category Category) (any, error) {
 	switch category {
 	case TextCategory:
-		response, err := im.textHandler.GetTextData(context.Background(), &pb.GetTextDataRequest{
+		response, err := im.grpcClient.Handlers.TextHandler.GetTextData(context.Background(), &pb.GetTextDataRequest{
 			TextId: dataID,
 		})
 		if err != nil {
@@ -93,7 +89,7 @@ func (im *ItemManager) getItemData(dataID string, category Category) (any, error
 		}, nil
 
 	case CardCategory:
-		response, err := im.bankCardsHandler.GetBankCardData(context.Background(), &pb.GetBankCardDataRequest{
+		response, err := im.grpcClient.Handlers.BankCardsHandler.GetBankCardData(context.Background(), &pb.GetBankCardDataRequest{
 			CardId: dataID,
 		})
 		if err != nil {
@@ -109,7 +105,7 @@ func (im *ItemManager) getItemData(dataID string, category Category) (any, error
 }
 
 func (im *ItemManager) syncMeta() error {
-	metaItems, err := im.metaHandler.GetMetaData(context.Background(),
+	metaItems, err := im.grpcClient.Handlers.MetaHandler.GetMetaData(context.Background(),
 		&pb.GetMetaDataRequest{UserId: im.userID})
 	if err != nil {
 		if e, ok := status.FromError(err); ok {

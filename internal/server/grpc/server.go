@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -18,14 +19,14 @@ import (
 
 // GRPCServer - структура инстанса gRPC сервера
 type GRPCServer struct {
-	auth   *auth
+	//auth   *auth
 	Server *grpc.Server
 }
 
-type auth struct {
-	cryptoKey string
-	hashKey   string
-}
+//type auth struct {
+//	cryptoKey string
+//	hashKey   string
+//}
 
 // NewServer создает инстанс gRPC сервера
 func NewServer(cryptoKey string, hashKey string,
@@ -35,18 +36,19 @@ func NewServer(cryptoKey string, hashKey string,
 	authHandler *handlers.AuthHandler,
 ) *GRPCServer {
 	instance := &GRPCServer{
-		auth: &auth{
-			cryptoKey: cryptoKey,
-			hashKey:   hashKey,
-		},
+		//auth: &auth{
+		//	cryptoKey: cryptoKey,
+		//	hashKey:   hashKey,
+		//},
 	}
 
 	// Определение перехватчиков
 	interceptors := []grpc.UnaryServerInterceptor{
 		instance.withLogger,
 		//instance.withHash,
-		//instance.withAuth,
+		instance.withAuth,
 		//instance.withEncrypt
+		// WITH TLS
 	}
 
 	//Регистрация инстанса gRPC с перехватчиками
@@ -81,27 +83,34 @@ func (g *GRPCServer) withLogger(ctx context.Context, req any,
 
 func (g *GRPCServer) withAuth(ctx context.Context, req any,
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-	meta, ok := metadata.FromIncomingContext(ctx)
-	if !ok {
-		return nil, status.Error(codes.Internal, "can't extract metadata from request")
-	}
+	fmt.Println("FULL SERVICE METHOD: ", info.FullMethod)
+	if info.FullMethod != "/server_grpc.UserHandlers/PostUserData" && config.GetKeys().JWTKey != "" {
+		meta, ok := metadata.FromIncomingContext(ctx)
+		if !ok {
+			slog.ErrorContext(ctx, "Failed to get metadata")
+			return nil, status.Error(codes.Internal, "can't extract metadata from request")
+		}
+		fmt.Printf("METADATA: %+v\n", meta)
+		header, ok := meta["authorization"]
+		if !ok {
+			slog.ErrorContext(ctx, "Failed to get Authorization header")
+			return nil, status.Error(codes.Unauthenticated, "can't found JWT header")
+		}
 
-	header, ok := meta["JWT"]
-	if ok {
-		return nil, status.Error(codes.Unauthenticated, "can't found JWT header")
-	}
+		token, err := jwt.Parse(header[0], func(token *jwt.Token) (interface{}, error) {
+			return []byte(config.GetKeys().JWTKey), nil
+		})
+		if err != nil {
+			slog.ErrorContext(ctx, "Failed to parse Authorization header")
+			return nil, status.Error(codes.Unauthenticated, "can't parse Authorization header")
+		}
 
-	token, err := jwt.Parse(header[0], func(token *jwt.Token) (interface{}, error) {
-		return config.GetKeys().CryptoKey, nil
-	})
-	if err != nil {
-		return nil, status.Error(codes.Unauthenticated, "can't parse JWT header")
+		if !token.Valid {
+			slog.ErrorContext(ctx, "JWT token is invalid")
+			return nil, status.Error(codes.PermissionDenied, "JWT token is invalid")
+		}
 	}
-
-	if !token.Valid {
-		return nil, status.Error(codes.PermissionDenied, "JWT token is invalid")
-	}
-
+	//TODO IF USEr ID IS OK IN BASE
 	return handler(ctx, req)
 }
 

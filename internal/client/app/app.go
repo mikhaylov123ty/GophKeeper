@@ -3,10 +3,12 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
+
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
-	"os"
 )
 
 type App struct {

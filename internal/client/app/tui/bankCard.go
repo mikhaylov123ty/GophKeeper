@@ -3,10 +3,12 @@ package tui
 import (
 	"context"
 	"fmt"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
@@ -128,7 +130,7 @@ func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				if screen.newItemData != nil {
 
 					//TODO maybe let server comnstruct metaD
-					resp, err := screen.itemManager.bankCardsHandler.PostBankCardData(context.Background(), &pb.PostBankCardDataRequest{
+					resp, err := screen.itemManager.grpcClient.Handlers.BankCardsHandler.PostBankCardData(context.Background(), &pb.PostBankCardDataRequest{
 						CardNum: screen.newItemData.cardNum,
 						Expiry:  screen.newItemData.expiry,
 						Cvv:     screen.newItemData.cvv,
@@ -138,6 +140,7 @@ func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 							Title:       newItem.Title,
 							Description: newItem.Description,
 							DataType:    string(screen.category),
+							UserId:      screen.itemManager.userID,
 						},
 					})
 					if err != nil {
