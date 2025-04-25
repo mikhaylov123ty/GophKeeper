@@ -5,13 +5,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"log/slog"
 	"time"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 )
 
 type AuthHandler struct {
@@ -35,6 +40,11 @@ func NewAuthHandler(userCreator userCreator, userProvider userProvider) *AuthHan
 	}
 }
 
+type authClaims struct {
+	UserID string `json:"userID"`
+	jwt.RegisteredClaims
+}
+
 func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserDataRequest) (*pb.PostUserDataResponse, error) {
 	var res pb.PostUserDataResponse
 	if request.GetLogin() == "" || request.GetPassword() == "" {
@@ -51,10 +61,17 @@ func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserData
 	}
 
 	if storageUser == nil {
+		pass, err := bcrypt.GenerateFromPassword([]byte(request.GetPassword()), 10)
+		if err != nil {
+			slog.Error("failed to generate password for user", slog.String("error", err.Error()))
+			res.Error = err.Error()
+			return &res, status.Error(codes.InvalidArgument, err.Error())
+		}
+
 		storageUser = &models.UserData{
 			ID:       uuid.New(),
 			Login:    request.Login,
-			Password: request.Password,
+			Password: string(pass),
 			Created:  time.Now(),
 			Modified: time.Now(),
 		}
@@ -64,14 +81,31 @@ func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserData
 			return &res, status.Error(codes.Internal, err.Error())
 		}
 	} else {
-		if storageUser.Password != request.Password {
+		if bcrypt.CompareHashAndPassword([]byte(storageUser.Password), []byte(request.Password)) != nil {
 			slog.Error("password not match")
 			res.Error = fmt.Sprintf("login or password is incorrect")
 			return &res, status.Error(codes.PermissionDenied, "login or password is incorrect")
 		}
 	}
-	//todo create jwt
+
+	// Create the Claims
+	claims := authClaims{
+		UserID: storageUser.ID.String(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	ss, err := token.SignedString([]byte(config.GetKeys().JWTKey))
+	if err != nil {
+		slog.Error("failed to sign token", slog.String("error", err.Error()))
+		res.Error = fmt.Sprintf("failed to sign token")
+		return &res, status.Error(codes.PermissionDenied, "failed to sign token")
+	}
+
 	res.UserId = storageUser.ID.String()
+	res.Jwt = ss
 
 	return &res, nil
 }

@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
+	grpcClient "github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
 
 	clientConfig "github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
@@ -18,11 +19,12 @@ func main() {
 
 	fmt.Println("Hello i'm client")
 
-	client, err := grpc.NewClient()
+	grpc, err := grpcClient.New()
 	if err != nil {
 		panic(err)
 	}
-	appSvc := app.New(client)
+
+	appSvc := app.New(grpc)
 
 	if err = appSvc.Run(context.Background()); err != nil {
 		panic(err)

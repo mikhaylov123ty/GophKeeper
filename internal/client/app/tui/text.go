@@ -3,10 +3,12 @@ package tui
 import (
 	"context"
 	"fmt"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
@@ -120,7 +122,7 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				if screen.newItemData != nil {
 					//TODO maybe let server comnstruct metaD
 					//TODO create dedicated func
-					resp, err := screen.itemManager.textHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{
+					resp, err := screen.itemManager.grpcClient.Handlers.TextHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{
 						Text:   screen.newItemData.text,
 						TextId: "",
 						MetaData: &pb.MetaData{
