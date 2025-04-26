@@ -16,10 +16,13 @@ type Commands interface {
 	GetUserByLogin(string) (*models.UserData, error)
 	SaveText(*models.TextData) error
 	GetTextByID(uuid.UUID) (*models.TextData, error)
+	DeleteTextByID(uuid.UUID) error
 	SaveBankCard(*models.BankCardData) error
 	GetBankCardById(uuid.UUID) (*models.BankCardData, error)
+	DeleteBankCardById(uuid.UUID) error
 	SaveMetaData(*models.Meta) error
 	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
+	DeleteMetaDataById(uuid.UUID) error
 	Close() error
 }
 

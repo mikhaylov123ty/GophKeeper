@@ -107,6 +107,16 @@ message GetMetaDataResponse {
 	repeated MetaData items = 1;
 }
 
+message DeleteMetaDataRequest {
+	string metadata_id = 1;
+	string metadata_type = 2;
+	string data_id = 3;
+}
+
+message DeleteMetaDataResponse {
+	string error = 1;
+}
+
 service UserHandlers {
 	rpc PostUserData(PostUserDataRequest) returns (PostUserDataResponse);
 }
@@ -124,5 +134,6 @@ service BankCardHandlers {
 service MetaDataHandlers {
 //	rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
 	rpc GetMetaData(GetMetaDataRequest) returns (GetMetaDataResponse);
+	rpc DeleteMetaData(DeleteMetaDataRequest) returns (DeleteMetaDataResponse);
 }
 //TODO add binary handler

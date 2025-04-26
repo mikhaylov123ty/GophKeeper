@@ -3,8 +3,6 @@ package tui
 import (
 	"context"
 	"fmt"
-	"strconv"
-
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
@@ -34,6 +32,12 @@ const (
 	ExitCategory Category = "Exit" // New exit category
 
 	listHeight = 15
+
+	ColorReset  = "\033[0m"
+	ColorBold   = "\033[1m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
+	ColorRed    = "\033[31m"
 )
 
 type MainMenu struct {
@@ -51,6 +55,7 @@ type ActionsMenu struct {
 	backScreen  Screen
 }
 
+// TODO change []*MetaItem to map[uuid]Metaitem
 type ItemManager struct {
 	metaItems  map[Category][]*MetaItem
 	grpcClient *grpc.Client
@@ -138,6 +143,25 @@ func (im *ItemManager) syncMeta() error {
 	return nil
 }
 
+func (im *ItemManager) deleteItem(metaItemID uuid.UUID, category Category, dataID string) error {
+	resp, err := im.grpcClient.Handlers.MetaHandler.DeleteMetaData(context.Background(), &pb.DeleteMetaDataRequest{
+		MetadataId:   metaItemID.String(),
+		MetadataType: string(category),
+		DataId:       dataID,
+	})
+	if err != nil && resp.GetError() != "" {
+		return fmt.Errorf("could not delete meta data: %w", err)
+	}
+
+	for i, v := range im.metaItems[category] {
+		if v.Id == metaItemID {
+			im.metaItems[category] = append(im.metaItems[category][:i], im.metaItems[category][i+1:]...)
+		}
+	}
+
+	return nil
+}
+
 type DeleteItemScreen struct {
 	itemManager *ItemManager
 	category    Category
@@ -146,10 +170,9 @@ type DeleteItemScreen struct {
 }
 
 const (
-	ViewOption   = "View items"
-	AddOption    = "Add an item"
-	DeleteOption = "Delete an item"
-	BackOption   = "Back"
+	ViewOption = "View items"
+	AddOption  = "Add an item"
+	BackOption = "Back"
 )
 
 // Style definitions
@@ -176,7 +199,7 @@ func (m MainMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				return m, tea.Quit // Exit the application
 			}
 			m.nextScreen = &ActionsMenu{
-				options:     []string{ViewOption, AddOption, DeleteOption, BackOption},
+				options:     []string{ViewOption, AddOption, BackOption},
 				category:    category,
 				itemManager: m.manager,
 				backScreen:  m,
@@ -226,9 +249,7 @@ func (cm ActionsMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				case CardCategory:
 					return &AddBankCardItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				}
-			case 2: // Delete item
-				return DeleteItemScreen{itemManager: cm.itemManager, deleteIndex: -1, backScreen: cm, category: cm.category}, nil
-			case 3: // Back
+			case 2: // Back
 				return cm.backScreen, nil
 			}
 		case "esc": // Go back to main menu
@@ -249,40 +270,6 @@ func (cm ActionsMenu) View() string {
 	}
 
 	s += separatorStyle.Render("Press ESC to go back to the main menu.\n") // Navigation instructions
-	return s
-}
-
-func (screen DeleteItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
-			if screen.deleteIndex >= 0 && screen.deleteIndex < len(screen.itemManager.metaItems[screen.category]) {
-				// Delete the selected item
-				screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category][:screen.deleteIndex], screen.itemManager.metaItems[screen.category][screen.deleteIndex+1:]...)
-			}
-			return screen.backScreen, nil // Go back to category menu
-		case "backspace":
-			if screen.deleteIndex >= 1 {
-				screen.deleteIndex--
-			}
-		case "q": // Go back to the previous menu
-			return screen.backScreen, nil
-		default:
-			if key, err := strconv.Atoi(msg.String()); err == nil && key > 0 {
-				screen.deleteIndex = key - 1 // Considering 1-based user input
-			}
-		}
-	}
-	return screen, nil
-}
-
-func (screen DeleteItemScreen) View() string {
-	s := "Delete an item:\n\n"
-	for i, item := range screen.itemManager.metaItems[screen.category] {
-		s += fmt.Sprintf("  - %d: %v\n", i+1, item) // Use bullet points for items
-	}
-	s += "Select the item number to delete (Press ESC to go back):\n" // Navigation instructions
 	return s
 }
 

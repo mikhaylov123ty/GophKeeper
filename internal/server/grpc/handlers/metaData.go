@@ -18,15 +18,23 @@ import (
 type MetaDataHandler struct {
 	pb.UnimplementedMetaDataHandlersServer
 	metaDataProvider metaDataProvider
+	dataRemover      dataRemover
 }
 
 type metaDataProvider interface {
 	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
 }
 
-func NewMetaDataHandler(metaDataProvider metaDataProvider) *MetaDataHandler {
+type dataRemover interface {
+	DeleteMetaDataById(uuid.UUID) error
+	DeleteBankCardById(uuid.UUID) error
+	DeleteTextByID(uuid.UUID) error
+}
+
+func NewMetaDataHandler(metaDataProvider metaDataProvider, dataRemover dataRemover) *MetaDataHandler {
 	return &MetaDataHandler{
 		metaDataProvider: metaDataProvider,
+		dataRemover:      dataRemover,
 	}
 }
 
@@ -63,4 +71,36 @@ func (m *MetaDataHandler) GetMetaData(ctx context.Context, request *pb.GetMetaDa
 	return &pb.GetMetaDataResponse{
 			Items: protoItems},
 		status.Errorf(codes.OK, "meta gathered")
+}
+
+func (m *MetaDataHandler) DeleteMetaData(ctx context.Context, request *pb.DeleteMetaDataRequest) (*pb.DeleteMetaDataResponse, error) {
+	metaDataID, err := uuid.Parse(request.GetMetadataId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetMetadataId())
+	}
+
+	dataID, err := uuid.Parse(request.GetDataId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid dataId %s", request.GetDataId())
+	}
+
+	switch request.GetMetadataType() {
+	case "Text":
+		if err := m.dataRemover.DeleteTextByID(dataID); err != nil {
+			slog.ErrorContext(ctx, "could not delete text", slog.String("error", err.Error()))
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+
+	case "Cards":
+		if err := m.dataRemover.DeleteBankCardById(dataID); err != nil {
+			slog.ErrorContext(ctx, "could not delete bank card", slog.String("error", err.Error()))
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
+	if err := m.dataRemover.DeleteMetaDataById(metaDataID); err != nil {
+		slog.ErrorContext(ctx, "could not delete metaData", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &pb.DeleteMetaDataResponse{}, nil
 }

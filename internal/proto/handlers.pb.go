@@ -7,12 +7,11 @@
 package protobuf
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -946,6 +945,110 @@ func (x *GetMetaDataResponse) GetItems() []*MetaData {
 	return nil
 }
 
+type DeleteMetaDataRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MetadataId    string                 `protobuf:"bytes,1,opt,name=metadata_id,json=metadataId,proto3" json:"metadata_id,omitempty"`
+	MetadataType  string                 `protobuf:"bytes,2,opt,name=metadata_type,json=metadataType,proto3" json:"metadata_type,omitempty"`
+	DataId        string                 `protobuf:"bytes,3,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteMetaDataRequest) Reset() {
+	*x = DeleteMetaDataRequest{}
+	mi := &file_internal_proto_handlers_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteMetaDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteMetaDataRequest) ProtoMessage() {}
+
+func (x *DeleteMetaDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_handlers_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteMetaDataRequest.ProtoReflect.Descriptor instead.
+func (*DeleteMetaDataRequest) Descriptor() ([]byte, []int) {
+	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *DeleteMetaDataRequest) GetMetadataId() string {
+	if x != nil {
+		return x.MetadataId
+	}
+	return ""
+}
+
+func (x *DeleteMetaDataRequest) GetMetadataType() string {
+	if x != nil {
+		return x.MetadataType
+	}
+	return ""
+}
+
+func (x *DeleteMetaDataRequest) GetDataId() string {
+	if x != nil {
+		return x.DataId
+	}
+	return ""
+}
+
+type DeleteMetaDataResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Error         string                 `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteMetaDataResponse) Reset() {
+	*x = DeleteMetaDataResponse{}
+	mi := &file_internal_proto_handlers_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteMetaDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteMetaDataResponse) ProtoMessage() {}
+
+func (x *DeleteMetaDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_internal_proto_handlers_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteMetaDataResponse.ProtoReflect.Descriptor instead.
+func (*DeleteMetaDataResponse) Descriptor() ([]byte, []int) {
+	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *DeleteMetaDataResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_internal_proto_handlers_proto protoreflect.FileDescriptor
 
 const file_internal_proto_handlers_proto_rawDesc = "" +
@@ -1006,7 +1109,14 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x12GetMetaDataRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"B\n" +
 	"\x13GetMetaDataResponse\x12+\n" +
-	"\x05items\x18\x01 \x03(\v2\x15.server_grpc.MetaDataR\x05items2c\n" +
+	"\x05items\x18\x01 \x03(\v2\x15.server_grpc.MetaDataR\x05items\"v\n" +
+	"\x15DeleteMetaDataRequest\x12\x1f\n" +
+	"\vmetadata_id\x18\x01 \x01(\tR\n" +
+	"metadataId\x12#\n" +
+	"\rmetadata_type\x18\x02 \x01(\tR\fmetadataType\x12\x17\n" +
+	"\adata_id\x18\x03 \x01(\tR\x06dataId\".\n" +
+	"\x16DeleteMetaDataResponse\x12\x14\n" +
+	"\x05error\x18\x01 \x01(\tR\x05error2c\n" +
 	"\fUserHandlers\x12S\n" +
 	"\fPostUserData\x12 .server_grpc.PostUserDataRequest\x1a!.server_grpc.PostUserDataResponse2\xb5\x01\n" +
 	"\fTextHandlers\x12S\n" +
@@ -1014,9 +1124,10 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\vGetTextData\x12\x1f.server_grpc.GetTextDataRequest\x1a .server_grpc.GetTextDataResponse2\xd1\x01\n" +
 	"\x10BankCardHandlers\x12_\n" +
 	"\x10PostBankCardData\x12$.server_grpc.PostBankCardDataRequest\x1a%.server_grpc.PostBankCardDataResponse\x12\\\n" +
-	"\x0fGetBankCardData\x12#.server_grpc.GetBankCardDataRequest\x1a$.server_grpc.GetBankCardDataResponse2d\n" +
+	"\x0fGetBankCardData\x12#.server_grpc.GetBankCardDataRequest\x1a$.server_grpc.GetBankCardDataResponse2\xbf\x01\n" +
 	"\x10MetaDataHandlers\x12P\n" +
-	"\vGetMetaData\x12\x1f.server_grpc.GetMetaDataRequest\x1a .server_grpc.GetMetaDataResponseB\x13Z\x11internal/protobufb\x06proto3"
+	"\vGetMetaData\x12\x1f.server_grpc.GetMetaDataRequest\x1a .server_grpc.GetMetaDataResponse\x12Y\n" +
+	"\x0eDeleteMetaData\x12\".server_grpc.DeleteMetaDataRequest\x1a#.server_grpc.DeleteMetaDataResponseB\x13Z\x11internal/protobufb\x06proto3"
 
 var (
 	file_internal_proto_handlers_proto_rawDescOnce sync.Once
@@ -1030,7 +1141,7 @@ func file_internal_proto_handlers_proto_rawDescGZIP() []byte {
 	return file_internal_proto_handlers_proto_rawDescData
 }
 
-var file_internal_proto_handlers_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_internal_proto_handlers_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_internal_proto_handlers_proto_goTypes = []any{
 	(*PostUserDataRequest)(nil),      // 0: server_grpc.PostUserDataRequest
 	(*PostUserDataResponse)(nil),     // 1: server_grpc.PostUserDataResponse
@@ -1049,6 +1160,8 @@ var file_internal_proto_handlers_proto_goTypes = []any{
 	(*MetaData)(nil),                 // 14: server_grpc.MetaData
 	(*GetMetaDataRequest)(nil),       // 15: server_grpc.GetMetaDataRequest
 	(*GetMetaDataResponse)(nil),      // 16: server_grpc.GetMetaDataResponse
+	(*DeleteMetaDataRequest)(nil),    // 17: server_grpc.DeleteMetaDataRequest
+	(*DeleteMetaDataResponse)(nil),   // 18: server_grpc.DeleteMetaDataResponse
 }
 var file_internal_proto_handlers_proto_depIdxs = []int32{
 	14, // 0: server_grpc.PostTextDataRequest.meta_data:type_name -> server_grpc.MetaData
@@ -1060,14 +1173,16 @@ var file_internal_proto_handlers_proto_depIdxs = []int32{
 	6,  // 6: server_grpc.BankCardHandlers.PostBankCardData:input_type -> server_grpc.PostBankCardDataRequest
 	8,  // 7: server_grpc.BankCardHandlers.GetBankCardData:input_type -> server_grpc.GetBankCardDataRequest
 	15, // 8: server_grpc.MetaDataHandlers.GetMetaData:input_type -> server_grpc.GetMetaDataRequest
-	1,  // 9: server_grpc.UserHandlers.PostUserData:output_type -> server_grpc.PostUserDataResponse
-	3,  // 10: server_grpc.TextHandlers.PostTextData:output_type -> server_grpc.PostTextDataResponse
-	5,  // 11: server_grpc.TextHandlers.GetTextData:output_type -> server_grpc.GetTextDataResponse
-	7,  // 12: server_grpc.BankCardHandlers.PostBankCardData:output_type -> server_grpc.PostBankCardDataResponse
-	9,  // 13: server_grpc.BankCardHandlers.GetBankCardData:output_type -> server_grpc.GetBankCardDataResponse
-	16, // 14: server_grpc.MetaDataHandlers.GetMetaData:output_type -> server_grpc.GetMetaDataResponse
-	9,  // [9:15] is the sub-list for method output_type
-	3,  // [3:9] is the sub-list for method input_type
+	17, // 9: server_grpc.MetaDataHandlers.DeleteMetaData:input_type -> server_grpc.DeleteMetaDataRequest
+	1,  // 10: server_grpc.UserHandlers.PostUserData:output_type -> server_grpc.PostUserDataResponse
+	3,  // 11: server_grpc.TextHandlers.PostTextData:output_type -> server_grpc.PostTextDataResponse
+	5,  // 12: server_grpc.TextHandlers.GetTextData:output_type -> server_grpc.GetTextDataResponse
+	7,  // 13: server_grpc.BankCardHandlers.PostBankCardData:output_type -> server_grpc.PostBankCardDataResponse
+	9,  // 14: server_grpc.BankCardHandlers.GetBankCardData:output_type -> server_grpc.GetBankCardDataResponse
+	16, // 15: server_grpc.MetaDataHandlers.GetMetaData:output_type -> server_grpc.GetMetaDataResponse
+	18, // 16: server_grpc.MetaDataHandlers.DeleteMetaData:output_type -> server_grpc.DeleteMetaDataResponse
+	10, // [10:17] is the sub-list for method output_type
+	3,  // [3:10] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
@@ -1084,7 +1199,7 @@ func file_internal_proto_handlers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_internal_proto_handlers_proto_rawDesc), len(file_internal_proto_handlers_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   4,
 		},

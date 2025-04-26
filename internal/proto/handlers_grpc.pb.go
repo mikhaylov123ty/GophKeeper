@@ -8,7 +8,6 @@ package protobuf
 
 import (
 	context "context"
-
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -402,7 +401,8 @@ var BankCardHandlers_ServiceDesc = grpc.ServiceDesc{
 }
 
 const (
-	MetaDataHandlers_GetMetaData_FullMethodName = "/server_grpc.MetaDataHandlers/GetMetaData"
+	MetaDataHandlers_GetMetaData_FullMethodName    = "/server_grpc.MetaDataHandlers/GetMetaData"
+	MetaDataHandlers_DeleteMetaData_FullMethodName = "/server_grpc.MetaDataHandlers/DeleteMetaData"
 )
 
 // MetaDataHandlersClient is the client API for MetaDataHandlers service.
@@ -411,6 +411,7 @@ const (
 type MetaDataHandlersClient interface {
 	// rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
 	GetMetaData(ctx context.Context, in *GetMetaDataRequest, opts ...grpc.CallOption) (*GetMetaDataResponse, error)
+	DeleteMetaData(ctx context.Context, in *DeleteMetaDataRequest, opts ...grpc.CallOption) (*DeleteMetaDataResponse, error)
 }
 
 type metaDataHandlersClient struct {
@@ -431,12 +432,23 @@ func (c *metaDataHandlersClient) GetMetaData(ctx context.Context, in *GetMetaDat
 	return out, nil
 }
 
+func (c *metaDataHandlersClient) DeleteMetaData(ctx context.Context, in *DeleteMetaDataRequest, opts ...grpc.CallOption) (*DeleteMetaDataResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteMetaDataResponse)
+	err := c.cc.Invoke(ctx, MetaDataHandlers_DeleteMetaData_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetaDataHandlersServer is the server API for MetaDataHandlers service.
 // All implementations must embed UnimplementedMetaDataHandlersServer
 // for forward compatibility.
 type MetaDataHandlersServer interface {
 	// rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
 	GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error)
+	DeleteMetaData(context.Context, *DeleteMetaDataRequest) (*DeleteMetaDataResponse, error)
 	mustEmbedUnimplementedMetaDataHandlersServer()
 }
 
@@ -449,6 +461,9 @@ type UnimplementedMetaDataHandlersServer struct{}
 
 func (UnimplementedMetaDataHandlersServer) GetMetaData(context.Context, *GetMetaDataRequest) (*GetMetaDataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetaData not implemented")
+}
+func (UnimplementedMetaDataHandlersServer) DeleteMetaData(context.Context, *DeleteMetaDataRequest) (*DeleteMetaDataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteMetaData not implemented")
 }
 func (UnimplementedMetaDataHandlersServer) mustEmbedUnimplementedMetaDataHandlersServer() {}
 func (UnimplementedMetaDataHandlersServer) testEmbeddedByValue()                          {}
@@ -489,6 +504,24 @@ func _MetaDataHandlers_GetMetaData_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetaDataHandlers_DeleteMetaData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteMetaDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetaDataHandlersServer).DeleteMetaData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MetaDataHandlers_DeleteMetaData_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetaDataHandlersServer).DeleteMetaData(ctx, req.(*DeleteMetaDataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetaDataHandlers_ServiceDesc is the grpc.ServiceDesc for MetaDataHandlers service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -499,6 +532,10 @@ var MetaDataHandlers_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMetaData",
 			Handler:    _MetaDataHandlers_GetMetaData_Handler,
+		},
+		{
+			MethodName: "DeleteMetaData",
+			Handler:    _MetaDataHandlers_DeleteMetaData_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

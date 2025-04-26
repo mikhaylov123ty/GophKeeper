@@ -150,6 +150,25 @@ func (s *Storage) GetTextByID(id uuid.UUID) (*models.TextData, error) {
 	return &res, nil
 }
 
+func (s *Storage) DeleteTextByID(id uuid.UUID) error {
+	query, args, err := squirrel.Delete(textTableName).
+		Where(squirrel.Eq{"id": id}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("could not build delete text by id query: %w", err)
+	}
+
+	slog.Debug("deleting text data", slog.String("query", query), slog.Any("args", args))
+
+	_, err = s.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not delete text data: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Storage) SaveBankCard(data *models.BankCardData) error {
 	query, args, err := squirrel.Insert(bankCardsTableName).
 		Values(data.ID, data.CardNum, data.Expiry, data.CVV).
@@ -198,6 +217,25 @@ func (s *Storage) GetBankCardById(id uuid.UUID) (*models.BankCardData, error) {
 	}
 
 	return &res, nil
+}
+
+func (s *Storage) DeleteBankCardById(id uuid.UUID) error {
+	query, args, err := squirrel.Delete(bankCardsTableName).
+		Where(squirrel.Eq{"id": id}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("could not build delete bank card by id query: %w", err)
+	}
+
+	slog.Debug("deleting bank card data", slog.String("query", query), slog.Any("args", args))
+
+	_, err = s.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not delete bank card data: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Storage) SaveMetaData(data *models.Meta) error {
@@ -266,6 +304,25 @@ func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	}
 
 	return res, nil
+}
+
+func (s *Storage) DeleteMetaDataById(id uuid.UUID) error {
+	query, args, err := squirrel.Delete(metaTableName).
+		Where(squirrel.Eq{"id": id}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("could not build delete meta by id query: %w", err)
+	}
+
+	slog.Debug("deleting metadata", slog.String("query", query), slog.Any("args", args))
+
+	_, err = s.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("could not delete meta data: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Storage) Close() error {
