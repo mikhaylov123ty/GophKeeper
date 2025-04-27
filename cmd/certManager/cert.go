@@ -42,12 +42,12 @@ func generateCert() error {
 			Organization: []string{"Ya Praktikum"},
 			Country:      []string{"RU"},
 		},
-		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().AddDate(0, 0, 1),
-		SubjectKeyId: []byte{1, 2, 3, 4, 6},
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:     x509.KeyUsageDigitalSignature & x509.KeyUsageKeyEncipherment,
+		IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		DNSNames:    []string{"localhost"},
+		NotBefore:   time.Now(),
+		NotAfter:    time.Now().AddDate(0, 0, 1),
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:    x509.KeyUsageDigitalSignature & x509.KeyUsageKeyEncipherment,
 	}
 
 	// Генерация приватного ключа
