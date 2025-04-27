@@ -3,8 +3,9 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	"strings"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"

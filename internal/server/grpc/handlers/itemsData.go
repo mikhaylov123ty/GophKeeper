@@ -43,7 +43,7 @@ func NewTextHandler(itemDataCreator itemDataCreator, itemDataProvider itemDataPr
 func (h *ItemsDataHandler) PostItemData(ctx context.Context, request *pb.PostItemDataRequest) (*pb.PostItemDataResponse, error) {
 	var dataID uuid.UUID
 
-	if request.GetData() == "" {
+	if len(request.GetData()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "empty item data")
 	}
 

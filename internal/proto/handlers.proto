@@ -32,7 +32,7 @@ message GetItemDataRequest {
 }
 
 message GetItemDataResponse {
-	string data = 1;
+	bytes data = 1;
 }
 
 message MetaData {

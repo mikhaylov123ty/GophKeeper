@@ -1,5 +1,6 @@
 {
   "address": {
     "grpc_port": "4443"
-  }
+  },
+  "public_cert": "./public.crt"
 }

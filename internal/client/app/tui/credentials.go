@@ -3,8 +3,9 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	"strings"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -331,9 +332,9 @@ func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
+			screen.cursor = (screen.cursor - 1 + credsFields) % credsFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+			screen.cursor = (screen.cursor + 1) % credsFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}

@@ -15,17 +15,24 @@ var cfg *ClientConfig
 type ClientConfig struct {
 	Address    *Address `json:"address"`
 	ConfigFile string
-	Key        string
+	Keys       *Keys
 }
 type Address struct {
 	Host     string `json:"host"`
 	GRPCPort string `json:"grpc_port"`
 }
 
+type Keys struct {
+	PublicCert string `json:"public_cert"`
+}
+
 // New - конструктор конфигурации агента
 func New() (*ClientConfig, error) {
 	var err error
-	config := &ClientConfig{Address: &Address{}}
+	config := &ClientConfig{
+		Address: &Address{},
+		Keys:    &Keys{},
+	}
 
 	// Парсинг флагов
 	config.parseFlags()
@@ -54,7 +61,7 @@ func (a *ClientConfig) parseFlags() {
 	flag.StringVar(&a.Address.GRPCPort, "grpc-port", "", "Port on which to listen gRPC requests. Example: \"443\"")
 
 	// Флаги подписи
-	flag.StringVar(&a.Key, "k", "", "Key")
+	flag.StringVar(&a.Keys.PublicCert, "cert", "", "TLS public cert file")
 
 	// Флаг файла конфигурации
 	flag.StringVar(&a.ConfigFile, "config", "", "Config file")
@@ -73,8 +80,8 @@ func (a *ClientConfig) parseEnv() error {
 		}
 	}
 
-	if key := os.Getenv("KEY"); key != "" {
-		a.Key = key
+	if publicCert := os.Getenv("PUBLIC_CERT"); publicCert != "" {
+		a.Keys.PublicCert = publicCert
 	}
 
 	if config := os.Getenv("CONFIG"); config != "" {
@@ -110,7 +117,7 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 		Address        *Address `json:"address"`
 		ReportInterval string   `json:"report_interval"`
 		PollInterval   string   `json:"poll_interval"`
-		CryptoKey      string   `json:"crypto_key"`
+		PublicCert     string   `json:"public_cert"`
 	}
 
 	if err = json.Unmarshal(b, &cfgFile); err != nil {
@@ -119,6 +126,10 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 
 	if a.Address.GRPCPort == "" && cfgFile.Address.GRPCPort != "" {
 		a.Address.GRPCPort = cfgFile.Address.GRPCPort
+	}
+
+	if a.Keys.PublicCert == "" && cfgFile.PublicCert != "" {
+		a.Keys.PublicCert = cfgFile.PublicCert
 	}
 
 	return nil
@@ -145,3 +156,5 @@ func (a *Address) Set(value string) error {
 func GetAddress() *Address {
 	return cfg.Address
 }
+
+func GetKeys() *Keys { return cfg.Keys }

@@ -47,7 +47,7 @@ type Meta struct {
 
 type ItemData struct {
 	ID   uuid.UUID `json:"id"`
-	Data string    `json:"data"`
+	Data []byte    `json:"data"`
 }
 
 //TODO add OTP Data

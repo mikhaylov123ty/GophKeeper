@@ -7,11 +7,12 @@
 package protobuf
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -135,7 +136,7 @@ func (x *PostUserDataResponse) GetUserId() string {
 
 type PostItemDataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	DataId        string                 `protobuf:"bytes,2,opt,name=data_id,json=dataId,proto3" json:"data_id,omitempty"`
 	MetaData      *MetaData              `protobuf:"bytes,3,opt,name=meta_data,json=metaData,proto3" json:"meta_data,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -172,11 +173,11 @@ func (*PostItemDataRequest) Descriptor() ([]byte, []int) {
 	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PostItemDataRequest) GetData() string {
+func (x *PostItemDataRequest) GetData() []byte {
 	if x != nil {
 		return x.Data
 	}
-	return ""
+	return nil
 }
 
 func (x *PostItemDataRequest) GetDataId() string {
@@ -299,7 +300,7 @@ func (x *GetItemDataRequest) GetDataId() string {
 
 type GetItemDataResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Data          string                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -334,11 +335,11 @@ func (*GetItemDataResponse) Descriptor() ([]byte, []int) {
 	return file_internal_proto_handlers_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetItemDataResponse) GetData() string {
+func (x *GetItemDataResponse) GetData() []byte {
 	if x != nil {
 		return x.Data
 	}
-	return ""
+	return nil
 }
 
 type MetaData struct {
@@ -646,7 +647,7 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x03jwt\x18\x02 \x01(\tR\x03jwt\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\tR\x06userId\"v\n" +
 	"\x13PostItemDataRequest\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\x12\x17\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\x12\x17\n" +
 	"\adata_id\x18\x02 \x01(\tR\x06dataId\x122\n" +
 	"\tmeta_data\x18\x03 \x01(\v2\x15.server_grpc.MetaDataR\bmetaData\"e\n" +
 	"\x14PostItemDataResponse\x12\x17\n" +
@@ -656,7 +657,7 @@ const file_internal_proto_handlers_proto_rawDesc = "" +
 	"\x12GetItemDataRequest\x12\x17\n" +
 	"\adata_id\x18\x01 \x01(\tR\x06dataId\")\n" +
 	"\x13GetItemDataResponse\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\tR\x04data\"\xd7\x01\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\"\xd7\x01\n" +
 	"\bMetaData\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12 \n" +

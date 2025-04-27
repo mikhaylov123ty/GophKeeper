@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
@@ -80,8 +81,10 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 }
 
 func (im *ItemManager) postItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
-	//TODO ADD ENCRYTP WITH PASS OR CERT
-	encryptedData := base64.StdEncoding.EncodeToString(data)
+	encryptedData := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+	base64.StdEncoding.Encode(encryptedData, data)
+
+	//encryptedData, err := EncryptData(data)
 
 	resp, err := im.grpcClient.Handlers.ItemDataHandler.PostItemData(context.Background(),
 		&pb.PostItemDataRequest{
@@ -104,9 +107,10 @@ func (im *ItemManager) getItemData(dataID string) (string, error) {
 		return "", fmt.Errorf("could not get text data: %w", err)
 	}
 
-	decryptedData, err := base64.StdEncoding.DecodeString(response.Data)
+	//decryptedData, err := DeryptData(response.Data)
+	decryptedData, err := base64.StdEncoding.DecodeString(string(response.Data))
 	if err != nil {
-		return "", fmt.Errorf("could not decode text data: %w", err)
+		return "", fmt.Errorf("failed decrypt data: %w", err)
 	}
 
 	return string(decryptedData), nil
@@ -295,3 +299,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	return m.currentScreen.View()
 }
+
+//func EncryptData(body []byte) ([]byte, error) {
+//	// Пропуск обработки, если флаг не задан
+//	if config.GetKeys().PublicCert == "" {
+//		return body, nil
+//	}
+//
+//	return encryptedBytes, nil
+//}
+//
+//func DeryptData(body []byte) ([]byte, error) {
+//	var err error
+//	if config.GetKeys().PublicCert == "" {
+//		return body, nil
+//	}
+//
+//	return decryptedBytes, nil
+//}

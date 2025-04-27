@@ -3,6 +3,8 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
@@ -29,18 +31,16 @@ func New() (*Client, error) {
 	//TODO add interceptors
 	interceptors := []grpc.UnaryClientInterceptor{
 		instance.withJWT,
-		//with TLS
 	}
 
-	creds, err := credentials.NewClientTLSFromFile("public.crt", "localhost")
+	tlsCred, err := credentials.NewClientTLSFromFile(config.GetKeys().PublicCert, "localhost")
 	if err != nil {
 		return nil, fmt.Errorf("could not load tls cert: %s", err)
 	}
 
 	conn, err := grpc.NewClient(
 		config.GetAddress().String(),
-		grpc.WithTransportCredentials(creds),
-		//grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(tlsCred),
 		grpc.WithChainUnaryInterceptor(interceptors...),
 	)
 	if err != nil {
@@ -53,7 +53,7 @@ func New() (*Client, error) {
 		AuthHandler:     pb.NewUserHandlersClient(conn),
 	}
 
-	fmt.Println("ADDRESS", config.GetAddress().String())
+	slog.Info("Client Created", slog.String("address", config.GetAddress().String()))
 
 	return &instance, nil
 }

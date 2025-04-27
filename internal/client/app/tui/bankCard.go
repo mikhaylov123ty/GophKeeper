@@ -3,13 +3,15 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"strings"
 )
 
 const (
@@ -294,7 +296,7 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				screen.newItemData.CardNum != "" &&
 				screen.newItemData.Expiry != "" &&
 				screen.newItemData.CVV != "" {
-				
+
 				// Create new item and add to the manager
 				newItem := MetaItem{
 					Id:          screen.selectedItem.Id,
@@ -317,7 +319,7 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						UserId:      screen.itemManager.userID,
 					}
 
-					resp, err := screen.itemManager.postItemData(cardData, "", &metaData)
+					resp, err := screen.itemManager.postItemData(cardData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
 						return screen.backScreen, func() tea.Msg {
 							newItem.Title = err.Error()
