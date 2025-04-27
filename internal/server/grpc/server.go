@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"log/slog"
 	"time"
 
@@ -19,48 +20,41 @@ import (
 
 // GRPCServer - структура инстанса gRPC сервера
 type GRPCServer struct {
-	//auth   *auth
 	Server *grpc.Server
 }
 
-//type auth struct {
-//	cryptoKey string
-//	hashKey   string
-//}
-
 // NewServer создает инстанс gRPC сервера
-func NewServer(cryptoKey string, hashKey string,
-	textHandler *handlers.TextHandler,
-	bankCardHandler *handlers.BankCardDataHandler,
+func NewServer(
+	itemsDataHandler *handlers.ItemsDataHandler,
 	metaDataHandler *handlers.MetaDataHandler,
 	authHandler *handlers.AuthHandler,
-) *GRPCServer {
-	instance := &GRPCServer{
-		//auth: &auth{
-		//	cryptoKey: cryptoKey,
-		//	hashKey:   hashKey,
-		//},
-	}
+) (*GRPCServer, error) {
+	instance := &GRPCServer{}
 
 	// Определение перехватчиков
 	interceptors := []grpc.UnaryServerInterceptor{
 		instance.withLogger,
-		//instance.withHash,
 		instance.withAuth,
 		//instance.withEncrypt
 		// WITH TLS
 	}
 
+	creds, err := credentials.NewServerTLSFromFile("public.crt", "private.key")
+	if err != nil {
+		return nil, fmt.Errorf("could not load tls cert: %s", err)
+	}
+
 	//Регистрация инстанса gRPC с перехватчиками
 	instance.Server = grpc.NewServer(
-		grpc.ChainUnaryInterceptor(interceptors...))
+		grpc.Creds(creds),
+		grpc.ChainUnaryInterceptor(interceptors...),
+	)
 
-	pb.RegisterTextHandlersServer(instance.Server, textHandler)
-	pb.RegisterBankCardHandlersServer(instance.Server, bankCardHandler)
+	pb.RegisterItemDataHandlersServer(instance.Server, itemsDataHandler)
 	pb.RegisterMetaDataHandlersServer(instance.Server, metaDataHandler)
 	pb.RegisterUserHandlersServer(instance.Server, authHandler)
 
-	return instance
+	return instance, nil
 }
 
 // withLogger - перехватчик логирует запросы
@@ -83,67 +77,93 @@ func (g *GRPCServer) withLogger(ctx context.Context, req any,
 
 func (g *GRPCServer) withAuth(ctx context.Context, req any,
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-	fmt.Println("FULL SERVICE METHOD: ", info.FullMethod)
-	if info.FullMethod != "/server_grpc.UserHandlers/PostUserData" && config.GetKeys().JWTKey != "" {
-		meta, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			slog.ErrorContext(ctx, "Failed to get metadata")
-			return nil, status.Error(codes.Internal, "can't extract metadata from request")
-		}
-		fmt.Printf("METADATA: %+v\n", meta)
-		header, ok := meta["authorization"]
-		if !ok {
-			slog.ErrorContext(ctx, "Failed to get Authorization header")
-			return nil, status.Error(codes.Unauthenticated, "can't found JWT header")
-		}
+	if config.GetKeys().JWTKey != "" {
+		if info.FullMethod != "/server_grpc.UserHandlers/PostUserData" && config.GetKeys().JWTKey != "" {
+			slog.InfoContext(ctx, "starting verifying JWT")
+			meta, ok := metadata.FromIncomingContext(ctx)
+			if !ok {
+				slog.ErrorContext(ctx, "Failed to get metadata")
+				return nil, status.Error(codes.Internal, "can't extract metadata from request")
+			}
 
-		token, err := jwt.Parse(header[0], func(token *jwt.Token) (interface{}, error) {
-			return []byte(config.GetKeys().JWTKey), nil
-		})
-		if err != nil {
-			slog.ErrorContext(ctx, "Failed to parse Authorization header")
-			return nil, status.Error(codes.Unauthenticated, "can't parse Authorization header")
-		}
+			header, ok := meta["authorization"]
+			if !ok {
+				slog.ErrorContext(ctx, "Failed to get Authorization header")
+				return nil, status.Error(codes.Unauthenticated, "can't found JWT header")
+			}
 
-		if !token.Valid {
-			slog.ErrorContext(ctx, "JWT token is invalid")
-			return nil, status.Error(codes.PermissionDenied, "JWT token is invalid")
+			token, err := jwt.Parse(header[0], func(token *jwt.Token) (interface{}, error) {
+				return []byte(config.GetKeys().JWTKey), nil
+			})
+			if err != nil {
+				slog.ErrorContext(ctx, "Failed to parse Authorization header")
+				return nil, status.Error(codes.Unauthenticated, "can't parse Authorization header")
+			}
+
+			if !token.Valid {
+				slog.ErrorContext(ctx, "JWT token is invalid")
+				return nil, status.Error(codes.PermissionDenied, "JWT token is invalid")
+			}
 		}
 	}
-	//TODO IF USEr ID IS OK IN BASE
+
+	//TODO ADD CREATION TLS CERT AND SEND IT
+
 	return handler(ctx, req)
 }
 
-//// withHash - перехватчик проверяет наличие хеша в метаданных и сверяет с телом запроса
-//func (g *GRPCServer) withHash(ctx context.Context, req any,
+//// withDecrypt - перехватчик дешифровки тела запроса
+//func (g *GRPCServer) withDecrypt(ctx context.Context, req any,
 //	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-//	// Проверка наличия флага ключа
-//	if g.auth.hashKey != "" {
-//		g.logger.Infof("start checking gRPC request hash")
+//	// Проверка наличия флага приватного ключа
+//	if config.GetKeys().CryptoKey != "" {
+//		slog.InfoContext(ctx, "start decrypt gRPC request")
 //
-//		// Чтеные метаданных
-//		meta, ok := metadata.FromIncomingContext(ctx)
-//		if !ok {
-//			return nil, status.Errorf(codes.Internal, "can't extract metadata from request")
-//		}
-//		var requestHeader []byte
-//		header, ok := meta["hashsha256"]
-//		if !ok {
-//			return nil, status.Errorf(codes.Unauthenticated, "can't extract hash header from request")
-//		}
-//		requestHeader, err = hex.DecodeString(header[0])
+//		// Чтение pem файла
+//		var privatePEM []byte
+//		privatePEM, err = os.ReadFile(config.GetKeys().CryptoKey)
 //		if err != nil {
-//			return nil, status.Errorf(codes.InvalidArgument, "can't decode hash header from request")
+//			return nil, status.Errorf(codes.NotFound, "unable to read private key: %v", err)
 //		}
 //
-//		// Чтение тела запроса
+//		// Поиск блока приватного ключа
+//		privateKeyBlock, _ := pem.Decode(privatePEM)
+//
+//		// Парсинг приватного ключа
+//		var privateKey *rsa.PrivateKey
+//		privateKey, err = x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
+//		if err != nil {
+//			return nil, status.Errorf(codes.InvalidArgument, "unable to parse private key: %v", err)
+//		}
+//		if err = privateKey.Validate(); err != nil {
+//			return nil, status.Errorf(codes.Unauthenticated, "invalid private key: %v", err)
+//		}
+//
+//		// Установка длины частей публичного ключа
+//		blockLen := privateKey.PublicKey.Size()
+//
+//		// Чтение метрик
 //		body := req.(*pb.PostUpdatesRequest).Metrics
 //
-//		// Вычисление и валидация хеша
-//		hash := utils.GetHash(g.auth.hashKey, body)
-//		if !hmac.Equal(hash, requestHeader) {
-//			return nil, status.Errorf(codes.PermissionDenied, "hash does not match")
+//		// Дешифровка тела запроса частями
+//		var decryptedBytes []byte
+//		for start := 0; start < len(body); start += blockLen {
+//			end := start + blockLen
+//			if start+blockLen > len(body) {
+//				end = len(body)
+//			}
+//
+//			var decryptedChunk []byte
+//			decryptedChunk, err = rsa.DecryptPKCS1v15(rand.Reader, privateKey, body[start:end])
+//			if err != nil {
+//				return nil, status.Errorf(codes.Internal, "unable to decrypt request: %v", err)
+//			}
+//
+//			decryptedBytes = append(decryptedBytes, decryptedChunk...)
 //		}
+//
+//		// Подмена тела запроса
+//		req.(*pb.PostUpdatesRequest).Metrics = decryptedBytes
 //	}
 //
 //	return handler(ctx, req)

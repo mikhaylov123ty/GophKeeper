@@ -1,8 +1,9 @@
 package tui
 
 import (
-	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -23,11 +24,7 @@ type ViewTextItemsScreen struct {
 
 type ViewTextDataScreen struct {
 	backScreen Screen
-	itemData   *textItemData
-}
-
-type textItemData struct {
-	text string
+	itemData   *models.TextData
 }
 
 // TODO optimize duplications
@@ -36,7 +33,7 @@ type AddTextItemScreen struct {
 	category    Category
 	newTitle    string
 	newDesc     string
-	newItemData *textItemData
+	newItemData *models.TextData
 	createdTime string
 	cursor      int
 	backScreen  Screen
@@ -49,7 +46,7 @@ type EditTextItemScreen struct {
 	newTitle     string
 	newDesc      string
 	selectedItem *MetaItem
-	newItemData  *textItemData
+	newItemData  *models.TextData
 	createdTime  string
 	cursor       int
 	backScreen   Screen
@@ -66,19 +63,30 @@ func (screen *ViewTextItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "enter":
 			if len(screen.itemManager.metaItems[screen.category]) > 0 {
 				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
-				itemData, err := screen.itemManager.getItemData(itemDataID, screen.category)
+				itemData, err := screen.itemManager.getItemData(itemDataID)
 				if err != nil {
 					return ViewTextDataScreen{
 						backScreen: screen,
-						itemData: &textItemData{
-							text: err.Error(),
+						itemData: &models.TextData{
+							Text: err.Error(),
 						},
 					}, nil
 				}
+
+				var textData models.TextData
+				if err = json.Unmarshal([]byte(itemData), &textData); err != nil {
+					return ViewTextDataScreen{
+						backScreen: screen,
+						itemData: &models.TextData{
+							Text: err.Error(),
+						},
+					}, nil
+				}
+
 				return ViewTextDataScreen{
 					backScreen: screen,
-					itemData: &textItemData{
-						text: itemData.(*textItemData).text,
+					itemData: &models.TextData{
+						Text: textData.Text,
 					},
 				}, nil
 			}
@@ -150,7 +158,7 @@ func (screen ViewTextDataScreen) View() string {
 			"%s%s\n",
 		ColorBold, ColorReset,
 		separator,
-		ColorGreen, screen.itemData.text,
+		ColorGreen, screen.itemData.Text,
 	)
 }
 
@@ -158,7 +166,7 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.text != "" {
+			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
 				newItem := MetaItem{
 					Id:          uuid.New(),
@@ -167,19 +175,20 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 
 				if screen.newItemData != nil {
-					//TODO maybe let server comnstruct metaD
-					//TODO create dedicated func
-					resp, err := screen.itemManager.grpcClient.Handlers.TextHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{
-						Text:   screen.newItemData.text,
-						TextId: "",
-						MetaData: &pb.MetaData{
-							Id:          newItem.Id.String(),
-							Title:       newItem.Title,
-							Description: newItem.Description,
-							DataType:    string(screen.category),
-							UserId:      screen.itemManager.userID,
-						},
-					})
+					textData, err := json.Marshal(screen.newItemData)
+					if err != nil {
+						return screen, nil
+					}
+
+					metaData := pb.MetaData{
+						Id:          newItem.Id.String(),
+						Title:       newItem.Title,
+						Description: newItem.Description,
+						DataType:    string(screen.category),
+						UserId:      screen.itemManager.userID,
+					}
+
+					resp, err := screen.itemManager.postItemData(textData, "", &metaData)
 					if err != nil {
 						return screen.backScreen, func() tea.Msg {
 							newItem.Title = err.Error()
@@ -216,7 +225,7 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 func (screen *AddTextItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &textItemData{}
+		screen.newItemData = &models.TextData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -228,13 +237,13 @@ func (screen *AddTextItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
+	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle}
 	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
 	addLine("Description:", screen.newDesc, styles[1])
-	addLine("Text:", screen.newItemData.text, styles[2])
+	addLine("Text:", screen.newItemData.Text, styles[2])
 
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
@@ -246,7 +255,7 @@ func (screen *AddTextItemScreen) View() string {
 }
 
 func (screen *AddTextItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.text}
+	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
 
 	// Backspace logic
 	if input == "backspace" {
@@ -263,14 +272,14 @@ func (screen *AddTextItemScreen) handleInput(input string) {
 	// Update the fields back to the screen state
 	screen.newTitle = fields[0]
 	screen.newDesc = fields[1]
-	screen.newItemData.text = fields[2]
+	screen.newItemData.Text = fields[2]
 }
 
 func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.text != "" {
+			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
 				newItem := MetaItem{
 					Id:          screen.selectedItem.Id,
@@ -279,27 +288,30 @@ func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 
 				if screen.newItemData != nil {
-					//TODO maybe let server comnstruct metaD
 					//TODO create dedicated func
-					resp, err := screen.itemManager.grpcClient.Handlers.TextHandler.PostTextData(context.Background(), &pb.PostTextDataRequest{
-						Text:   screen.newItemData.text,
-						TextId: screen.selectedItem.dataID,
-						MetaData: &pb.MetaData{
-							Id:          screen.selectedItem.Id.String(),
-							Title:       newItem.Title,
-							Description: newItem.Description,
-							DataType:    string(screen.category),
-							UserId:      screen.itemManager.userID,
-						},
-					})
+					textData, err := json.Marshal(screen.newItemData)
+					if err != nil {
+						return screen, nil
+					}
+
+					metaData := pb.MetaData{
+						Id:          screen.selectedItem.Id.String(),
+						Title:       newItem.Title,
+						Description: newItem.Description,
+						DataType:    string(screen.category),
+						UserId:      screen.itemManager.userID,
+					}
+
+					resp, err := screen.itemManager.postItemData(textData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
 						return screen.backScreen, func() tea.Msg {
-							screen.selectedItem.Title = err.Error()
+							newItem.Title = err.Error()
+							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
+
 							return fmt.Sprintf("ERROR %s,", err.Error())
 						}
 					}
 
-					//TODO store to local storage
 					screen.selectedItem.Title = screen.newTitle
 					screen.selectedItem.Description = screen.newDesc
 					screen.selectedItem.Modified = resp.Modified
@@ -324,7 +336,7 @@ func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 func (screen *EditTextItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &textItemData{}
+		screen.newItemData = &models.TextData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -342,7 +354,7 @@ func (screen *EditTextItemScreen) View() string {
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
 	addLine("Description:", screen.newDesc, styles[1])
-	addLine("Text:", screen.newItemData.text, styles[2])
+	addLine("Text:", screen.newItemData.Text, styles[2])
 
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
@@ -354,7 +366,7 @@ func (screen *EditTextItemScreen) View() string {
 }
 
 func (screen *EditTextItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.text}
+	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
 
 	// Backspace logic
 	if input == "backspace" {
@@ -371,5 +383,5 @@ func (screen *EditTextItemScreen) handleInput(input string) {
 	// Update the fields back to the screen state
 	screen.newTitle = fields[0]
 	screen.newDesc = fields[1]
-	screen.newItemData.text = fields[2]
+	screen.newItemData.Text = fields[2]
 }

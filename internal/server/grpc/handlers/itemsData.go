@@ -15,46 +15,46 @@ import (
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
-type TextHandler struct {
-	pb.UnimplementedTextHandlersServer
-	textDataCreator  textDataCreator
-	textDataProvider textDataProvider
+type ItemsDataHandler struct {
+	pb.UnimplementedItemDataHandlersServer
+	itemDataCreator  itemDataCreator
+	itemDataProvider itemDataProvider
 }
 
 // TODO ADD TX
-type textDataCreator interface {
-	SaveText(*models.TextData) error
+type itemDataCreator interface {
+	SaveItemData(*models.ItemData) error
 	SaveMetaData(*models.Meta) error
 }
 
 // TODO separate metadata to interface
 
-type textDataProvider interface {
-	GetTextByID(uuid.UUID) (*models.TextData, error)
+type itemDataProvider interface {
+	GetItemDataByID(uuid.UUID) (*models.ItemData, error)
 }
 
-func NewTextHandler(textDataCreator textDataCreator, textDataProvider textDataProvider) *TextHandler {
-	return &TextHandler{
-		textDataCreator:  textDataCreator,
-		textDataProvider: textDataProvider,
+func NewTextHandler(itemDataCreator itemDataCreator, itemDataProvider itemDataProvider) *ItemsDataHandler {
+	return &ItemsDataHandler{
+		itemDataCreator:  itemDataCreator,
+		itemDataProvider: itemDataProvider,
 	}
 }
 
-func (t *TextHandler) PostTextData(ctx context.Context, request *pb.PostTextDataRequest) (*pb.PostTextDataResponse, error) {
-	var textID uuid.UUID
+func (h *ItemsDataHandler) PostItemData(ctx context.Context, request *pb.PostItemDataRequest) (*pb.PostItemDataResponse, error) {
+	var dataID uuid.UUID
 
-	if request.GetText() == "" {
-		return nil, status.Error(codes.InvalidArgument, "empty text")
+	if request.GetData() == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty item data")
 	}
 
-	if request.GetTextId() == "" {
-		textID = uuid.New()
+	if request.GetDataId() == "" {
+		dataID = uuid.New()
 	} else {
-		id, err := uuid.Parse(request.GetTextId())
+		id, err := uuid.Parse(request.GetDataId())
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetTextId())
+			return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetDataId())
 		}
-		textID = id
+		dataID = id
 	}
 
 	if request.GetMetaData() == nil {
@@ -76,42 +76,42 @@ func (t *TextHandler) PostTextData(ctx context.Context, request *pb.PostTextData
 		Title:       request.GetMetaData().Title,
 		Description: request.GetMetaData().Description,
 		Type:        request.GetMetaData().DataType,
-		DataID:      textID,
+		DataID:      dataID,
 		UserID:      userID,
 		Created:     time.Now(), // Current time
 		Modified:    time.Now(), // Current time
 	}
 
-	textData := models.TextData{
-		ID:   textID,
-		Text: request.GetText(),
+	itemData := models.ItemData{
+		ID:   dataID,
+		Data: request.GetData(),
 	}
 
 	// TODO open TX
-	if err = t.textDataCreator.SaveText(&textData); err != nil {
+	if err = h.itemDataCreator.SaveItemData(&itemData); err != nil {
 		slog.ErrorContext(ctx, "could not save text", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if err = t.textDataCreator.SaveMetaData(&metaData); err != nil {
+	if err = h.itemDataCreator.SaveMetaData(&metaData); err != nil {
 		slog.ErrorContext(ctx, "could not save meta data", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.PostTextDataResponse{
-			DataId:   textID.String(),
+	return &pb.PostItemDataResponse{
+			DataId:   dataID.String(),
 			Created:  metaData.Created.Format(time.RFC3339),
 			Modified: metaData.Modified.Format(time.RFC3339),
 		},
 		status.Errorf(codes.OK, "text registered")
 }
-func (t *TextHandler) GetTextData(ctx context.Context, request *pb.GetTextDataRequest) (*pb.GetTextDataResponse, error) {
-	textID, err := uuid.Parse(request.GetTextId())
+func (h *ItemsDataHandler) GetItemData(ctx context.Context, request *pb.GetItemDataRequest) (*pb.GetItemDataResponse, error) {
+	dataID, err := uuid.Parse(request.GetDataId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetTextId())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetDataId())
 	}
 
-	textItem, err := t.textDataProvider.GetTextByID(textID)
+	item, err := h.itemDataProvider.GetItemDataByID(dataID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.ErrorContext(ctx, "no text found", slog.String("error", err.Error()))
@@ -121,7 +121,7 @@ func (t *TextHandler) GetTextData(ctx context.Context, request *pb.GetTextDataRe
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &pb.GetTextDataResponse{
-			Text: textItem.Text},
+	return &pb.GetItemDataResponse{
+			Data: item.Data},
 		status.Errorf(codes.OK, "text gathered")
 }

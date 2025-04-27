@@ -44,7 +44,10 @@ func main() {
 		slog.String("db_name", config.GetDB().Name),
 	)
 
-	serverInstance := server.New(storageService)
+	serverInstance, err := server.New(storageService)
+	if err != nil {
+		panic(err)
+	}
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)

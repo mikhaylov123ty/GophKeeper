@@ -3,9 +3,8 @@ package grpc
 import (
 	"context"
 	"fmt"
-
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
@@ -13,16 +12,14 @@ import (
 )
 
 type Client struct {
-	//	Conn     *grpc.ClientConn
 	JWTToken string
 	Handlers *Handlers
 }
 
 type Handlers struct {
-	TextHandler      pb.TextHandlersClient
-	MetaHandler      pb.MetaDataHandlersClient
-	BankCardsHandler pb.BankCardHandlersClient
-	AuthHandler      pb.UserHandlersClient
+	ItemDataHandler pb.ItemDataHandlersClient
+	MetaDataHandler pb.MetaDataHandlersClient
+	AuthHandler     pb.UserHandlersClient
 }
 
 func New() (*Client, error) {
@@ -32,11 +29,18 @@ func New() (*Client, error) {
 	//TODO add interceptors
 	interceptors := []grpc.UnaryClientInterceptor{
 		instance.withJWT,
+		//with TLS
+	}
+
+	creds, err := credentials.NewClientTLSFromFile("public.crt", "localhost")
+	if err != nil {
+		return nil, fmt.Errorf("could not load tls cert: %s", err)
 	}
 
 	conn, err := grpc.NewClient(
 		config.GetAddress().String(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithTransportCredentials(creds),
+		//grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(interceptors...),
 	)
 	if err != nil {
@@ -44,10 +48,9 @@ func New() (*Client, error) {
 	}
 
 	instance.Handlers = &Handlers{
-		TextHandler:      pb.NewTextHandlersClient(conn),
-		MetaHandler:      pb.NewMetaDataHandlersClient(conn),
-		BankCardsHandler: pb.NewBankCardHandlersClient(conn),
-		AuthHandler:      pb.NewUserHandlersClient(conn),
+		ItemDataHandler: pb.NewItemDataHandlersClient(conn),
+		MetaDataHandler: pb.NewMetaDataHandlersClient(conn),
+		AuthHandler:     pb.NewUserHandlersClient(conn),
 	}
 
 	fmt.Println("ADDRESS", config.GetAddress().String())

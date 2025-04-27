@@ -8,23 +8,9 @@ CREATE TABLE IF NOT EXISTS users(
     modified_at TIMESTAMP NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS texts(
+CREATE TABLE IF NOT EXISTS items_data(
     id UUID PRIMARY KEY NOT NULL,
-    text TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS binaries(
-    id UUID PRIMARY KEY NOT NULL,
-    name TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    content_type TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS bank_cards(
-    id UUID PRIMARY KEY NOT NULL,
-    card_num TEXT NOT NULL,
-    expiry TEXT NOT NULL,
-    cvv INT NOT NULL
+    data TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS metas(

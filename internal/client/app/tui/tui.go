@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -15,7 +16,6 @@ import (
 
 type Model struct {
 	currentScreen Screen
-	//grpcClient    *grpc.Client
 }
 
 type Screen interface {
@@ -26,10 +26,11 @@ type Screen interface {
 type Category string
 
 const (
-	TextCategory Category = "Text"
-	FileCategory Category = "Files"
-	CardCategory Category = "Cards"
-	ExitCategory Category = "Exit" // New exit category
+	TextCategory  Category = "Text"
+	CredsCategory Category = "Creds"
+	FileCategory  Category = "Files"
+	CardCategory  Category = "Cards"
+	ExitCategory  Category = "Exit" // New exit category
 
 	listHeight = 15
 
@@ -55,7 +56,6 @@ type ActionsMenu struct {
 	backScreen  Screen
 }
 
-// TODO change []*MetaItem to map[uuid]Metaitem
 type ItemManager struct {
 	metaItems  map[Category][]*MetaItem
 	grpcClient *grpc.Client
@@ -69,48 +69,52 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 	}
 
 	mainMenu := MainMenu{
-		categories: []Category{TextCategory, FileCategory, CardCategory, ExitCategory}, // Include exit category
+		categories: []Category{TextCategory, CredsCategory, FileCategory, CardCategory, ExitCategory}, // Include exit category
 		cursor:     0,
 		manager:    &im,
 	}
 
-	//TODO wrap
 	auth := NewAuthScreen(&mainMenu, &im)
 
 	return auth, nil
 }
 
-func (im *ItemManager) getItemData(dataID string, category Category) (any, error) {
-	switch category {
-	case TextCategory:
-		response, err := im.grpcClient.Handlers.TextHandler.GetTextData(context.Background(), &pb.GetTextDataRequest{
-			TextId: dataID,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("could not get text data: %w", err)
-		}
-		return &textItemData{
-			text: response.GetText(),
-		}, nil
+func (im *ItemManager) postItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
+	//TODO ADD ENCRYTP WITH PASS OR CERT
+	encryptedData := base64.StdEncoding.EncodeToString(data)
 
-	case CardCategory:
-		response, err := im.grpcClient.Handlers.BankCardsHandler.GetBankCardData(context.Background(), &pb.GetBankCardDataRequest{
-			CardId: dataID,
+	resp, err := im.grpcClient.Handlers.ItemDataHandler.PostItemData(context.Background(),
+		&pb.PostItemDataRequest{
+			Data:     encryptedData,
+			DataId:   dataID,
+			MetaData: metaData,
 		})
-		if err != nil {
-			return nil, fmt.Errorf("could not get bank card data: %w", err)
-		}
-		return &bankCardItemData{
-			cardNum: response.GetCardNum(),
-			expiry:  response.GetExpiry(),
-			cvv:     response.GetCvv(),
-		}, nil
+	if err != nil {
+		return nil, fmt.Errorf("post item failed:  %w,", err)
 	}
-	return nil, nil
+
+	return resp, err
+}
+
+func (im *ItemManager) getItemData(dataID string) (string, error) {
+	response, err := im.grpcClient.Handlers.ItemDataHandler.GetItemData(context.Background(), &pb.GetItemDataRequest{
+		DataId: dataID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("could not get text data: %w", err)
+	}
+
+	decryptedData, err := base64.StdEncoding.DecodeString(response.Data)
+	if err != nil {
+		return "", fmt.Errorf("could not decode text data: %w", err)
+	}
+
+	return string(decryptedData), nil
+
 }
 
 func (im *ItemManager) syncMeta() error {
-	metaItems, err := im.grpcClient.Handlers.MetaHandler.GetMetaData(context.Background(),
+	metaItems, err := im.grpcClient.Handlers.MetaDataHandler.GetMetaData(context.Background(),
 		&pb.GetMetaDataRequest{UserId: im.userID})
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
@@ -125,6 +129,7 @@ func (im *ItemManager) syncMeta() error {
 			return err
 		}
 	}
+
 	for _, metaItem := range metaItems.Items {
 		id, err := uuid.Parse(metaItem.GetId())
 		if err != nil {
@@ -144,7 +149,7 @@ func (im *ItemManager) syncMeta() error {
 }
 
 func (im *ItemManager) deleteItem(metaItemID uuid.UUID, category Category, dataID string) error {
-	resp, err := im.grpcClient.Handlers.MetaHandler.DeleteMetaData(context.Background(), &pb.DeleteMetaDataRequest{
+	resp, err := im.grpcClient.Handlers.MetaDataHandler.DeleteMetaData(context.Background(), &pb.DeleteMetaDataRequest{
 		MetadataId:   metaItemID.String(),
 		MetadataType: string(category),
 		DataId:       dataID,
@@ -239,6 +244,8 @@ func (cm ActionsMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				case TextCategory:
 					//TODO make screens construct to reuse
 					return &ViewTextItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				case CredsCategory:
+					return &ViewCredsItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				case CardCategory:
 					return &ViewBankCardItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				}
@@ -246,6 +253,8 @@ func (cm ActionsMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				switch cm.category {
 				case TextCategory:
 					return &AddTextItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				case CredsCategory:
+					return &AddCredsItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				case CardCategory:
 					return &AddBankCardItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				}

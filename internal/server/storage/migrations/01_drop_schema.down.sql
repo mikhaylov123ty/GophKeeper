@@ -1,11 +1,7 @@
-DROP TABLE bank_cards;
+DROP TABLE users;
 
-DROP TABLE binaries;
+DROP TABLE items_data;
 
 DROP TABLE metas;
-
-DROP TABLE texts;
-
-DROP TABLE users;
 
 DROP TABLE schema_migrations;

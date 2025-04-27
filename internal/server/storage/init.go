@@ -2,24 +2,19 @@ package storage
 
 import (
 	"fmt"
-	"log/slog"
-
 	"github.com/google/uuid"
-
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage/psql"
+	"log/slog"
 )
 
 type Commands interface {
 	SaveUser(*models.UserData) error
 	GetUserByLogin(string) (*models.UserData, error)
-	SaveText(*models.TextData) error
-	GetTextByID(uuid.UUID) (*models.TextData, error)
-	DeleteTextByID(uuid.UUID) error
-	SaveBankCard(*models.BankCardData) error
-	GetBankCardById(uuid.UUID) (*models.BankCardData, error)
-	DeleteBankCardById(uuid.UUID) error
+	SaveItemData(data *models.ItemData) error
+	GetItemDataByID(uuid.UUID) (*models.ItemData, error)
+	DeleteItemDataByID(uuid.UUID) error
 	SaveMetaData(*models.Meta) error
 	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
 	DeleteMetaDataById(uuid.UUID) error

@@ -3,56 +3,60 @@ package tui
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"strings"
 )
 
 const (
-	cardFields = 5
+	credsFields = 4
 )
 
-type ViewBankCardItemsScreen struct {
-	options      []string
-	category     Category
-	itemManager  *ItemManager
-	editScreen   Screen
-	deleteScreen Screen
-	backScreen   Screen
-	list         *list.Model
+type ViewCredsItemsScreen struct {
+	options     []string
+	category    Category
+	itemManager *ItemManager
+	backScreen  Screen
+	list        *list.Model
 }
 
-type ViewBankCardDataScreen struct {
+type ViewCredsDataScreen struct {
 	backScreen Screen
-	itemData   *models.BankCardData
+	itemData   *models.CredsData
 }
 
-type AddBankCardItemScreen struct {
+// TODO optimize duplications
+type AddCredsItemScreen struct {
 	itemManager *ItemManager
 	category    Category
 	newTitle    string
 	newDesc     string
-	newItemData *models.BankCardData
+	newItemData *models.CredsData
+	createdTime string
 	cursor      int
 	backScreen  Screen
 }
 
-type EditBankCardItemScreen struct {
+// TODO remove unused fields
+type EditCredsItemScreen struct {
 	itemManager  *ItemManager
 	category     Category
 	newTitle     string
 	newDesc      string
 	selectedItem *MetaItem
-	newItemData  *models.BankCardData
+	newItemData  *models.CredsData
+	createdTime  string
 	cursor       int
 	backScreen   Screen
 }
 
-func (screen *ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *ViewCredsItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -61,45 +65,36 @@ func (screen *ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "up":
 			screen.list.CursorUp()
 		case "enter":
-			itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
-			itemData, err := screen.itemManager.getItemData(itemDataID)
-			if err != nil {
-				return ViewBankCardDataScreen{
+			if len(screen.itemManager.metaItems[screen.category]) > 0 {
+				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
+				itemData, err := screen.itemManager.getItemData(itemDataID)
+				if err != nil {
+					return ViewCredsDataScreen{
+						backScreen: screen,
+						itemData: &models.CredsData{
+							Login: err.Error(),
+						},
+					}, nil
+				}
+
+				var credsData models.CredsData
+				if err = json.Unmarshal([]byte(itemData), &credsData); err != nil {
+					return ViewCredsDataScreen{
+						backScreen: screen,
+						itemData: &models.CredsData{
+							Login: err.Error(),
+						},
+					}, nil
+				}
+
+				return ViewCredsDataScreen{
 					backScreen: screen,
-					itemData: &models.BankCardData{
-						CardNum: err.Error(),
+					itemData: &models.CredsData{
+						Login:    credsData.Login,
+						Password: credsData.Password,
 					},
 				}, nil
 			}
-			var cardData models.BankCardData
-			if err := json.Unmarshal([]byte(itemData), &cardData); err != nil {
-				return ViewBankCardDataScreen{
-					backScreen: screen,
-					itemData: &models.BankCardData{
-						CardNum: err.Error(),
-					},
-				}, nil
-			}
-			return ViewBankCardDataScreen{
-				backScreen: screen,
-				itemData: &models.BankCardData{
-					CardNum: cardData.CardNum,
-					Expiry:  cardData.Expiry,
-					CVV:     cardData.CVV,
-				},
-			}, nil
-		case "e":
-			if screen.itemManager.metaItems[screen.category] != nil {
-				return &EditBankCardItemScreen{itemManager: screen.itemManager,
-					backScreen:   screen,
-					category:     screen.category,
-					selectedItem: screen.list.SelectedItem().(*MetaItem),
-					newTitle:     screen.list.SelectedItem().(*MetaItem).Title,
-					newDesc:      screen.list.SelectedItem().(*MetaItem).Description,
-				}, nil
-
-			}
-
 		case "d":
 			if len(screen.itemManager.metaItems[screen.category]) > 0 {
 				//todo failed screen
@@ -112,6 +107,16 @@ func (screen *ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 				screen.list.CursorUp()
 			}
+		case "e":
+			if screen.itemManager.metaItems[screen.category] != nil {
+				return &EditCredsItemScreen{itemManager: screen.itemManager,
+					backScreen:   screen,
+					category:     screen.category,
+					selectedItem: screen.list.SelectedItem().(*MetaItem),
+					newTitle:     screen.list.SelectedItem().(*MetaItem).Title,
+					newDesc:      screen.list.SelectedItem().(*MetaItem).Description,
+				}, nil
+			}
 		case "q":
 			return screen.backScreen, nil // Go back when ESC is pressed
 		}
@@ -119,14 +124,14 @@ func (screen *ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen *ViewBankCardItemsScreen) View() string {
+func (screen *ViewCredsItemsScreen) View() string {
 	if screen.list == nil {
 		listModel := list.New([]list.Item{}, metaItemDelegate{}, 10, listHeight)
 		screen.list = &listModel
 	}
 
 	if len(screen.itemManager.metaItems[screen.category]) == 0 {
-		return "No items to display.\n\nPress Q to go back.\n"
+		return cursorStyle.Render("No items to display.\n\nPress ESC to go back.\n")
 	}
 
 	listItems := []list.Item{}
@@ -135,16 +140,11 @@ func (screen *ViewBankCardItemsScreen) View() string {
 	}
 
 	screen.list.SetItems(listItems)
-	screen.list.SetShowHelp(false)
-	screen.list.Title = "Bank Cards List"
 
-	s := screen.list.View()
-	s += backgroundStyle.Render(separatorStyle.Render("\nUse arrow keys to navigate. e to edit. d to delete. enter to select.\n")) // Navigation instructions
-
-	return s
+	return screen.list.View()
 }
 
-func (screen ViewBankCardDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen ViewCredsDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -152,38 +152,37 @@ func (screen ViewBankCardDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return screen.backScreen, nil
 		}
 	}
-
 	return screen, nil
 }
 
-func (screen ViewBankCardDataScreen) View() string {
+func (screen ViewCredsDataScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
-		"%sCard Information%s\n"+
+		"%sCreds Information%s\n"+
 			"=======================%s"+
-			"%sCard Num: %s%s\n"+
-			"%sExpiry: %s%s\n"+
-			"%sCVV: %s%s\n",
-		ColorBold, ColorReset, separator,
-		ColorGreen, screen.itemData.CardNum, ColorReset,
-		ColorYellow, screen.itemData.Expiry, ColorReset,
-		ColorRed, screen.itemData.CVV, ColorReset,
+			"%s%s\n"+
+			"%s%s\n",
+		ColorBold, ColorReset,
+		separator,
+		ColorGreen, screen.itemData.Login,
+		ColorGreen, screen.itemData.Password,
 	)
 }
 
-func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" {
+			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
 				// Create new item and add to the manager
 				newItem := MetaItem{
 					Id:          uuid.New(),
 					Title:       screen.newTitle,
 					Description: screen.newDesc,
 				}
+
 				if screen.newItemData != nil {
-					cardData, err := json.Marshal(screen.newItemData)
+					CredsData, err := json.Marshal(screen.newItemData)
 					if err != nil {
 						return screen, nil
 					}
@@ -196,7 +195,7 @@ func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						UserId:      screen.itemManager.userID,
 					}
 
-					resp, err := screen.itemManager.postItemData(cardData, "", &metaData)
+					resp, err := screen.itemManager.postItemData(CredsData, "", &metaData)
 					if err != nil {
 						return screen.backScreen, func() tea.Msg {
 							newItem.Title = err.Error()
@@ -219,19 +218,21 @@ func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + cardFields) % cardFields // Focus on Title
+			screen.cursor = (screen.cursor - 1 + credsFields) % credsFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % cardFields // Focus on Description
+			screen.cursor = (screen.cursor + 1) % credsFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
+
 	}
+
 	return screen, nil
 }
 
-func (screen *AddBankCardItemScreen) View() string {
+func (screen *AddCredsItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &models.BankCardData{}
+		screen.newItemData = &models.CredsData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -243,15 +244,14 @@ func (screen *AddBankCardItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
+	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
 	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
 	addLine("Description:", screen.newDesc, styles[1])
-	addLine("Card Num:", screen.newItemData.CardNum, styles[2])
-	addLine("Expiry:", screen.newItemData.Expiry, styles[3])
-	addLine("CVV:", screen.newItemData.CVV, styles[4])
+	addLine("Login:", screen.newItemData.Login, styles[2])
+	addLine("Password:", screen.newItemData.Password, styles[3])
 
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
@@ -262,8 +262,8 @@ func (screen *AddBankCardItemScreen) View() string {
 	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
 }
 
-func (screen *AddBankCardItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.CardNum, screen.newItemData.Expiry, screen.newItemData.CVV}
+func (screen *AddCredsItemScreen) handleInput(input string) {
+	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic
 	if input == "backspace" {
@@ -280,21 +280,15 @@ func (screen *AddBankCardItemScreen) handleInput(input string) {
 	// Update the fields back to the screen state
 	screen.newTitle = fields[0]
 	screen.newDesc = fields[1]
-	screen.newItemData.CardNum = fields[2]
-	screen.newItemData.Expiry = fields[3]
-	screen.newItemData.CVV = fields[4]
+	screen.newItemData.Login = fields[2]
+	screen.newItemData.Password = fields[3]
 }
 
-func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" &&
-				screen.newDesc != "" &&
-				screen.newItemData.CardNum != "" &&
-				screen.newItemData.Expiry != "" &&
-				screen.newItemData.CVV != "" {
-				
+			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
 				// Create new item and add to the manager
 				newItem := MetaItem{
 					Id:          screen.selectedItem.Id,
@@ -304,20 +298,20 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 				if screen.newItemData != nil {
 					//TODO create dedicated func
-					cardData, err := json.Marshal(screen.newItemData)
+					CredsData, err := json.Marshal(screen.newItemData)
 					if err != nil {
 						return screen, nil
 					}
 
 					metaData := pb.MetaData{
-						Id:          newItem.Id.String(),
+						Id:          screen.selectedItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
 						DataType:    string(screen.category),
 						UserId:      screen.itemManager.userID,
 					}
 
-					resp, err := screen.itemManager.postItemData(cardData, "", &metaData)
+					resp, err := screen.itemManager.postItemData(CredsData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
 						return screen.backScreen, func() tea.Msg {
 							newItem.Title = err.Error()
@@ -337,9 +331,9 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + cardFields) % cardFields // Focus on Title
+			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % cardFields // Focus on Description
+			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -349,9 +343,9 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen *EditBankCardItemScreen) View() string {
+func (screen *EditCredsItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &models.BankCardData{}
+		screen.newItemData = &models.CredsData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -363,15 +357,14 @@ func (screen *EditBankCardItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
+	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
 	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
 	addLine("Description:", screen.newDesc, styles[1])
-	addLine("Card Num:", screen.newItemData.CardNum, styles[2])
-	addLine("Expiry:", screen.newItemData.Expiry, styles[3])
-	addLine("CVV:", screen.newItemData.CVV, styles[4])
+	addLine("Login:", screen.newItemData.Login, styles[2])
+	addLine("Password:", screen.newItemData.Password, styles[3])
 
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
@@ -382,8 +375,8 @@ func (screen *EditBankCardItemScreen) View() string {
 	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
 }
 
-func (screen *EditBankCardItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.CardNum, screen.newItemData.Expiry, screen.newItemData.CVV}
+func (screen *EditCredsItemScreen) handleInput(input string) {
+	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic
 	if input == "backspace" {
@@ -400,7 +393,6 @@ func (screen *EditBankCardItemScreen) handleInput(input string) {
 	// Update the fields back to the screen state
 	screen.newTitle = fields[0]
 	screen.newDesc = fields[1]
-	screen.newItemData.CardNum = fields[2]
-	screen.newItemData.Expiry = fields[3]
-	screen.newItemData.CVV = fields[4]
+	screen.newItemData.Login = fields[2]
+	screen.newItemData.Password = fields[3]
 }

@@ -26,9 +26,8 @@ type metaDataProvider interface {
 }
 
 type dataRemover interface {
+	DeleteItemDataByID(uuid.UUID) error
 	DeleteMetaDataById(uuid.UUID) error
-	DeleteBankCardById(uuid.UUID) error
-	DeleteTextByID(uuid.UUID) error
 }
 
 func NewMetaDataHandler(metaDataProvider metaDataProvider, dataRemover dataRemover) *MetaDataHandler {
@@ -84,21 +83,12 @@ func (m *MetaDataHandler) DeleteMetaData(ctx context.Context, request *pb.Delete
 		return nil, status.Errorf(codes.InvalidArgument, "invalid dataId %s", request.GetDataId())
 	}
 
-	switch request.GetMetadataType() {
-	case "Text":
-		if err := m.dataRemover.DeleteTextByID(dataID); err != nil {
-			slog.ErrorContext(ctx, "could not delete text", slog.String("error", err.Error()))
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
-	case "Cards":
-		if err := m.dataRemover.DeleteBankCardById(dataID); err != nil {
-			slog.ErrorContext(ctx, "could not delete bank card", slog.String("error", err.Error()))
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+	if err = m.dataRemover.DeleteItemDataByID(dataID); err != nil {
+		slog.ErrorContext(ctx, "could not delete bank card", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if err := m.dataRemover.DeleteMetaDataById(metaDataID); err != nil {
+	if err = m.dataRemover.DeleteMetaDataById(metaDataID); err != nil {
 		slog.ErrorContext(ctx, "could not delete metaData", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -22,19 +22,19 @@ type auth struct {
 	hashKey   string
 }
 
-func New(storageCommands storage.Commands) *Server {
-	gRPC := grpc.NewServer(
-		config.GetKeys().HashKey,
-		config.GetKeys().CryptoKey,
+func New(storageCommands storage.Commands) (*Server, error) {
+	gRPC, err := grpc.NewServer(
 		handlers.NewTextHandler(storageCommands, storageCommands),
-		handlers.NewBankCardDataHandler(storageCommands, storageCommands),
 		handlers.NewMetaDataHandler(storageCommands, storageCommands),
 		handlers.NewAuthHandler(storageCommands, storageCommands),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("failed build new server: %w", err)
+	}
 
 	return &Server{
 		grpc: gRPC,
-	}
+	}, nil
 }
 
 func (s *Server) Start() error {

@@ -14,22 +14,24 @@ type UserData struct {
 	Modified time.Time `json:"modified"`
 }
 
+type CredsData struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
 type TextData struct {
-	ID   uuid.UUID `json:"id"`
-	Text string    `json:"text"`
+	Text string `json:"text"`
 }
 
 type BankCardData struct {
-	ID      uuid.UUID `json:"id"`
-	CardNum string    `json:"card_num"`
-	Expiry  string    `json:"expiry"`
-	CVV     string    `json:"cvv"`
+	CardNum string `json:"card_num"`
+	Expiry  string `json:"expiry"`
+	CVV     string `json:"cvv"`
 }
 
 type BinaryData struct {
-	ID     uuid.UUID `json:"id"`
-	Binary []byte    `json:"binary"`
-	Name   string    `json:"name"`
+	Binary []byte `json:"binary"`
+	Name   string `json:"name"`
 }
 
 type Meta struct {
@@ -41,6 +43,11 @@ type Meta struct {
 	UserID      uuid.UUID `json:"user_id"`
 	Created     time.Time `json:"created"`
 	Modified    time.Time `json:"modified"`
+}
+
+type ItemData struct {
+	ID   uuid.UUID `json:"id"`
+	Data string    `json:"data"`
 }
 
 //TODO add OTP Data

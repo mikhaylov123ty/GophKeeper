@@ -4,24 +4,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
-
-	"github.com/google/uuid"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
-
 	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"log/slog"
 )
 
 const (
 	metaTableName      = "metas"
-	textTableName      = "texts"
+	itemsDataTableName = "items_data"
 	usersTableName     = "users"
-	bankCardsTableName = "bank_cards"
 )
 
 type Storage struct {
@@ -103,136 +99,67 @@ func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
 	return &user, nil
 }
 
-func (s *Storage) SaveText(data *models.TextData) error {
-	query, args, err := squirrel.Insert(textTableName).
-		Values(data.ID, data.Text).
-		Suffix("ON CONFLICT(id) DO UPDATE SET text = $2").
+func (s *Storage) SaveItemData(item *models.ItemData) error {
+	query, args, err := squirrel.Insert(itemsDataTableName).
+		Values(item.ID, item.Data).
+		Suffix("ON CONFLICT(id) DO UPDATE SET data = $2").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		return fmt.Errorf("could not build save text query: %w", err)
+		return fmt.Errorf("could not build save item data query: %w", err)
 	}
 
-	slog.Debug("saving text data", slog.String("query", query), slog.Any("args", args))
+	slog.Debug("saving item data", slog.String("query", query), slog.Any("args", args))
 
 	_, err = s.db.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("could not save text data: %w", err)
+		return fmt.Errorf("could not save item data: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Storage) GetTextByID(id uuid.UUID) (*models.TextData, error) {
+func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
 	query, args, err := squirrel.Select("*").
-		From(textTableName).
+		From(itemsDataTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("could not build get text by id query: %w", err)
+		return nil, fmt.Errorf("could not build get item data by id query: %w", err)
 	}
 
-	slog.Debug("getting meta data", slog.String("query", query), slog.Any("args", args))
+	slog.Debug("getting data", slog.String("query", query), slog.Any("args", args))
 
 	row := s.db.QueryRow(query, args...)
 	if row.Err() != nil {
-		return nil, fmt.Errorf("could not execute get text by id query: %w", row.Err())
+		return nil, fmt.Errorf("could not execute get item data by id query: %w", row.Err())
 	}
-	var res models.TextData
+	var res models.ItemData
 	if err = row.Scan(
 		&res.ID,
-		&res.Text,
+		&res.Data,
 	); err != nil {
-		return nil, fmt.Errorf("could not scan get text by id query: %w", err)
+		return nil, fmt.Errorf("could not scan get item data by id query: %w", err)
 	}
 
 	return &res, nil
 }
 
-func (s *Storage) DeleteTextByID(id uuid.UUID) error {
-	query, args, err := squirrel.Delete(textTableName).
+func (s *Storage) DeleteItemDataByID(id uuid.UUID) error {
+	query, args, err := squirrel.Delete(itemsDataTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
-		return fmt.Errorf("could not build delete text by id query: %w", err)
+		return fmt.Errorf("could not build delete item data by id query: %w", err)
 	}
 
-	slog.Debug("deleting text data", slog.String("query", query), slog.Any("args", args))
+	slog.Debug("deleting item data", slog.String("query", query), slog.Any("args", args))
 
 	_, err = s.db.Exec(query, args...)
 	if err != nil {
-		return fmt.Errorf("could not delete text data: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Storage) SaveBankCard(data *models.BankCardData) error {
-	query, args, err := squirrel.Insert(bankCardsTableName).
-		Values(data.ID, data.CardNum, data.Expiry, data.CVV).
-		Suffix("ON CONFLICT(id) DO UPDATE SET card_num = $2, expiry = $3, cvv = $4").
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("could not build save bank card query: %w", err)
-	}
-
-	slog.Debug("saving bank card data", slog.String("query", query), slog.Any("args", args))
-
-	_, err = s.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("could not save bank card data: %w", err)
-	}
-
-	return nil
-}
-
-func (s *Storage) GetBankCardById(id uuid.UUID) (*models.BankCardData, error) {
-	query, args, err := squirrel.Select("*").
-		From(bankCardsTableName).
-		Where(squirrel.Eq{"id": id}).
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("could not build get bank card query: %w", err)
-	}
-
-	slog.Debug("get bank card data", slog.String("query", query), slog.Any("args", args))
-
-	row := s.db.QueryRow(query, args...)
-	if row.Err() != nil {
-		return nil, fmt.Errorf("could not execute get bank card query: %w", row.Err())
-	}
-
-	var res models.BankCardData
-	if err = row.Scan(
-		&res.ID,
-		&res.CardNum,
-		&res.Expiry,
-		&res.CVV,
-	); err != nil {
-		return nil, fmt.Errorf("could not scan get bank card query row to struct: %w", row.Err())
-	}
-
-	return &res, nil
-}
-
-func (s *Storage) DeleteBankCardById(id uuid.UUID) error {
-	query, args, err := squirrel.Delete(bankCardsTableName).
-		Where(squirrel.Eq{"id": id}).
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("could not build delete bank card by id query: %w", err)
-	}
-
-	slog.Debug("deleting bank card data", slog.String("query", query), slog.Any("args", args))
-
-	_, err = s.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("could not delete bank card data: %w", err)
+		return fmt.Errorf("could not delete item data: %w", err)
 	}
 
 	return nil

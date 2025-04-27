@@ -113,14 +113,17 @@ func (s *AuthScreen) login() error {
 		Password: s.password,
 	})
 	if err != nil {
+		s.username = err.Error()
 		return fmt.Errorf("failed login: %w", err)
 	}
 
 	if res.Error != "" {
+		s.username = res.Error
 		return fmt.Errorf("failed login: %s", res.Error)
 	}
 
 	if res.UserId == "" {
+		s.username = res.Error
 		return fmt.Errorf("failed login: empty user id")
 	}
 
