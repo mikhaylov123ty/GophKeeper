@@ -27,8 +27,7 @@ type Handlers struct {
 func New() (*Client, error) {
 	var err error
 	instance := Client{}
-
-	//TODO add interceptors
+	
 	interceptors := []grpc.UnaryClientInterceptor{
 		instance.withJWT,
 	}

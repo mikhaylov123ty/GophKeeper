@@ -65,6 +65,7 @@ func (g *GRPCServer) withLogger(ctx context.Context, req any,
 	start := time.Now()
 
 	slog.InfoContext(ctx, "gRPC server received request", slog.String("method", info.FullMethod))
+	slog.InfoContext(ctx, "gRPC server received request", slog.Any("req", req))
 
 	// Запуск RPC-метода
 	resp, err = handler(ctx, req)

@@ -2,8 +2,16 @@ package tui
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/pem"
 	"fmt"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
+	"io"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -81,10 +89,13 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 }
 
 func (im *ItemManager) postItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
-	encryptedData := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
-	base64.StdEncoding.Encode(encryptedData, data)
+	//encryptedData := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
+	//base64.StdEncoding.Encode(encryptedData, data)
 
-	//encryptedData, err := EncryptData(data)
+	encryptedData, err := encryptData(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encrypt data: %w", err)
+	}
 
 	resp, err := im.grpcClient.Handlers.ItemDataHandler.PostItemData(context.Background(),
 		&pb.PostItemDataRequest{
@@ -107,8 +118,7 @@ func (im *ItemManager) getItemData(dataID string) (string, error) {
 		return "", fmt.Errorf("could not get text data: %w", err)
 	}
 
-	//decryptedData, err := DeryptData(response.Data)
-	decryptedData, err := base64.StdEncoding.DecodeString(string(response.Data))
+	decryptedData, err := deryptData(response.Data)
 	if err != nil {
 		return "", fmt.Errorf("failed decrypt data: %w", err)
 	}
@@ -300,20 +310,83 @@ func (m Model) View() string {
 	return m.currentScreen.View()
 }
 
-//func EncryptData(body []byte) ([]byte, error) {
-//	// Пропуск обработки, если флаг не задан
-//	if config.GetKeys().PublicCert == "" {
-//		return body, nil
-//	}
-//
-//	return encryptedBytes, nil
-//}
-//
-//func DeryptData(body []byte) ([]byte, error) {
-//	var err error
-//	if config.GetKeys().PublicCert == "" {
-//		return body, nil
-//	}
-//
-//	return decryptedBytes, nil
-//}
+func encryptData(data []byte) ([]byte, error) {
+	// Пропуск обработки, если флаг не задан
+	if config.GetKeys().PublicCert == "" {
+		return data, nil
+	}
+
+	var err error
+	var publicPEM []byte
+
+	publicPEM, err = os.ReadFile(config.GetKeys().PublicCert)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read public certificate: %w", err)
+	}
+
+	publicCertBlock, _ := pem.Decode(publicPEM)
+	certHash := []byte(createHash(publicCertBlock.Bytes))
+
+	block, err := aes.NewCipher(certHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize gcm: %w", err)
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, fmt.Errorf("failed to generate nonce: %w", err)
+	}
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
+
+	return []byte(base64.StdEncoding.EncodeToString(ciphertext)), nil
+}
+
+func deryptData(body []byte) ([]byte, error) {
+	if config.GetKeys().PublicCert == "" {
+		return body, nil
+	}
+
+	var err error
+	var publicPEM []byte
+
+	publicPEM, err = os.ReadFile(config.GetKeys().PublicCert)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read public certificate: %w", err)
+	}
+
+	publicCertBlock, _ := pem.Decode(publicPEM)
+	certHash := []byte(createHash(publicCertBlock.Bytes))
+
+	block, err := aes.NewCipher(certHash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create AES cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GCM: %w", err)
+	}
+
+	decodedBody, err := base64.StdEncoding.DecodeString(string(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode body: %w", err)
+	}
+
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := decodedBody[:nonceSize], decodedBody[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt data: %w", err)
+	}
+
+	return plaintext, nil
+}
+
+func createHash(key []byte) string {
+	hasher := sha256.New()
+	hasher.Write(key)
+	return base64.StdEncoding.EncodeToString(hasher.Sum(nil))[:32]
+}
