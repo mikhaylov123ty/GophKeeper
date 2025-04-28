@@ -13,3 +13,12 @@ generateCert:
 
 goimports:
 	goimports -local github.com/mikhaylov123ty/GophKeeper -w ./internal/..
+
+build:
+	go build -gcflags="-N -l" -o ./cmd/client/app ./cmd/client/main.go
+
+runApp:
+	./cmd/client//app -config cmd/client/config.json
+
+run:
+	go run cmd/client/main.go -config ./cmd/client/config.json

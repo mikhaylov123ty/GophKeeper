@@ -13,9 +13,10 @@ var cfg *ClientConfig
 
 // ClientConfig - структура конфигурации агента
 type ClientConfig struct {
-	Address    *Address `json:"address"`
-	ConfigFile string
-	Keys       *Keys
+	Address      *Address `json:"address"`
+	ConfigFile   string
+	Keys         *Keys
+	OutputFolder string
 }
 type Address struct {
 	Host     string `json:"host"`
@@ -66,6 +67,8 @@ func (a *ClientConfig) parseFlags() {
 	// Флаг файла конфигурации
 	flag.StringVar(&a.ConfigFile, "config", "", "Config file")
 
+	flag.StringVar(&a.OutputFolder, "file output folder", "", "Output folder for downloaded files.")
+
 	_ = flag.Value(a.Address)
 	flag.Var(a.Address, "a", "Host and port on which to listen gRPC requests. Example: \"localhost:443\" or \":443\"")
 
@@ -90,6 +93,10 @@ func (a *ClientConfig) parseEnv() error {
 
 	if grpcPort := os.Getenv("GRPC_PORT"); grpcPort != "" {
 		a.Address.GRPCPort = grpcPort
+	}
+
+	if outputFolder := os.Getenv("OUTPUT_FOLDER"); outputFolder != "" {
+		a.OutputFolder = outputFolder
 	}
 
 	return nil
@@ -118,6 +125,7 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 		ReportInterval string   `json:"report_interval"`
 		PollInterval   string   `json:"poll_interval"`
 		PublicCert     string   `json:"public_cert"`
+		OutputFolder   string   `json:"files_output_folder"`
 	}
 
 	if err = json.Unmarshal(b, &cfgFile); err != nil {
@@ -130,6 +138,10 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 
 	if a.Keys.PublicCert == "" && cfgFile.PublicCert != "" {
 		a.Keys.PublicCert = cfgFile.PublicCert
+	}
+
+	if a.OutputFolder == "" && cfgFile.OutputFolder != "" {
+		a.OutputFolder = cfgFile.OutputFolder
 	}
 
 	return nil
@@ -158,3 +170,5 @@ func GetAddress() *Address {
 }
 
 func GetKeys() *Keys { return cfg.Keys }
+
+func GetOutputFolder() string { return cfg.OutputFolder }

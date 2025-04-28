@@ -29,9 +29,15 @@ type BankCardData struct {
 	CVV     string `json:"cvv"`
 }
 
+type Binary struct {
+	Binary   BinaryData `json:"binary_data"`
+	FilePath string     `json:"name"`
+}
+
 type BinaryData struct {
-	Binary []byte `json:"binary"`
-	Name   string `json:"name"`
+	Name        string `json:"name"`
+	ContentType string `json:"content_type"`
+	Content     []byte `json:"content"`
 }
 
 type Meta struct {

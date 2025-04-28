@@ -2,5 +2,6 @@
   "address": {
     "grpc_port": "4443"
   },
-  "public_cert": "./public.crt"
+  "public_cert": "./public.crt",
+  "files_output_folder": "/Users/amikhaylov/Downloads/Output/"
 }

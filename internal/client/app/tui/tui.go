@@ -260,6 +260,8 @@ func (cm ActionsMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					return &ViewTextItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				case CredsCategory:
 					return &ViewCredsItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				case FileCategory:
+					return &ViewBinaryItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				case CardCategory:
 					return &ViewBankCardItemsScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				}
@@ -269,6 +271,8 @@ func (cm ActionsMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					return &AddTextItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				case CredsCategory:
 					return &AddCredsItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
+				case FileCategory:
+					return &AddBinaryItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				case CardCategory:
 					return &AddBankCardItemScreen{itemManager: cm.itemManager, backScreen: cm, category: cm.category}, nil
 				}
