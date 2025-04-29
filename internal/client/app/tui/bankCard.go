@@ -66,23 +66,19 @@ func (screen *ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
 			itemData, err := screen.itemManager.getItemData(itemDataID)
 			if err != nil {
-				return ViewBankCardDataScreen{
+				return &ErrorScreen{
 					backScreen: screen,
-					itemData: &models.BankCardData{
-						CardNum: err.Error(),
-					},
+					err:        err,
 				}, nil
 			}
 			var cardData models.BankCardData
 			if err := json.Unmarshal([]byte(itemData), &cardData); err != nil {
-				return ViewBankCardDataScreen{
+				return &ErrorScreen{
 					backScreen: screen,
-					itemData: &models.BankCardData{
-						CardNum: err.Error(),
-					},
+					err:        err,
 				}, nil
 			}
-			return ViewBankCardDataScreen{
+			return &ViewBankCardDataScreen{
 				backScreen: screen,
 				itemData: &models.BankCardData{
 					CardNum: cardData.CardNum,
@@ -104,17 +100,19 @@ func (screen *ViewBankCardItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 		case "d":
 			if len(screen.itemManager.metaItems[screen.category]) > 0 {
-				//todo failed screen
 				if err := screen.itemManager.deleteItem(
 					screen.list.SelectedItem().(*MetaItem).Id,
 					screen.category,
 					screen.list.SelectedItem().(*MetaItem).dataID,
 				); err != nil {
-					return screen, nil
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        err,
+					}, nil
 				}
 				screen.list.CursorUp()
 			}
-		case "q":
+		case "ctrl+q":
 			return screen.backScreen, nil // Go back when ESC is pressed
 		}
 	}
@@ -141,16 +139,16 @@ func (screen *ViewBankCardItemsScreen) View() string {
 	screen.list.Title = "Bank Cards List"
 
 	s := screen.list.View()
-	s += backgroundStyle.Render(separatorStyle.Render("\nUse arrow keys to navigate. e to edit. d to delete. enter to select.\n")) // Navigation instructions
+	s += listItemsFooter()
 
 	return s
 }
 
-func (screen ViewBankCardDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *ViewBankCardDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q":
+		case "ctrl+q":
 			return screen.backScreen, nil
 		}
 	}
@@ -158,9 +156,9 @@ func (screen ViewBankCardDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen ViewBankCardDataScreen) View() string {
+func (screen *ViewBankCardDataScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
-	return fmt.Sprintf(
+	body := fmt.Sprintf(
 		"%sCard Information%s\n"+
 			"=======================%s"+
 			"%sCard Num: %s%s\n"+
@@ -171,6 +169,9 @@ func (screen ViewBankCardDataScreen) View() string {
 		ColorYellow, screen.itemData.Expiry, ColorReset,
 		ColorRed, screen.itemData.CVV, ColorReset,
 	)
+	body += itemDataFooter()
+
+	return body
 }
 
 func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
@@ -187,7 +188,10 @@ func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				if screen.newItemData != nil {
 					cardData, err := json.Marshal(screen.newItemData)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -200,19 +204,16 @@ func (screen *AddBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 					resp, err := screen.itemManager.postItemData(cardData, "", &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					newItem.dataID = resp.DataId
 					newItem.Created = resp.Created
 					newItem.Modified = resp.Modified
 
-					//TODO store to local storage
 					screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
 				}
 			}
@@ -258,10 +259,9 @@ func (screen *AddBankCardItemScreen) View() string {
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
 
-	// Add instructions at the end
-	instructions := "Press Enter to save, Q to cancel, or Backspace to delete the last character."
+	result += addItemsFooter()
 
-	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
+	return result
 }
 
 func (screen *AddBankCardItemScreen) handleInput(input string) {
@@ -305,10 +305,12 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 
 				if screen.newItemData != nil {
-					//TODO create dedicated func
 					cardData, err := json.Marshal(screen.newItemData)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -321,12 +323,10 @@ func (screen *EditBankCardItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 					resp, err := screen.itemManager.postItemData(cardData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					screen.selectedItem.Title = screen.newTitle
@@ -378,10 +378,9 @@ func (screen *EditBankCardItemScreen) View() string {
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
 
-	// Add instructions at the end
-	instructions := "Press Enter to save, Q to cancel, or Backspace to delete the last character."
+	result += addItemsFooter()
 
-	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
+	return result
 }
 
 func (screen *EditBankCardItemScreen) handleInput(input string) {

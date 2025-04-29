@@ -12,12 +12,11 @@ import (
 )
 
 type AuthScreen struct {
-	username     string
-	password     string
-	errorMsg     string
-	next         Screen
-	itemManager  *ItemManager
-	focusedField int // 0 for username, 1 for password
+	username    string
+	password    string
+	next        Screen
+	itemManager *ItemManager
+	cursor      int
 }
 
 // NewAuthScreen initializes the AuthScreen
@@ -34,25 +33,9 @@ func NewAuthScreen(next Screen, itemManager *ItemManager) *Model {
 func (s *AuthScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "tab": // Change focus between fields
-			s.focusedField = (s.focusedField + 1) % 2
-		case "enter": // Submit the form
-			if err := s.login(); err != nil {
-				//todo return failed login screen
-				return s, nil
-			}
-
-			// TODO make this goroutine outside authscreen
-			if err := s.itemManager.syncMeta(); err != nil {
-				//todo return failed sync screen
-				return s, nil
-			}
-
-			return s.next, nil // Go to main menu if authenticated
-
-		case "backspace":
-			switch s.focusedField {
+		switch msg.Type {
+		case tea.KeyBackspace:
+			switch s.cursor {
 			case 0:
 				if len(s.username) > 0 {
 					s.username = s.username[:len(s.username)-1]
@@ -62,13 +45,38 @@ func (s *AuthScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					s.password = s.password[:len(s.password)-1]
 				}
 			}
-		case "ctrl+q":
+			return s, nil
+		case tea.KeyTab:
+			s.cursor = (s.cursor + 1) % 2
+			return s, nil
+		case tea.KeyCtrlQ:
 			return s, tea.Quit // Exit on ESC
+		}
+		switch msg.String() {
+		//case "tab": // Change focus between fields
+
+		case "enter": // Submit the form
+			if err := s.login(); err != nil {
+				return &ErrorScreen{
+					backScreen: s,
+					err:        err,
+				}, nil
+			}
+
+			if err := s.itemManager.syncMeta(); err != nil {
+				return &ErrorScreen{
+					backScreen: s,
+					err:        err,
+				}, nil
+			}
+
+			return s.next, nil // Go to main menu if authenticated
+
 		default:
 			// Handle character input based on the currently focused field
-			if s.focusedField == 0 { // Username field
+			if s.cursor == 0 { // Username field
 				s.username += msg.String()
-			} else if s.focusedField == 1 { // Password field
+			} else if s.cursor == 1 { // Password field
 				s.password += msg.String()
 			}
 		}
@@ -84,7 +92,6 @@ func (s *AuthScreen) View() string {
 	// Basic styles
 	usernameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
 	passwordStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("1")) // Red for errors
 
 	sb.WriteString("Please log in:\n\n")
 
@@ -93,17 +100,14 @@ func (s *AuthScreen) View() string {
 	// Render Password Field (masked)
 	sb.WriteString(fmt.Sprintf("Password: %s\n", passwordStyle.Render(strings.Repeat("•", len(s.password)))))
 
-	// Display error message if any
-	if s.errorMsg != "" {
-		sb.WriteString("\n" + errorStyle.Render(s.errorMsg))
-	}
+	// Render Footer
+	sb.WriteString(authFooter())
 
-	sb.WriteString("\nPress Tab to switch fields, Enter to submit, or ESC to exit.\n")
 	return sb.String()
 }
 
 // Init method for AuthScreen
-func (s AuthScreen) Init() tea.Cmd {
+func (s *AuthScreen) Init() tea.Cmd {
 	return nil // No command to run initially
 }
 
@@ -113,24 +117,23 @@ func (s *AuthScreen) login() error {
 		Password: s.password,
 	})
 	if err != nil {
-		s.username = err.Error()
 		return fmt.Errorf("failed login: %w", err)
 	}
 
 	if res.Error != "" {
-		s.username = res.Error
 		return fmt.Errorf("failed login: %s", res.Error)
 	}
 
 	if res.UserId == "" {
-		s.username = res.Error
 		return fmt.Errorf("failed login: empty user id")
 	}
 
 	s.itemManager.userID = res.UserId
 	s.itemManager.grpcClient.JWTToken = res.Jwt
 
-	fmt.Println("TOKEN", s.itemManager.grpcClient.JWTToken)
-
 	return nil
+}
+
+func authFooter() string {
+	return backgroundStyle.Render(separatorStyle.Render("\nPress Tab to switch fields, Enter to submit, or CTRL+Q to exit.\n"))
 }

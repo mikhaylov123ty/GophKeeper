@@ -70,25 +70,21 @@ func (screen *ViewCredsItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
 				itemData, err := screen.itemManager.getItemData(itemDataID)
 				if err != nil {
-					return ViewCredsDataScreen{
+					return &ErrorScreen{
 						backScreen: screen,
-						itemData: &models.CredsData{
-							Login: err.Error(),
-						},
+						err:        err,
 					}, nil
 				}
 
 				var credsData models.CredsData
 				if err = json.Unmarshal([]byte(itemData), &credsData); err != nil {
-					return ViewCredsDataScreen{
+					return &ErrorScreen{
 						backScreen: screen,
-						itemData: &models.CredsData{
-							Login: err.Error(),
-						},
+						err:        err,
 					}, nil
 				}
 
-				return ViewCredsDataScreen{
+				return &ViewCredsDataScreen{
 					backScreen: screen,
 					itemData: &models.CredsData{
 						Login:    credsData.Login,
@@ -104,7 +100,10 @@ func (screen *ViewCredsItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					screen.category,
 					screen.list.SelectedItem().(*MetaItem).dataID,
 				); err != nil {
-					return screen, nil
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        err,
+					}, nil
 				}
 				screen.list.CursorUp()
 			}
@@ -145,7 +144,7 @@ func (screen *ViewCredsItemsScreen) View() string {
 	return screen.list.View()
 }
 
-func (screen ViewCredsDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *ViewCredsDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -156,13 +155,13 @@ func (screen ViewCredsDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen ViewCredsDataScreen) View() string {
+func (screen *ViewCredsDataScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
 		"%sCreds Information%s\n"+
 			"=======================%s"+
-			"%s%s\n"+
-			"%s%s\n",
+			"Login: %s%s\n"+
+			"Password: %s%s\n",
 		ColorBold, ColorReset,
 		separator,
 		ColorGreen, screen.itemData.Login,
@@ -183,9 +182,12 @@ func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				}
 
 				if screen.newItemData != nil {
-					CredsData, err := json.Marshal(screen.newItemData)
+					credsData, err := json.Marshal(screen.newItemData)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -196,14 +198,12 @@ func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						UserId:      screen.itemManager.userID,
 					}
 
-					resp, err := screen.itemManager.postItemData(CredsData, "", &metaData)
+					resp, err := screen.itemManager.postItemData(credsData, "", &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					newItem.dataID = resp.DataId
@@ -299,9 +299,12 @@ func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 				if screen.newItemData != nil {
 					//TODO create dedicated func
-					CredsData, err := json.Marshal(screen.newItemData)
+					credsData, err := json.Marshal(screen.newItemData)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -312,14 +315,12 @@ func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						UserId:      screen.itemManager.userID,
 					}
 
-					resp, err := screen.itemManager.postItemData(CredsData, screen.selectedItem.dataID, &metaData)
+					resp, err := screen.itemManager.postItemData(credsData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					screen.selectedItem.Title = screen.newTitle

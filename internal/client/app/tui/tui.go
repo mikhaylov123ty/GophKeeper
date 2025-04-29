@@ -12,6 +12,7 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 	"io"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -65,6 +66,11 @@ type ActionsMenu struct {
 	backScreen  Screen
 }
 
+type ErrorScreen struct {
+	backScreen Screen
+	err        error
+}
+
 type ItemManager struct {
 	metaItems  map[Category][]*MetaItem
 	grpcClient *grpc.Client
@@ -89,9 +95,6 @@ func NewItemManager(grpcClient *grpc.Client) (*Model, error) {
 }
 
 func (im *ItemManager) postItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
-	//encryptedData := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
-	//base64.StdEncoding.Encode(encryptedData, data)
-
 	encryptedData, err := encryptData(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt data: %w", err)
@@ -199,9 +202,9 @@ var (
 	cursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))                     // Bright purple
 	selectedStyle   = lipgloss.NewStyle().Padding(1).Foreground(lipgloss.Color("2")).Bold(true) // Green
 	unselectedStyle = lipgloss.NewStyle().Padding(1).Foreground(lipgloss.Color("7"))            // White
-	backgroundStyle = lipgloss.NewStyle().Background(lipgloss.Color("235"))                     // Grey background
+	backgroundStyle = lipgloss.NewStyle().Background(lipgloss.Color("245"))                     // Grey background
 	titleStyle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("65"))           // Bold yellow
-	separatorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))                     // Light grey
+	separatorStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("235"))                     // Light grey
 )
 
 func (m MainMenu) Update(msg tea.Msg) (Screen, tea.Cmd) {
@@ -239,7 +242,7 @@ func (m MainMenu) View() string {
 			s += unselectedStyle.Render(fmt.Sprintf("[ ] %s\n", category)) // Unselected option with color
 		}
 	}
-	s += backgroundStyle.Render(separatorStyle.Render("Use arrow keys to navigate and enter to select.\n")) // Navigation instructions
+	s += navigateFooter()
 	return s
 }
 
@@ -296,8 +299,30 @@ func (cm ActionsMenu) View() string {
 		}
 	}
 
-	s += separatorStyle.Render("Press ESC to go back to the main menu.\n") // Navigation instructions
+	s += navigateFooter()
 	return s
+}
+
+func (screen *ErrorScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		default:
+			return screen.backScreen, nil
+		}
+	}
+	return screen.backScreen, nil
+}
+
+func (screen *ErrorScreen) View() string {
+	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
+	return fmt.Sprintf(
+		"%sError%s\n"+
+			"=======================%s"+
+			"%s%s%s\n",
+		ColorBold, ColorReset,
+		separator,
+		ColorGreen, screen.err.Error(), ColorReset)
 }
 
 func (m Model) Init() tea.Cmd {
@@ -393,4 +418,20 @@ func createHash(key []byte) string {
 	hasher := sha256.New()
 	hasher.Write(key)
 	return base64.StdEncoding.EncodeToString(hasher.Sum(nil))[:32]
+}
+
+func navigateFooter() string {
+	return backgroundStyle.Render(separatorStyle.Render("Use arrow keys to navigate and enter to select.\n")) // Navigation instructions
+}
+
+func addItemsFooter() string {
+	return backgroundStyle.Render(separatorStyle.Render("Press Enter to save, CTRL+Q to cancel, or Backspace to delete the last character.\n"))
+}
+
+func listItemsFooter() string {
+	return backgroundStyle.Render(separatorStyle.Render("\nUse arrow keys to navigate. E to edit. D to delete. Enter to select. CTRL+Q to cancel.\n"))
+}
+
+func itemDataFooter() string {
+	return backgroundStyle.Render(separatorStyle.Render("\nPress CTRL+Q to return.\n"))
 }

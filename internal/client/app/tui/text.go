@@ -66,25 +66,21 @@ func (screen *ViewTextItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
 				itemData, err := screen.itemManager.getItemData(itemDataID)
 				if err != nil {
-					return ViewTextDataScreen{
+					return &ErrorScreen{
 						backScreen: screen,
-						itemData: &models.TextData{
-							Text: err.Error(),
-						},
+						err:        err,
 					}, nil
 				}
 
 				var textData models.TextData
 				if err = json.Unmarshal([]byte(itemData), &textData); err != nil {
-					return ViewTextDataScreen{
+					return &ErrorScreen{
 						backScreen: screen,
-						itemData: &models.TextData{
-							Text: err.Error(),
-						},
+						err:        err,
 					}, nil
 				}
 
-				return ViewTextDataScreen{
+				return &ViewTextDataScreen{
 					backScreen: screen,
 					itemData: &models.TextData{
 						Text: textData.Text,
@@ -99,7 +95,10 @@ func (screen *ViewTextItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					screen.category,
 					screen.list.SelectedItem().(*MetaItem).dataID,
 				); err != nil {
-					return screen, nil
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        err,
+					}, nil
 				}
 				screen.list.CursorUp()
 			}
@@ -140,7 +139,7 @@ func (screen *ViewTextItemsScreen) View() string {
 	return screen.list.View()
 }
 
-func (screen ViewTextDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *ViewTextDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -178,7 +177,10 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				if screen.newItemData != nil {
 					textData, err := json.Marshal(screen.newItemData)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -191,12 +193,10 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 					resp, err := screen.itemManager.postItemData(textData, "", &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					newItem.dataID = resp.DataId
@@ -292,7 +292,10 @@ func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					//TODO create dedicated func
 					textData, err := json.Marshal(screen.newItemData)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -305,12 +308,10 @@ func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 					resp, err := screen.itemManager.postItemData(textData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					screen.selectedItem.Title = screen.newTitle

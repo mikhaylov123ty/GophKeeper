@@ -19,6 +19,10 @@ import (
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
+const (
+	binaryFields = 3
+)
+
 type ViewBinaryItemsScreen struct {
 	options     []string
 	category    Category
@@ -70,21 +74,17 @@ func (screen *ViewBinaryItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
 				itemData, err := screen.itemManager.getItemData(itemDataID)
 				if err != nil {
-					return &ViewBinaryDataScreen{
+					return &ErrorScreen{
 						backScreen: screen,
-						itemData: &models.BinaryData{
-							Name: err.Error(),
-						},
+						err:        err,
 					}, nil
 				}
 
 				var binaryData models.BinaryData
 				if err = json.Unmarshal([]byte(itemData), &binaryData); err != nil {
-					return &ViewBinaryDataScreen{
+					return &ErrorScreen{
 						backScreen: screen,
-						itemData: &models.BinaryData{
-							Name: err.Error(),
-						},
+						err:        err,
 					}, nil
 				}
 
@@ -105,7 +105,10 @@ func (screen *ViewBinaryItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 					screen.category,
 					screen.list.SelectedItem().(*MetaItem).dataID,
 				); err != nil {
-					return screen, nil
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        err,
+					}, nil
 				}
 				screen.list.CursorUp()
 			}
@@ -153,17 +156,26 @@ func (screen *ViewBinaryDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "d":
 			ext, err := mime.ExtensionsByType(screen.itemData.ContentType)
 			if err != nil {
-				return screen, nil
+				return &ErrorScreen{
+					backScreen: screen,
+					err:        err,
+				}, nil
 			}
 
 			outputFile, err := os.Create(strings.Join([]string{config.GetOutputFolder(), screen.itemData.Name, ext[0]}, ""))
 			if err != nil {
-				return screen, nil
+				return &ErrorScreen{
+					backScreen: screen,
+					err:        err,
+				}, nil
 			}
 			defer outputFile.Close()
 
 			if _, err = outputFile.Write(screen.itemData.Content); err != nil {
-				return screen, nil
+				return &ErrorScreen{
+					backScreen: screen,
+					err:        err,
+				}, nil
 			}
 
 			return screen.backScreen, nil
@@ -212,17 +224,18 @@ func (screen *AddBinaryItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 				if err != nil {
 					//TODO error screen
-					return screen.backScreen, func() tea.Msg {
-						newItem.Title = err.Error()
-						screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-						return fmt.Sprintf("ERROR %s,", err.Error())
-					}
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        err,
+					}, nil
 				}
 				if screen.newItemData != nil {
 					binaryData, err := json.Marshal(screen.newItemData.Binary)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -235,12 +248,10 @@ func (screen *AddBinaryItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 					resp, err := screen.itemManager.postItemData(binaryData, "", &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					newItem.dataID = resp.DataId
@@ -256,9 +267,9 @@ func (screen *AddBinaryItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
+			screen.cursor = (screen.cursor - 1 + binaryFields) % binaryFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+			screen.cursor = (screen.cursor + 1) % binaryFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -343,20 +354,20 @@ func (screen *EditBinaryItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 				screen.newItemData.Binary.Name = name
 
 				if err != nil {
-					//TODO error screen
-					return screen.backScreen, func() tea.Msg {
-						newItem.Title = err.Error()
-						screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-						return fmt.Sprintf("ERROR %s,", err.Error())
-					}
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        err,
+					}, nil
 				}
 
 				if screen.newItemData != nil {
 					//TODO create dedicated func
 					binaryData, err := json.Marshal(screen.newItemData.Binary)
 					if err != nil {
-						return screen, nil
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					metaData := pb.MetaData{
@@ -369,12 +380,10 @@ func (screen *EditBinaryItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 
 					resp, err := screen.itemManager.postItemData(binaryData, screen.selectedItem.dataID, &metaData)
 					if err != nil {
-						return screen.backScreen, func() tea.Msg {
-							newItem.Title = err.Error()
-							screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
-
-							return fmt.Sprintf("ERROR %s,", err.Error())
-						}
+						return &ErrorScreen{
+							backScreen: screen,
+							err:        err,
+						}, nil
 					}
 
 					screen.selectedItem.Title = screen.newTitle
@@ -387,9 +396,9 @@ func (screen *EditBinaryItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		case "ctrl+q": // Go back to the previous menu
 			return screen.backScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
+			screen.cursor = (screen.cursor - 1 + binaryFields) % binaryFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+			screen.cursor = (screen.cursor + 1) % binaryFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
