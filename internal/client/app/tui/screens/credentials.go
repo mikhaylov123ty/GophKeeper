@@ -1,150 +1,47 @@
-package tui
+package screens
 
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
-
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
-
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
+	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+	"strings"
 )
 
 const (
 	credsFields = 4
 )
 
-type ViewCredsItemsScreen struct {
-	options     []string
-	category    Category
-	itemManager *ItemManager
-	backScreen  Screen
-	list        *list.Model
+type viewCredsDataScreen struct {
+	backScreen models.Screen
+	itemData   *dbModels.CredsData
 }
 
-type ViewCredsDataScreen struct {
-	backScreen Screen
-	itemData   *models.CredsData
-}
-
-// TODO optimize duplications
-type AddCredsItemScreen struct {
-	itemManager *ItemManager
-	category    Category
-	newTitle    string
-	newDesc     string
-	newItemData *models.CredsData
-	createdTime string
-	cursor      int
-	backScreen  Screen
-}
-
-// TODO remove unused fields
-type EditCredsItemScreen struct {
-	itemManager  *ItemManager
-	category     Category
+type credsItemScreen struct {
+	itemsManager models.ItemsManager
+	category     string
 	newTitle     string
 	newDesc      string
-	selectedItem *MetaItem
-	newItemData  *models.CredsData
-	createdTime  string
+	newItemData  *dbModels.CredsData
 	cursor       int
-	backScreen   Screen
+	backScreen   models.Screen
 }
 
-func (screen *ViewCredsItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "down":
-			screen.list.CursorDown()
-		case "up":
-			screen.list.CursorUp()
-		case "enter":
-			if len(screen.itemManager.metaItems[screen.category]) > 0 {
-				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
-				itemData, err := screen.itemManager.getItemData(itemDataID)
-				if err != nil {
-					return &ErrorScreen{
-						backScreen: screen,
-						err:        err,
-					}, nil
-				}
-
-				var credsData models.CredsData
-				if err = json.Unmarshal([]byte(itemData), &credsData); err != nil {
-					return &ErrorScreen{
-						backScreen: screen,
-						err:        err,
-					}, nil
-				}
-
-				return &ViewCredsDataScreen{
-					backScreen: screen,
-					itemData: &models.CredsData{
-						Login:    credsData.Login,
-						Password: credsData.Password,
-					},
-				}, nil
-			}
-		case "d":
-			if len(screen.itemManager.metaItems[screen.category]) > 0 {
-				//todo failed screen
-				if err := screen.itemManager.deleteItem(
-					screen.list.SelectedItem().(*MetaItem).Id,
-					screen.category,
-					screen.list.SelectedItem().(*MetaItem).dataID,
-				); err != nil {
-					return &ErrorScreen{
-						backScreen: screen,
-						err:        err,
-					}, nil
-				}
-				screen.list.CursorUp()
-			}
-		case "e":
-			if screen.itemManager.metaItems[screen.category] != nil {
-				return &EditCredsItemScreen{itemManager: screen.itemManager,
-					backScreen:   screen,
-					category:     screen.category,
-					selectedItem: screen.list.SelectedItem().(*MetaItem),
-					newTitle:     screen.list.SelectedItem().(*MetaItem).Title,
-					newDesc:      screen.list.SelectedItem().(*MetaItem).Description,
-				}, nil
-			}
-		case "q":
-			return screen.backScreen, nil // Go back when ESC is pressed
-		}
-	}
-	return screen, nil
+type addCredsItemScreen struct {
+	*credsItemScreen
 }
 
-func (screen *ViewCredsItemsScreen) View() string {
-	if screen.list == nil {
-		listModel := list.New([]list.Item{}, metaItemDelegate{}, 10, listHeight)
-		screen.list = &listModel
-	}
-
-	if len(screen.itemManager.metaItems[screen.category]) == 0 {
-		return cursorStyle.Render("No items to display.\n\nPress ESC to go back.\n")
-	}
-
-	listItems := []list.Item{}
-	for _, v := range screen.itemManager.metaItems[screen.category] {
-		listItems = append(listItems, v)
-	}
-
-	screen.list.SetItems(listItems)
-
-	return screen.list.View()
+type editCredsItemScreen struct {
+	*credsItemScreen
+	selectedItem *models.MetaItem
 }
 
-func (screen *ViewCredsDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *viewCredsDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -152,30 +49,32 @@ func (screen *ViewCredsDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return screen.backScreen, nil
 		}
 	}
+
 	return screen, nil
 }
 
-func (screen *ViewCredsDataScreen) View() string {
+// TODO UNIFY
+func (screen *viewCredsDataScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
 		"%sCreds Information%s\n"+
 			"=======================%s"+
 			"Login: %s%s\n"+
 			"Password: %s%s\n",
-		ColorBold, ColorReset,
+		utils.ColorBold, utils.ColorReset,
 		separator,
-		ColorGreen, screen.itemData.Login,
-		ColorGreen, screen.itemData.Password,
+		utils.ColorGreen, screen.itemData.Login,
+		utils.ColorGreen, screen.itemData.Password,
 	)
 }
 
-func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
 			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
 				// Create new item and add to the manager
-				newItem := MetaItem{
+				newItem := models.MetaItem{
 					Id:          uuid.New(),
 					Title:       screen.newTitle,
 					Description: screen.newDesc,
@@ -194,11 +93,10 @@ func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						Id:          newItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    string(screen.category),
-						UserId:      screen.itemManager.userID,
+						DataType:    screen.category,
 					}
 
-					resp, err := screen.itemManager.postItemData(credsData, "", &metaData)
+					resp, err := screen.itemsManager.PostItemData(credsData, "", &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -206,12 +104,11 @@ func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						}, nil
 					}
 
-					newItem.dataID = resp.DataId
+					newItem.DataID = resp.DataId
 					newItem.Created = resp.Created
 					newItem.Modified = resp.Modified
 
-					//TODO store to local storage
-					screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
+					screen.itemsManager.SaveMetaItem(screen.category, &newItem)
 				}
 			}
 			return screen.backScreen, nil // Go back to category menu
@@ -231,9 +128,10 @@ func (screen *AddCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen *AddCredsItemScreen) View() string {
+// TODO UNIFY THIS
+func (screen *addCredsItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &models.CredsData{}
+		screen.newItemData = &dbModels.CredsData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -245,8 +143,13 @@ func (screen *AddCredsItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
-	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
+	styles := []lipgloss.Style{
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+	}
+	styles[screen.cursor] = utils.SelectedStyle
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
@@ -257,13 +160,12 @@ func (screen *AddCredsItemScreen) View() string {
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
 
-	// Add instructions at the end
-	instructions := "Press Enter to save, Q to cancel, or Backspace to delete the last character."
+	result += utils.AddItemsFooter()
 
-	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
+	return result
 }
 
-func (screen *AddCredsItemScreen) handleInput(input string) {
+func (screen *addCredsItemScreen) handleInput(input string) {
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic
@@ -285,13 +187,14 @@ func (screen *AddCredsItemScreen) handleInput(input string) {
 	screen.newItemData.Password = fields[3]
 }
 
-func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+// TODO DEPRECATE? THISI SAME AS ADD BUT FILLED ITEMS
+func (screen *editCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
 			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
 				// Create new item and add to the manager
-				newItem := MetaItem{
+				newItem := models.MetaItem{
 					Id:          screen.selectedItem.Id,
 					Title:       screen.newTitle,
 					Description: screen.newDesc,
@@ -311,11 +214,10 @@ func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						Id:          screen.selectedItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    string(screen.category),
-						UserId:      screen.itemManager.userID,
+						DataType:    screen.category,
 					}
 
-					resp, err := screen.itemManager.postItemData(credsData, screen.selectedItem.dataID, &metaData)
+					resp, err := screen.itemsManager.PostItemData(credsData, screen.selectedItem.DataID, &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -345,9 +247,9 @@ func (screen *EditCredsItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen *EditCredsItemScreen) View() string {
+func (screen *editCredsItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &models.CredsData{}
+		screen.newItemData = &dbModels.CredsData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -359,8 +261,13 @@ func (screen *EditCredsItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
-	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
+	styles := []lipgloss.Style{
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+	}
+	styles[screen.cursor] = utils.SelectedStyle
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
@@ -377,7 +284,7 @@ func (screen *EditCredsItemScreen) View() string {
 	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
 }
 
-func (screen *EditCredsItemScreen) handleInput(input string) {
+func (screen *editCredsItemScreen) handleInput(input string) {
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic

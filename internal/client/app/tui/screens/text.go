@@ -1,145 +1,43 @@
-package tui
+package screens
 
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
-
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
-
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
+	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+	"strings"
 )
 
-type ViewTextItemsScreen struct {
-	options     []string
-	category    Category
-	itemManager *ItemManager
-	backScreen  Screen
-	list        *list.Model
+type viewTextDataScreen struct {
+	backScreen models.Screen
+	itemData   *dbModels.TextData
 }
-
-type ViewTextDataScreen struct {
-	backScreen Screen
-	itemData   *models.TextData
+type textItemScreen struct {
+	itemsManager models.ItemsManager
+	category     string
+	newTitle     string
+	newDesc      string
+	newItemData  *dbModels.TextData
+	createdTime  string
+	cursor       int
+	backScreen   models.Screen
 }
-
-// TODO optimize duplications
-type AddTextItemScreen struct {
-	itemManager *ItemManager
-	category    Category
-	newTitle    string
-	newDesc     string
-	newItemData *models.TextData
-	createdTime string
-	cursor      int
-	backScreen  Screen
+type addTextItemScreen struct {
+	*textItemScreen
 }
 
 // TODO remove unused fields
-type EditTextItemScreen struct {
-	itemManager  *ItemManager
-	category     Category
-	newTitle     string
-	newDesc      string
-	selectedItem *MetaItem
-	newItemData  *models.TextData
-	createdTime  string
-	cursor       int
-	backScreen   Screen
+type editTextItemScreen struct {
+	*textItemScreen
+	selectedItem *models.MetaItem
 }
 
-func (screen *ViewTextItemsScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "down":
-			screen.list.CursorDown()
-		case "up":
-			screen.list.CursorUp()
-		case "enter":
-			if len(screen.itemManager.metaItems[screen.category]) > 0 {
-				itemDataID := screen.list.SelectedItem().(*MetaItem).dataID
-				itemData, err := screen.itemManager.getItemData(itemDataID)
-				if err != nil {
-					return &ErrorScreen{
-						backScreen: screen,
-						err:        err,
-					}, nil
-				}
-
-				var textData models.TextData
-				if err = json.Unmarshal([]byte(itemData), &textData); err != nil {
-					return &ErrorScreen{
-						backScreen: screen,
-						err:        err,
-					}, nil
-				}
-
-				return &ViewTextDataScreen{
-					backScreen: screen,
-					itemData: &models.TextData{
-						Text: textData.Text,
-					},
-				}, nil
-			}
-		case "d":
-			if len(screen.itemManager.metaItems[screen.category]) > 0 {
-				//todo failed screen
-				if err := screen.itemManager.deleteItem(
-					screen.list.SelectedItem().(*MetaItem).Id,
-					screen.category,
-					screen.list.SelectedItem().(*MetaItem).dataID,
-				); err != nil {
-					return &ErrorScreen{
-						backScreen: screen,
-						err:        err,
-					}, nil
-				}
-				screen.list.CursorUp()
-			}
-		case "e":
-			if screen.itemManager.metaItems[screen.category] != nil {
-				return &EditTextItemScreen{itemManager: screen.itemManager,
-					backScreen:   screen,
-					category:     screen.category,
-					selectedItem: screen.list.SelectedItem().(*MetaItem),
-					newTitle:     screen.list.SelectedItem().(*MetaItem).Title,
-					newDesc:      screen.list.SelectedItem().(*MetaItem).Description,
-				}, nil
-			}
-		case "q":
-			return screen.backScreen, nil // Go back when ESC is pressed
-		}
-	}
-	return screen, nil
-}
-
-func (screen *ViewTextItemsScreen) View() string {
-	if screen.list == nil {
-		listModel := list.New([]list.Item{}, metaItemDelegate{}, 10, listHeight)
-		screen.list = &listModel
-	}
-
-	if len(screen.itemManager.metaItems[screen.category]) == 0 {
-		return cursorStyle.Render("No items to display.\n\nPress ESC to go back.\n")
-	}
-
-	listItems := []list.Item{}
-	for _, v := range screen.itemManager.metaItems[screen.category] {
-		listItems = append(listItems, v)
-	}
-
-	screen.list.SetItems(listItems)
-
-	return screen.list.View()
-}
-
-func (screen *ViewTextDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *viewTextDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -150,25 +48,26 @@ func (screen *ViewTextDataScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen ViewTextDataScreen) View() string {
+// TODO move to models and unify
+func (screen *viewTextDataScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
 		"%sText Information%s\n"+
 			"=======================%s"+
-			"%s%s\n",
-		ColorBold, ColorReset,
+			"%sText: %s%s\n",
+		utils.ColorBold, utils.ColorReset,
 		separator,
-		ColorGreen, screen.itemData.Text,
+		utils.ColorGreen, screen.itemData.Text, utils.ColorReset,
 	)
 }
 
-func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
 			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
-				newItem := MetaItem{
+				newItem := models.MetaItem{
 					Id:          uuid.New(),
 					Title:       screen.newTitle,
 					Description: screen.newDesc,
@@ -187,11 +86,10 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						Id:          newItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    string(screen.category),
-						UserId:      screen.itemManager.userID,
+						DataType:    screen.category,
 					}
 
-					resp, err := screen.itemManager.postItemData(textData, "", &metaData)
+					resp, err := screen.itemsManager.PostItemData(textData, "", &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -199,12 +97,12 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						}, nil
 					}
 
-					newItem.dataID = resp.DataId
+					newItem.DataID = resp.DataId
 					newItem.Created = resp.Created
 					newItem.Modified = resp.Modified
 
 					//TODO store to local storage
-					screen.itemManager.metaItems[screen.category] = append(screen.itemManager.metaItems[screen.category], &newItem)
+					screen.itemsManager.SaveMetaItem(screen.category, &newItem)
 				}
 			}
 			return screen.backScreen, nil // Go back to category menu
@@ -224,9 +122,10 @@ func (screen *AddTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen *AddTextItemScreen) View() string {
+// TODO UNIFY THIS, like run build func in method
+func (screen *addTextItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &models.TextData{}
+		screen.newItemData = &dbModels.TextData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -238,8 +137,12 @@ func (screen *AddTextItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle}
-	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
+	styles := []lipgloss.Style{
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+	}
+	styles[screen.cursor] = utils.SelectedStyle
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
@@ -249,13 +152,12 @@ func (screen *AddTextItemScreen) View() string {
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
 
-	// Add instructions at the end
-	instructions := "Press Enter to save, Q to cancel, or Backspace to delete the last character."
+	result += utils.AddItemsFooter()
 
-	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
+	return result
 }
 
-func (screen *AddTextItemScreen) handleInput(input string) {
+func (screen *addTextItemScreen) handleInput(input string) {
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
 
 	// Backspace logic
@@ -276,13 +178,13 @@ func (screen *AddTextItemScreen) handleInput(input string) {
 	screen.newItemData.Text = fields[2]
 }
 
-func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
+func (screen *editTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
 			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
-				newItem := MetaItem{
+				newItem := models.MetaItem{
 					Id:          screen.selectedItem.Id,
 					Title:       screen.newTitle,
 					Description: screen.newDesc,
@@ -302,11 +204,10 @@ func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 						Id:          screen.selectedItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    string(screen.category),
-						UserId:      screen.itemManager.userID,
+						DataType:    screen.category,
 					}
 
-					resp, err := screen.itemManager.postItemData(textData, screen.selectedItem.dataID, &metaData)
+					resp, err := screen.itemsManager.PostItemData(textData, screen.selectedItem.DataID, &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -336,9 +237,9 @@ func (screen *EditTextItemScreen) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	return screen, nil
 }
 
-func (screen *EditTextItemScreen) View() string {
+func (screen *editTextItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &models.TextData{}
+		screen.newItemData = &dbModels.TextData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -350,9 +251,12 @@ func (screen *EditTextItemScreen) View() string {
 	}
 
 	// Set styles based on cursor position
-	styles := []lipgloss.Style{unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle, unselectedStyle}
-	styles[screen.cursor] = selectedStyle // Highlight the currently focused element
-
+	styles := []lipgloss.Style{
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+		utils.UnselectedStyle,
+	}
+	styles[screen.cursor] = utils.SelectedStyle
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
 	addLine("Description:", screen.newDesc, styles[1])
@@ -361,13 +265,12 @@ func (screen *EditTextItemScreen) View() string {
 	// Combine the lines with newlines
 	result := strings.Join(lines, "\n")
 
-	// Add instructions at the end
-	instructions := "Press Enter to save, Q to cancel, or Backspace to delete the last character."
+	result += utils.AddItemsFooter()
 
-	return fmt.Sprintf("%s\n\n%s\n", result, instructions)
+	return result
 }
 
-func (screen *EditTextItemScreen) handleInput(input string) {
+func (screen *editTextItemScreen) handleInput(input string) {
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
 
 	// Backspace logic
