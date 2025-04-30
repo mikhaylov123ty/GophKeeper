@@ -3,14 +3,16 @@ package tui
 import (
 	"context"
 	"fmt"
+
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/screens"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type ItemsManager struct {

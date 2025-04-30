@@ -2,6 +2,7 @@ package screens
 
 import (
 	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
@@ -40,37 +41,37 @@ func (cm ActionsMenu) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 				switch cm.category {
 				case TextCategory:
 					return &addTextItemScreen{
-						textItemScreen: &textItemScreen{
-							itemsManager: cm.itemsManager,
-							backScreen:   cm,
-							category:     cm.category,
+						ItemScreen: &models.ItemScreen{
+							ItemsManager: cm.itemsManager,
+							BackScreen:   cm,
+							Category:     cm.category,
 						},
 					}, nil
 
 				case CredsCategory:
 					return &addCredsItemScreen{
-						credsItemScreen: &credsItemScreen{
-							itemsManager: cm.itemsManager,
-							backScreen:   cm,
-							category:     cm.category,
+						ItemScreen: &models.ItemScreen{
+							ItemsManager: cm.itemsManager,
+							BackScreen:   cm,
+							Category:     cm.category,
 						},
 					}, nil
 
 				case FileCategory:
 					return &addBinaryItemScreen{
-						binaryItemScreen: &binaryItemScreen{
-							itemsManager: cm.itemsManager,
-							backScreen:   cm,
-							category:     cm.category,
+						ItemScreen: &models.ItemScreen{
+							ItemsManager: cm.itemsManager,
+							BackScreen:   cm,
+							Category:     cm.category,
 						},
 					}, nil
 
 				case CardCategory:
 					return &addBankCardItemScreen{
-						bankCardItemScreen: &bankCardItemScreen{
-							itemsManager: cm.itemsManager,
-							backScreen:   cm,
-							category:     cm.category,
+						ItemScreen: &models.ItemScreen{
+							ItemsManager: cm.itemsManager,
+							BackScreen:   cm,
+							Category:     cm.category,
 						},
 					}, nil
 				}

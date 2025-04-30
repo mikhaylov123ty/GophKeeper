@@ -8,10 +8,12 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 	"io"
 	"os"
+
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
 var (

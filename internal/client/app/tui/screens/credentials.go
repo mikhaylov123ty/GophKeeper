@@ -3,14 +3,16 @@ package screens
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"strings"
 )
 
 const (
@@ -22,23 +24,15 @@ type viewCredsDataScreen struct {
 	itemData   *dbModels.CredsData
 }
 
-type credsItemScreen struct {
-	itemsManager models.ItemsManager
-	category     string
-	newTitle     string
-	newDesc      string
-	newItemData  *dbModels.CredsData
-	cursor       int
-	backScreen   models.Screen
-}
-
 type addCredsItemScreen struct {
-	*credsItemScreen
+	*models.ItemScreen
+	newItemData *dbModels.CredsData
 }
 
 type editCredsItemScreen struct {
-	*credsItemScreen
+	*models.ItemScreen
 	selectedItem *models.MetaItem
+	newItemData  *dbModels.CredsData
 }
 
 func (screen *viewCredsDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -72,12 +66,12 @@ func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
+			if screen.NewTitle != "" && screen.NewDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
 				// Create new item and add to the manager
 				newItem := models.MetaItem{
 					Id:          uuid.New(),
-					Title:       screen.newTitle,
-					Description: screen.newDesc,
+					Title:       screen.NewTitle,
+					Description: screen.NewDesc,
 				}
 
 				if screen.newItemData != nil {
@@ -93,10 +87,10 @@ func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 						Id:          newItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    screen.category,
+						DataType:    screen.Category,
 					}
 
-					resp, err := screen.itemsManager.PostItemData(credsData, "", &metaData)
+					resp, err := screen.ItemsManager.PostItemData(credsData, "", &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -108,17 +102,17 @@ func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 					newItem.Created = resp.Created
 					newItem.Modified = resp.Modified
 
-					screen.itemsManager.SaveMetaItem(screen.category, &newItem)
+					screen.ItemsManager.SaveMetaItem(screen.Category, &newItem)
 				}
 			}
-			return screen.backScreen, nil // Go back to category menu
+			return screen.BackScreen, nil // Go back to category menu
 
 		case "ctrl+q": // Go back to the previous menu
-			return screen.backScreen, nil
+			return screen.BackScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + credsFields) % credsFields // Focus on Title
+			screen.Cursor = (screen.Cursor - 1 + credsFields) % credsFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % credsFields // Focus on Description
+			screen.Cursor = (screen.Cursor + 1) % credsFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -149,11 +143,11 @@ func (screen *addCredsItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.Cursor] = utils.SelectedStyle
 
 	// Build each line
-	addLine("Title:", screen.newTitle, styles[0])
-	addLine("Description:", screen.newDesc, styles[1])
+	addLine("Title:", screen.NewTitle, styles[0])
+	addLine("Description:", screen.NewDesc, styles[1])
 	addLine("Login:", screen.newItemData.Login, styles[2])
 	addLine("Password:", screen.newItemData.Password, styles[3])
 
@@ -166,23 +160,23 @@ func (screen *addCredsItemScreen) View() string {
 }
 
 func (screen *addCredsItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
+	fields := []string{screen.NewTitle, screen.NewDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic
 	if input == "backspace" {
-		if len(fields[screen.cursor]) > 0 {
-			fields[screen.cursor] = fields[screen.cursor][:len(fields[screen.cursor])-1]
+		if len(fields[screen.Cursor]) > 0 {
+			fields[screen.Cursor] = fields[screen.Cursor][:len(fields[screen.Cursor])-1]
 		}
 	} else {
 		// Ignore special keys
 		if input != "up" && input != "down" && input != "esc" {
-			fields[screen.cursor] += input
+			fields[screen.Cursor] += input
 		}
 	}
 
 	// Update the fields back to the screen state
-	screen.newTitle = fields[0]
-	screen.newDesc = fields[1]
+	screen.NewTitle = fields[0]
+	screen.NewDesc = fields[1]
 	screen.newItemData.Login = fields[2]
 	screen.newItemData.Password = fields[3]
 }
@@ -192,12 +186,12 @@ func (screen *editCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
+			if screen.NewTitle != "" && screen.NewDesc != "" && screen.newItemData.Login != "" && screen.newItemData.Password != "" {
 				// Create new item and add to the manager
 				newItem := models.MetaItem{
 					Id:          screen.selectedItem.Id,
-					Title:       screen.newTitle,
-					Description: screen.newDesc,
+					Title:       screen.NewTitle,
+					Description: screen.NewDesc,
 				}
 
 				if screen.newItemData != nil {
@@ -214,10 +208,10 @@ func (screen *editCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 						Id:          screen.selectedItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    screen.category,
+						DataType:    screen.Category,
 					}
 
-					resp, err := screen.itemsManager.PostItemData(credsData, screen.selectedItem.DataID, &metaData)
+					resp, err := screen.ItemsManager.PostItemData(credsData, screen.selectedItem.DataID, &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -225,19 +219,19 @@ func (screen *editCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 						}, nil
 					}
 
-					screen.selectedItem.Title = screen.newTitle
-					screen.selectedItem.Description = screen.newDesc
+					screen.selectedItem.Title = screen.NewTitle
+					screen.selectedItem.Description = screen.NewDesc
 					screen.selectedItem.Modified = resp.Modified
 				}
 
-				return screen.backScreen, nil // Go back to category menu
+				return screen.BackScreen, nil // Go back to category menu
 			}
 		case "ctrl+q": // Go back to the previous menu
-			return screen.backScreen, nil
+			return screen.BackScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + credsFields) % credsFields // Focus on Title
+			screen.Cursor = (screen.Cursor - 1 + credsFields) % credsFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % credsFields // Focus on Description
+			screen.Cursor = (screen.Cursor + 1) % credsFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -267,11 +261,11 @@ func (screen *editCredsItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.Cursor] = utils.SelectedStyle
 
 	// Build each line
-	addLine("Title:", screen.newTitle, styles[0])
-	addLine("Description:", screen.newDesc, styles[1])
+	addLine("Title:", screen.NewTitle, styles[0])
+	addLine("Description:", screen.NewDesc, styles[1])
 	addLine("Login:", screen.newItemData.Login, styles[2])
 	addLine("Password:", screen.newItemData.Password, styles[3])
 
@@ -285,23 +279,23 @@ func (screen *editCredsItemScreen) View() string {
 }
 
 func (screen *editCredsItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
+	fields := []string{screen.NewTitle, screen.NewDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic
 	if input == "backspace" {
-		if len(fields[screen.cursor]) > 0 {
-			fields[screen.cursor] = fields[screen.cursor][:len(fields[screen.cursor])-1]
+		if len(fields[screen.Cursor]) > 0 {
+			fields[screen.Cursor] = fields[screen.Cursor][:len(fields[screen.Cursor])-1]
 		}
 	} else {
 		// Ignore special keys
 		if input != "up" && input != "down" && input != "esc" {
-			fields[screen.cursor] += input
+			fields[screen.Cursor] += input
 		}
 	}
 
 	// Update the fields back to the screen state
-	screen.newTitle = fields[0]
-	screen.newDesc = fields[1]
+	screen.NewTitle = fields[0]
+	screen.NewDesc = fields[1]
 	screen.newItemData.Login = fields[2]
 	screen.newItemData.Password = fields[3]
 }

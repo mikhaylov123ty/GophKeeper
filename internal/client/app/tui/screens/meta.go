@@ -2,8 +2,11 @@ package screens
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
@@ -26,7 +29,7 @@ func (screen *viewMetaItemsScreen) View() string {
 	metaData := screen.itemsManager.GetMetaData(screen.category)
 
 	if len(metaData) == 0 {
-		return "No items to display.\n\nPress Q to go back.\n"
+		return "No items to display.\n\nPress CTRL+Q to go back.\n"
 	}
 
 	listItems := []list.Item{}
@@ -93,6 +96,7 @@ func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	return screen, nil
 }
 
+// TODO make common unmarhsaler
 func (screen *viewMetaItemsScreen) routeViewData(itemData string, category string) models.Screen {
 	switch category {
 	case TextCategory:
@@ -169,51 +173,56 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 }
 
 func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen {
+	selectedItem, ok := screen.list.SelectedItem().(*models.MetaItem)
+	if !ok || selectedItem == nil {
+		return &ErrorScreen{backScreen: screen, err: fmt.Errorf("item not found")}
+	}
+
 	switch category {
 	case TextCategory:
 		return &editTextItemScreen{
-			textItemScreen: &textItemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     screen.list.SelectedItem().(*models.MetaItem).Title,
-				newDesc:      screen.list.SelectedItem().(*models.MetaItem).Description,
+			ItemScreen: &models.ItemScreen{
+				ItemsManager: screen.itemsManager,
+				BackScreen:   screen,
+				Category:     screen.category,
+				NewTitle:     selectedItem.Title,
+				NewDesc:      selectedItem.Description,
 			},
-			selectedItem: screen.list.SelectedItem().(*models.MetaItem),
+			selectedItem: selectedItem,
 		}
 
 	case CardCategory:
 		return &editBankCardItemScreen{
-			bankCardItemScreen: &bankCardItemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     screen.list.SelectedItem().(*models.MetaItem).Title,
-				newDesc:      screen.list.SelectedItem().(*models.MetaItem).Description,
+			ItemScreen: &models.ItemScreen{
+				ItemsManager: screen.itemsManager,
+				BackScreen:   screen,
+				Category:     screen.category,
+				NewTitle:     selectedItem.Title,
+				NewDesc:      selectedItem.Description,
 			},
-			selectedItem: screen.list.SelectedItem().(*models.MetaItem),
+			selectedItem: selectedItem,
 		}
 
 	case CredsCategory:
 		return &editCredsItemScreen{
-			credsItemScreen: &credsItemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     screen.list.SelectedItem().(*models.MetaItem).Title,
-				newDesc:      screen.list.SelectedItem().(*models.MetaItem).Description,
+			ItemScreen: &models.ItemScreen{
+				ItemsManager: screen.itemsManager,
+				BackScreen:   screen,
+				Category:     screen.category,
+				NewTitle:     selectedItem.Title,
+				NewDesc:      selectedItem.Description,
 			},
-			selectedItem: screen.list.SelectedItem().(*models.MetaItem),
+			selectedItem: selectedItem,
 		}
 
 	case FileCategory:
 		return &editBinaryItemScreen{
-			binaryItemScreen: &binaryItemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     screen.list.SelectedItem().(*models.MetaItem).Title,
-				newDesc:      screen.list.SelectedItem().(*models.MetaItem).Description,
+			ItemScreen: &models.ItemScreen{
+				ItemsManager: screen.itemsManager,
+				BackScreen:   screen,
+				Category:     screen.category,
+				NewTitle:     selectedItem.Title,
+				NewDesc:      selectedItem.Description,
 			},
 			selectedItem: screen.list.SelectedItem().(*models.MetaItem),
 		}

@@ -2,13 +2,15 @@ package models
 
 import (
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"io"
-	"strings"
 )
 
 type Screen interface {
@@ -24,6 +26,15 @@ type ItemsManager interface {
 	DeleteItem(uuid.UUID, string, string) error
 	PostUserData(string, string) error
 	SyncMeta() error
+}
+
+type ItemScreen struct {
+	ItemsManager ItemsManager
+	Category     string
+	NewTitle     string
+	NewDesc      string
+	Cursor       int
+	BackScreen   Screen
 }
 
 type Model struct {

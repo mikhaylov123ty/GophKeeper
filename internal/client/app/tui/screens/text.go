@@ -3,45 +3,43 @@ package screens
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
-	"strings"
+)
+
+const (
+	textFields = 3
 )
 
 type viewTextDataScreen struct {
 	backScreen models.Screen
 	itemData   *dbModels.TextData
 }
-type textItemScreen struct {
-	itemsManager models.ItemsManager
-	category     string
-	newTitle     string
-	newDesc      string
-	newItemData  *dbModels.TextData
-	createdTime  string
-	cursor       int
-	backScreen   models.Screen
-}
+
 type addTextItemScreen struct {
-	*textItemScreen
+	*models.ItemScreen
+	newItemData *dbModels.TextData
 }
 
-// TODO remove unused fields
 type editTextItemScreen struct {
-	*textItemScreen
+	*models.ItemScreen
 	selectedItem *models.MetaItem
+	newItemData  *dbModels.TextData
 }
 
 func (screen *viewTextDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q":
+		case "ctrl+q":
 			return screen.backScreen, nil
 		}
 	}
@@ -65,12 +63,12 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
+			if screen.NewTitle != "" && screen.NewDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
 				newItem := models.MetaItem{
 					Id:          uuid.New(),
-					Title:       screen.newTitle,
-					Description: screen.newDesc,
+					Title:       screen.NewTitle,
+					Description: screen.NewDesc,
 				}
 
 				if screen.newItemData != nil {
@@ -86,10 +84,10 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 						Id:          newItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    screen.category,
+						DataType:    screen.Category,
 					}
 
-					resp, err := screen.itemsManager.PostItemData(textData, "", &metaData)
+					resp, err := screen.ItemsManager.PostItemData(textData, "", &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -102,17 +100,17 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 					newItem.Modified = resp.Modified
 
 					//TODO store to local storage
-					screen.itemsManager.SaveMetaItem(screen.category, &newItem)
+					screen.ItemsManager.SaveMetaItem(screen.Category, &newItem)
 				}
 			}
-			return screen.backScreen, nil // Go back to category menu
+			return screen.BackScreen, nil // Go back to Category menu
 
 		case "ctrl+q": // Go back to the previous menu
-			return screen.backScreen, nil
+			return screen.BackScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
+			screen.Cursor = (screen.Cursor - 1 + textFields) % textFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+			screen.Cursor = (screen.Cursor + 1) % textFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -136,17 +134,17 @@ func (screen *addTextItemScreen) View() string {
 		lines = append(lines, fmt.Sprintf("%s %s", style.Render(label), style.Render(value)))
 	}
 
-	// Set styles based on cursor position
+	// Set styles based on Cursor position
 	styles := []lipgloss.Style{
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.Cursor] = utils.SelectedStyle
 
 	// Build each line
-	addLine("Title:", screen.newTitle, styles[0])
-	addLine("Description:", screen.newDesc, styles[1])
+	addLine("Title:", screen.NewTitle, styles[0])
+	addLine("Description:", screen.NewDesc, styles[1])
 	addLine("Text:", screen.newItemData.Text, styles[2])
 
 	// Combine the lines with newlines
@@ -158,23 +156,23 @@ func (screen *addTextItemScreen) View() string {
 }
 
 func (screen *addTextItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
+	fields := []string{screen.NewTitle, screen.NewDesc, screen.newItemData.Text}
 
 	// Backspace logic
 	if input == "backspace" {
-		if len(fields[screen.cursor]) > 0 {
-			fields[screen.cursor] = fields[screen.cursor][:len(fields[screen.cursor])-1]
+		if len(fields[screen.Cursor]) > 0 {
+			fields[screen.Cursor] = fields[screen.Cursor][:len(fields[screen.Cursor])-1]
 		}
 	} else {
 		// Ignore special keys
 		if input != "up" && input != "down" && input != "esc" {
-			fields[screen.cursor] += input
+			fields[screen.Cursor] += input
 		}
 	}
 
 	// Update the fields back to the screen state
-	screen.newTitle = fields[0]
-	screen.newDesc = fields[1]
+	screen.NewTitle = fields[0]
+	screen.NewDesc = fields[1]
 	screen.newItemData.Text = fields[2]
 }
 
@@ -182,12 +180,12 @@ func (screen *editTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
+			if screen.NewTitle != "" && screen.NewDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
 				newItem := models.MetaItem{
 					Id:          screen.selectedItem.Id,
-					Title:       screen.newTitle,
-					Description: screen.newDesc,
+					Title:       screen.NewTitle,
+					Description: screen.NewDesc,
 				}
 
 				if screen.newItemData != nil {
@@ -204,10 +202,10 @@ func (screen *editTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 						Id:          screen.selectedItem.Id.String(),
 						Title:       newItem.Title,
 						Description: newItem.Description,
-						DataType:    screen.category,
+						DataType:    screen.Category,
 					}
 
-					resp, err := screen.itemsManager.PostItemData(textData, screen.selectedItem.DataID, &metaData)
+					resp, err := screen.ItemsManager.PostItemData(textData, screen.selectedItem.DataID, &metaData)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -215,19 +213,19 @@ func (screen *editTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 						}, nil
 					}
 
-					screen.selectedItem.Title = screen.newTitle
-					screen.selectedItem.Description = screen.newDesc
+					screen.selectedItem.Title = screen.NewTitle
+					screen.selectedItem.Description = screen.NewDesc
 					screen.selectedItem.Modified = resp.Modified
 				}
 
-				return screen.backScreen, nil // Go back to category menu
+				return screen.BackScreen, nil // Go back to Category menu
 			}
 		case "ctrl+q": // Go back to the previous menu
-			return screen.backScreen, nil
+			return screen.BackScreen, nil
 		case "up":
-			screen.cursor = (screen.cursor - 1 + 3) % 3 // Focus on Title
+			screen.Cursor = (screen.Cursor - 1 + textFields) % textFields // Focus on Title
 		case "down":
-			screen.cursor = (screen.cursor + 1) % 3 // Focus on Description
+			screen.Cursor = (screen.Cursor + 1) % textFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -250,16 +248,16 @@ func (screen *editTextItemScreen) View() string {
 		lines = append(lines, fmt.Sprintf("%s %s", style.Render(label), style.Render(value)))
 	}
 
-	// Set styles based on cursor position
+	// Set styles based on Cursor position
 	styles := []lipgloss.Style{
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.Cursor] = utils.SelectedStyle
 	// Build each line
-	addLine("Title:", screen.newTitle, styles[0])
-	addLine("Description:", screen.newDesc, styles[1])
+	addLine("Title:", screen.NewTitle, styles[0])
+	addLine("Description:", screen.NewDesc, styles[1])
 	addLine("Text:", screen.newItemData.Text, styles[2])
 
 	// Combine the lines with newlines
@@ -271,22 +269,22 @@ func (screen *editTextItemScreen) View() string {
 }
 
 func (screen *editTextItemScreen) handleInput(input string) {
-	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
+	fields := []string{screen.NewTitle, screen.NewDesc, screen.newItemData.Text}
 
 	// Backspace logic
 	if input == "backspace" {
-		if len(fields[screen.cursor]) > 0 {
-			fields[screen.cursor] = fields[screen.cursor][:len(fields[screen.cursor])-1]
+		if len(fields[screen.Cursor]) > 0 {
+			fields[screen.Cursor] = fields[screen.Cursor][:len(fields[screen.Cursor])-1]
 		}
 	} else {
 		// Ignore special keys
 		if input != "up" && input != "down" && input != "esc" {
-			fields[screen.cursor] += input
+			fields[screen.Cursor] += input
 		}
 	}
 
 	// Update the fields back to the screen state
-	screen.newTitle = fields[0]
-	screen.newDesc = fields[1]
+	screen.NewTitle = fields[0]
+	screen.NewDesc = fields[1]
 	screen.newItemData.Text = fields[2]
 }
