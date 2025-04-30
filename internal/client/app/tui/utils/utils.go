@@ -115,11 +115,11 @@ func createHash(key []byte) string {
 }
 
 func NavigateFooter() string {
-	return BackgroundStyle.Render(SeparatorStyle.Render("Use arrow keys to navigate and enter to select.\n")) // Navigation instructions
+	return BackgroundStyle.Render(SeparatorStyle.Render("\nUse arrow keys to navigate and enter to select.\n")) // Navigation instructions
 }
 
 func AddItemsFooter() string {
-	return BackgroundStyle.Render(SeparatorStyle.Render("Press Enter to save, CTRL+Q to cancel, or Backspace to delete the last character.\n"))
+	return BackgroundStyle.Render(SeparatorStyle.Render("\nPress Enter to save, CTRL+Q to cancel, or Backspace to delete the last character.\n"))
 }
 
 func ListItemsFooter() string {
@@ -128,6 +128,10 @@ func ListItemsFooter() string {
 
 func ItemDataFooter() string {
 	return BackgroundStyle.Render(SeparatorStyle.Render("\nPress CTRL+Q to return.\n"))
+}
+
+func BinaryItemDataFooter() string {
+	return BackgroundStyle.Render(SeparatorStyle.Render("\nPress D to download file to output folder. CTRL+Q to return.\n"))
 }
 
 func AuthFooter() string {

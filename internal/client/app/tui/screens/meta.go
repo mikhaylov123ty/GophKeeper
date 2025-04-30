@@ -58,6 +58,9 @@ func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 			screen.list.CursorUp()
 
 		case "enter":
+			if screen.list.SelectedItem() == nil {
+				return screen.backScreen, nil
+			}
 			itemDataID := screen.list.SelectedItem().(*models.MetaItem).DataID
 			itemData, err := screen.itemsManager.GetItemData(itemDataID)
 			if err != nil {
@@ -180,7 +183,7 @@ func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen 
 
 	switch category {
 	case TextCategory:
-		return &editTextItemScreen{
+		return &addTextItemScreen{
 			ItemScreen: &models.ItemScreen{
 				ItemsManager: screen.itemsManager,
 				BackScreen:   screen,
@@ -192,7 +195,7 @@ func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen 
 		}
 
 	case CardCategory:
-		return &editBankCardItemScreen{
+		return &addBankCardItemScreen{
 			ItemScreen: &models.ItemScreen{
 				ItemsManager: screen.itemsManager,
 				BackScreen:   screen,
@@ -204,7 +207,7 @@ func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen 
 		}
 
 	case CredsCategory:
-		return &editCredsItemScreen{
+		return &addCredsItemScreen{
 			ItemScreen: &models.ItemScreen{
 				ItemsManager: screen.itemsManager,
 				BackScreen:   screen,
@@ -216,7 +219,7 @@ func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen 
 		}
 
 	case FileCategory:
-		return &editBinaryItemScreen{
+		return &addBinaryItemScreen{
 			ItemScreen: &models.ItemScreen{
 				ItemsManager: screen.itemsManager,
 				BackScreen:   screen,
