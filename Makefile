@@ -17,7 +17,7 @@ goimports:
 build:
 	go build -gcflags="-N -l" -o ./cmd/client/app ./cmd/client/main.go
 
-runApp:
+runBuild: build
 	./cmd/client//app -config cmd/client/config.json
 
 run:

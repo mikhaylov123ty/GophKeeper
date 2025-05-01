@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
 
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
@@ -64,7 +65,7 @@ func (d MetaItemDelegate) Spacing() int                            { return 0 }
 func (d MetaItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 func (d MetaItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
 	itemStyle := lipgloss.NewStyle().PaddingLeft(4)
-	selecteditemStyle := lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("63"))
+	selecteditemStyle := utils.CursorStyle.PaddingLeft(2)
 	i, ok := listItem.(*MetaItem)
 	if !ok {
 		return

@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 )
@@ -69,11 +67,13 @@ func (s *AuthScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 			return s, tea.Quit
 
 		default:
-			// Handle character input based on the currently focused field
-			if s.cursor == 0 { // Username field
-				s.username += msg.String()
-			} else if s.cursor == 1 { // Password field
-				s.password += msg.String()
+			if len(msg.String()) == 1 {
+				// Handle character input based on the currently focused field
+				if s.cursor == 0 { // Username field
+					s.username += msg.String()
+				} else if s.cursor == 1 { // Password field
+					s.password += msg.String()
+				}
 			}
 		}
 	}
@@ -85,16 +85,12 @@ func (s *AuthScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 func (s *AuthScreen) View() string {
 	var sb strings.Builder
 
-	// Basic styles
-	usernameStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-	passwordStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("63"))
-
 	sb.WriteString("Please log in:\n\n")
 
 	// Render Username Field
-	sb.WriteString(fmt.Sprintf("Username: %s\n", usernameStyle.Render(s.username)))
+	sb.WriteString(fmt.Sprintf("Username: %s\n", utils.CursorStyle.Render(s.username)))
 	// Render Password Field (masked)
-	sb.WriteString(fmt.Sprintf("Password: %s\n", passwordStyle.Render(strings.Repeat("•", len(s.password)))))
+	sb.WriteString(fmt.Sprintf("Password: %s\n", utils.CursorStyle.Render(strings.Repeat("•", len(s.password)))))
 	// Render Footer
 	sb.WriteString(utils.AuthFooter())
 

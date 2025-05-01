@@ -44,7 +44,7 @@ func (screen *viewCredsDataScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
 		"%sCreds Information%s\n"+
-			"=======================%s"+
+			"%s"+
 			"Login: %s%s\n"+
 			"Password: %s%s\n",
 		utils.ColorBold, utils.ColorReset,
@@ -140,7 +140,7 @@ func (screen *addCredsItemScreen) handleInput(input string) {
 		}
 	} else {
 		// Ignore special keys
-		if input != "up" && input != "down" && input != "esc" {
+		if len(input) == 1 {
 			fields[screen.cursor] += input
 		}
 	}

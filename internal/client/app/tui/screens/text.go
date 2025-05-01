@@ -139,7 +139,7 @@ func (screen *addTextItemScreen) handleInput(input string) {
 		}
 	} else {
 		// Ignore special keys
-		if input != "up" && input != "down" && input != "esc" {
+		if len(input) == 1 {
 			fields[screen.cursor] += input
 		}
 	}

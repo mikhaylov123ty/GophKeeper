@@ -30,8 +30,8 @@ type addBankCardItemScreen struct {
 func (screen *viewBankCardDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+q":
+		switch msg.Type {
+		case tea.KeyCtrlQ:
 			return screen.backScreen, nil
 		}
 	}
@@ -60,8 +60,8 @@ func (screen *viewBankCardDataScreen) View() string {
 
 func (screen *addBankCardItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
-		switch keyMsg.String() {
-		case "enter":
+		switch keyMsg.Type {
+		case tea.KeyEnter:
 			if screen.newTitle != "" && screen.newDesc != "" {
 				if screen.newItemData != nil {
 					cardData, err := json.Marshal(screen.newItemData)
@@ -81,12 +81,11 @@ func (screen *addBankCardItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd
 				}
 			}
 			return screen.backScreen, nil // Go back to category menu
-
-		case "ctrl+q": // Go back to the previous menu
+		case tea.KeyCtrlQ: // Go back to the previous menu
 			return screen.backScreen, nil
-		case "up":
+		case tea.KeyUp:
 			screen.cursor = (screen.cursor - 1 + cardFields) % cardFields // Focus on Title
-		case "down":
+		case tea.KeyDown:
 			screen.cursor = (screen.cursor + 1) % cardFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
@@ -144,7 +143,7 @@ func (screen *addBankCardItemScreen) handleInput(input string) {
 		}
 	} else {
 		// Ignore special keys
-		if input != "up" && input != "down" && input != "esc" {
+		if len(input) == 1 {
 			fields[screen.cursor] += input
 		}
 	}

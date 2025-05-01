@@ -30,7 +30,7 @@ func (screen *ErrorScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
 		"%sError%s\n"+
-			"=======================%s"+
+			"%s"+
 			"%s%s%s\n",
 		utils.ColorBold, utils.ColorReset,
 		separator,
