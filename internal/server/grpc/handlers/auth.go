@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -49,7 +48,7 @@ func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserData
 	var res pb.PostUserDataResponse
 	if request.GetLogin() == "" || request.GetPassword() == "" {
 		slog.Error("failed to get request parameters: login or password is empty")
-		res.Error = fmt.Sprintf("login or password is empty")
+		res.Error = "login or password is empty"
 		return &res, status.Error(codes.InvalidArgument, "login or password is empty")
 	}
 
@@ -83,7 +82,7 @@ func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserData
 	} else {
 		if bcrypt.CompareHashAndPassword([]byte(storageUser.Password), []byte(request.Password)) != nil {
 			slog.Error("password not match")
-			res.Error = fmt.Sprintf("login or password is incorrect")
+			res.Error = "login or password is incorrect"
 			return &res, status.Error(codes.PermissionDenied, "login or password is incorrect")
 		}
 	}
@@ -100,7 +99,7 @@ func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserData
 	ss, err := token.SignedString([]byte(config.GetKeys().JWTKey))
 	if err != nil {
 		slog.Error("failed to sign token", slog.String("error", err.Error()))
-		res.Error = fmt.Sprintf("failed to sign token")
+		res.Error = "failed to sign token"
 		return &res, status.Error(codes.PermissionDenied, "failed to sign token")
 	}
 

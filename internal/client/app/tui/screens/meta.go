@@ -80,7 +80,7 @@ func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 		case "d":
 			if len(screen.list.Items()) > 0 {
 				if err := screen.itemsManager.DeleteItem(
-					screen.list.SelectedItem().(*models.MetaItem).Id,
+					screen.list.SelectedItem().(*models.MetaItem).ID,
 					screen.category,
 					screen.list.SelectedItem().(*models.MetaItem).DataID,
 				); err != nil {

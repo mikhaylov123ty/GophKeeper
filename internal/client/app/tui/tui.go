@@ -132,7 +132,7 @@ func (im *ItemsManager) SyncMeta() error {
 			return fmt.Errorf("invalid meta item id: %s", metaItem.GetId())
 		}
 		im.metaItems[metaItem.DataType] = append(im.metaItems[metaItem.DataType], &models.MetaItem{
-			Id:          id,
+			ID:          id,
 			Title:       metaItem.GetTitle(),
 			Description: metaItem.GetDescription(),
 			DataID:      metaItem.GetDataId(),
@@ -155,7 +155,7 @@ func (im *ItemsManager) DeleteItem(metaItemID uuid.UUID, category string, dataID
 	}
 
 	for i, v := range im.metaItems[category] {
-		if v.Id == metaItemID {
+		if v.ID == metaItemID {
 			im.metaItems[category] = append(im.metaItems[category][:i], im.metaItems[category][i+1:]...)
 		}
 	}

@@ -19,7 +19,7 @@ type Commands interface {
 	DeleteItemDataByID(uuid.UUID) error
 	SaveMetaData(*models.Meta) error
 	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
-	DeleteMetaDataById(uuid.UUID) error
+	DeleteMetaDataByID(uuid.UUID) error
 	Close() error
 }
 

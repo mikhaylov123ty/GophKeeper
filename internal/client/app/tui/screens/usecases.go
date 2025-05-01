@@ -21,20 +21,20 @@ func (is *itemScreen) postItemData(itemData []byte) error {
 	var id uuid.UUID
 	var dataID string
 	if is.selectedItem != nil {
-		id = is.selectedItem.Id
+		id = is.selectedItem.ID
 		dataID = is.selectedItem.DataID
 	} else {
 		id = uuid.New()
 	}
 
 	newItem := models.MetaItem{
-		Id:          id,
+		ID:          id,
 		Title:       is.newTitle,
 		Description: is.newDesc,
 	}
 
 	metaData := pb.MetaData{
-		Id:          newItem.Id.String(),
+		Id:          newItem.ID.String(),
 		Title:       newItem.Title,
 		Description: newItem.Description,
 		DataType:    is.category,

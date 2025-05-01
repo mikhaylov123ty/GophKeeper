@@ -27,7 +27,7 @@ type metaDataProvider interface {
 
 type dataRemover interface {
 	DeleteItemDataByID(uuid.UUID) error
-	DeleteMetaDataById(uuid.UUID) error
+	DeleteMetaDataByID(uuid.UUID) error
 }
 
 func NewMetaDataHandler(metaDataProvider metaDataProvider, dataRemover dataRemover) *MetaDataHandler {
@@ -88,7 +88,7 @@ func (m *MetaDataHandler) DeleteMetaData(ctx context.Context, request *pb.Delete
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	if err = m.dataRemover.DeleteMetaDataById(metaDataID); err != nil {
+	if err = m.dataRemover.DeleteMetaDataByID(metaDataID); err != nil {
 		slog.ErrorContext(ctx, "could not delete metaData", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -46,7 +46,7 @@ func (m Model) View() string {
 }
 
 type MetaItem struct {
-	Id          uuid.UUID
+	ID          uuid.UUID
 	Title       string
 	Description string
 	DataID      string

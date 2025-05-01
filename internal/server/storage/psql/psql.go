@@ -204,7 +204,7 @@ func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	slog.Debug("getting meta data", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := s.db.Query(query, args...)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) && rows.Err() != nil {
 		return nil, fmt.Errorf("could not execute get meta query: %w", err)
 	}
 	defer rows.Close()
@@ -235,7 +235,7 @@ func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	return res, nil
 }
 
-func (s *Storage) DeleteMetaDataById(id uuid.UUID) error {
+func (s *Storage) DeleteMetaDataByID(id uuid.UUID) error {
 	query, args, err := squirrel.Delete(metaTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar).
