@@ -40,18 +40,18 @@ func New() (*ClientConfig, error) {
 
 	// Инициализация конфига из файла
 	if config.ConfigFile != "" {
-		if err = config.initConfigFile(); err != nil {
+		if err = config.InitConfigFile(); err != nil {
 			return nil, fmt.Errorf("failed init config file: %w", err)
 		}
 	}
 
 	// Парсинг переменных окружения
-	if err = config.parseEnv(); err != nil {
+	if err = config.ParseEnv(); err != nil {
 		return nil, fmt.Errorf("error parsing environment variables: %w", err)
 	}
 
 	cfg = config
-	fmt.Println(cfg)
+
 	return config, nil
 }
 
@@ -67,7 +67,7 @@ func (a *ClientConfig) parseFlags() {
 	// Флаг файла конфигурации
 	flag.StringVar(&a.ConfigFile, "config", "", "Config file")
 
-	flag.StringVar(&a.OutputFolder, "file output folder", "", "Output folder for downloaded files.")
+	flag.StringVar(&a.OutputFolder, "files-output", "", "Output folder for downloaded files.")
 
 	_ = flag.Value(a.Address)
 	flag.Var(a.Address, "a", "Host and port on which to listen gRPC requests. Example: \"localhost:443\" or \":443\"")
@@ -76,7 +76,7 @@ func (a *ClientConfig) parseFlags() {
 }
 
 // parseEnv - Парсинг инструкций переменных окружений агента
-func (a *ClientConfig) parseEnv() error {
+func (a *ClientConfig) ParseEnv() error {
 	if address := os.Getenv("ADDRESS"); address != "" {
 		if err := a.Address.Set(address); err != nil {
 			return fmt.Errorf("error setting ADDRESS: %w", err)
@@ -103,7 +103,7 @@ func (a *ClientConfig) parseEnv() error {
 }
 
 // initConfigFile читает и инициализирует файл конфигурации
-func (a *ClientConfig) initConfigFile() error {
+func (a *ClientConfig) InitConfigFile() error {
 	fileData, err := os.ReadFile(a.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
@@ -121,11 +121,9 @@ func (a *ClientConfig) initConfigFile() error {
 func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 	var err error
 	var cfgFile struct {
-		Address        *Address `json:"address"`
-		ReportInterval string   `json:"report_interval"`
-		PollInterval   string   `json:"poll_interval"`
-		PublicCert     string   `json:"public_cert"`
-		OutputFolder   string   `json:"files_output_folder"`
+		Address      *Address `json:"address"`
+		PublicCert   string   `json:"public_cert"`
+		OutputFolder string   `json:"files_output_folder"`
 	}
 
 	if err = json.Unmarshal(b, &cfgFile); err != nil {
@@ -169,6 +167,19 @@ func GetAddress() *Address {
 	return cfg.Address
 }
 
-func GetKeys() *Keys { return cfg.Keys }
+func GetKeys() *Keys {
+	fmt.Printf("config %+v\n", cfg)
+	return cfg.Keys
+}
 
 func GetOutputFolder() string { return cfg.OutputFolder }
+
+func NewTestConfig() (*ClientConfig, error) {
+	config := &ClientConfig{
+		Address: &Address{},
+		Keys:    &Keys{},
+	}
+
+	cfg = config
+	return config, nil
+}
