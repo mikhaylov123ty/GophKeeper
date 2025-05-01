@@ -41,37 +41,37 @@ func (cm ActionsMenu) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 				switch cm.category {
 				case TextCategory:
 					return &addTextItemScreen{
-						ItemScreen: &models.ItemScreen{
-							ItemsManager: cm.itemsManager,
-							BackScreen:   cm,
-							Category:     cm.category,
+						itemScreen: &itemScreen{
+							itemsManager: cm.itemsManager,
+							backScreen:   cm,
+							category:     cm.category,
 						},
 					}, nil
 
 				case CredsCategory:
 					return &addCredsItemScreen{
-						ItemScreen: &models.ItemScreen{
-							ItemsManager: cm.itemsManager,
-							BackScreen:   cm,
-							Category:     cm.category,
+						itemScreen: &itemScreen{
+							itemsManager: cm.itemsManager,
+							backScreen:   cm,
+							category:     cm.category,
 						},
 					}, nil
 
 				case FileCategory:
 					return &addBinaryItemScreen{
-						ItemScreen: &models.ItemScreen{
-							ItemsManager: cm.itemsManager,
-							BackScreen:   cm,
-							Category:     cm.category,
+						itemScreen: &itemScreen{
+							itemsManager: cm.itemsManager,
+							backScreen:   cm,
+							category:     cm.category,
 						},
 					}, nil
 
 				case CardCategory:
 					return &addBankCardItemScreen{
-						ItemScreen: &models.ItemScreen{
-							ItemsManager: cm.itemsManager,
-							BackScreen:   cm,
-							Category:     cm.category,
+						itemScreen: &itemScreen{
+							itemsManager: cm.itemsManager,
+							backScreen:   cm,
+							category:     cm.category,
 						},
 					}, nil
 				}

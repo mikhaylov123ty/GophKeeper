@@ -12,19 +12,19 @@ import (
 )
 
 type AuthScreen struct {
-	username    string
-	password    string
-	next        models.Screen
-	itemManager models.ItemsManager
-	cursor      int
+	username     string
+	password     string
+	next         models.Screen
+	itemsManager models.ItemsManager
+	cursor       int
 }
 
 // NewAuthScreen initializes the AuthScreen
-func NewAuthScreen(next models.Screen, itemManager models.ItemsManager) *models.Model {
+func NewAuthScreen(next models.Screen, itemsManager models.ItemsManager) *models.Model {
 	return &models.Model{
 		CurrentScreen: &AuthScreen{
-			next:        next,
-			itemManager: itemManager,
+			next:         next,
+			itemsManager: itemsManager,
 		},
 	}
 }
@@ -50,14 +50,14 @@ func (s *AuthScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 			s.cursor = (s.cursor + 1) % 2
 
 		case tea.KeyEnter:
-			if err := s.itemManager.PostUserData(s.username, s.password); err != nil {
+			if err := s.itemsManager.PostUserData(s.username, s.password); err != nil {
 				return &ErrorScreen{
 					backScreen: s,
 					err:        err,
 				}, nil
 			}
 
-			if err := s.itemManager.SyncMeta(); err != nil {
+			if err := s.itemsManager.SyncMeta(); err != nil {
 				return &ErrorScreen{
 					backScreen: s,
 					err:        err,

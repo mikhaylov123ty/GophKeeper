@@ -10,13 +10,11 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/google/uuid"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
 const (
@@ -29,9 +27,8 @@ type viewBinaryDataScreen struct {
 }
 
 type addBinaryItemScreen struct {
-	*models.ItemScreen
-	selectedItem *models.MetaItem
-	newItemData  *dbModels.Binary
+	*itemScreen
+	newItemData *dbModels.Binary
 }
 
 func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -65,7 +62,7 @@ func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd)
 
 			return screen.backScreen, nil
 
-		case "q":
+		case "ctrl+q":
 			return screen.backScreen, nil
 		}
 	}
@@ -91,7 +88,7 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
-			if screen.NewTitle != "" && screen.NewDesc != "" && screen.newItemData.FilePath != "" {
+			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.FilePath != "" {
 				filename := filepath.Base(screen.newItemData.FilePath)
 				extension := filepath.Ext(screen.newItemData.FilePath)
 				name := filename[:len(filename)-len(extension)]
@@ -114,58 +111,23 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 							err:        err,
 						}, nil
 					}
-
-					var id uuid.UUID
-					var dataID string
-					if screen.selectedItem != nil {
-						id = screen.selectedItem.Id
-						dataID = screen.selectedItem.DataID
-					} else {
-						id = uuid.New()
-					}
-
-					newItem := models.MetaItem{
-						Id:          id,
-						Title:       screen.NewTitle,
-						Description: screen.NewDesc,
-					}
-
-					metaData := pb.MetaData{
-						Id:          newItem.Id.String(),
-						Title:       newItem.Title,
-						Description: newItem.Description,
-						DataType:    screen.Category,
-					}
-
-					resp, err := screen.ItemsManager.PostItemData(binaryData, dataID, &metaData)
-					if err != nil {
+					
+					if err = screen.postItemData(binaryData); err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
 							err:        err,
 						}, nil
 					}
-
-					if screen.selectedItem != nil {
-						screen.selectedItem.Title = screen.NewTitle
-						screen.selectedItem.Description = screen.NewDesc
-						screen.selectedItem.Modified = resp.Modified
-					} else {
-						newItem.DataID = resp.DataId
-						newItem.Created = resp.Created
-						newItem.Modified = resp.Modified
-
-						screen.ItemsManager.SaveMetaItem(screen.Category, &newItem)
-					}
 				}
 			}
-			return screen.BackScreen, nil // Go back to category menu
+			return screen.backScreen, nil // Go back to category menu
 
 		case "ctrl+q": // Go back to the previous menu
-			return screen.BackScreen, nil
+			return screen.backScreen, nil
 		case "up":
-			screen.Cursor = (screen.Cursor - 1 + binaryFields) % binaryFields // Focus on Title
+			screen.cursor = (screen.cursor - 1 + binaryFields) % binaryFields // Focus on Title
 		case "down":
-			screen.Cursor = (screen.Cursor + 1) % binaryFields // Focus on Description
+			screen.cursor = (screen.cursor + 1) % binaryFields // Focus on Description
 		default:
 			screen.handleInput(keyMsg.String())
 		}
@@ -194,10 +156,10 @@ func (screen *addBinaryItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.Cursor] = utils.SelectedStyle
+	styles[screen.cursor] = utils.SelectedStyle
 	// Build each line
-	addLine("Title:", screen.NewTitle, styles[0])
-	addLine("Description:", screen.NewDesc, styles[1])
+	addLine("Title:", screen.newTitle, styles[0])
+	addLine("Description:", screen.newDesc, styles[1])
 	addLine("File Path:", screen.newItemData.FilePath, styles[2])
 
 	// Combine the lines with newlines
@@ -209,22 +171,22 @@ func (screen *addBinaryItemScreen) View() string {
 }
 
 func (screen *addBinaryItemScreen) handleInput(input string) {
-	fields := []string{screen.NewTitle, screen.NewDesc, screen.newItemData.FilePath}
+	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.FilePath}
 
 	// Backspace logic
 	if input == "backspace" {
-		if len(fields[screen.Cursor]) > 0 {
-			fields[screen.Cursor] = fields[screen.Cursor][:len(fields[screen.Cursor])-1]
+		if len(fields[screen.cursor]) > 0 {
+			fields[screen.cursor] = fields[screen.cursor][:len(fields[screen.cursor])-1]
 		}
 	} else {
 		// Ignore special keys
 		if input != "up" && input != "down" && input != "esc" {
-			fields[screen.Cursor] += input
+			fields[screen.cursor] += input
 		}
 	}
 
 	// Update the fields back to the screen state
-	screen.NewTitle = fields[0]
-	screen.NewDesc = fields[1]
+	screen.newTitle = fields[0]
+	screen.newDesc = fields[1]
 	screen.newItemData.FilePath = fields[2]
 }

@@ -184,50 +184,49 @@ func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen 
 	switch category {
 	case TextCategory:
 		return &addTextItemScreen{
-			ItemScreen: &models.ItemScreen{
-				ItemsManager: screen.itemsManager,
-				BackScreen:   screen,
-				Category:     screen.category,
-				NewTitle:     selectedItem.Title,
-				NewDesc:      selectedItem.Description,
+			itemScreen: &itemScreen{
+				itemsManager: screen.itemsManager,
+				backScreen:   screen,
+				category:     screen.category,
+				newTitle:     selectedItem.Title,
+				newDesc:      selectedItem.Description,
+				selectedItem: selectedItem,
 			},
-			selectedItem: selectedItem,
 		}
 
 	case CardCategory:
 		return &addBankCardItemScreen{
-			ItemScreen: &models.ItemScreen{
-				ItemsManager: screen.itemsManager,
-				BackScreen:   screen,
-				Category:     screen.category,
-				NewTitle:     selectedItem.Title,
-				NewDesc:      selectedItem.Description,
+			itemScreen: &itemScreen{
+				itemsManager: screen.itemsManager,
+				backScreen:   screen,
+				category:     screen.category,
+				newTitle:     selectedItem.Title,
+				newDesc:      selectedItem.Description,
+				selectedItem: selectedItem,
 			},
-			selectedItem: selectedItem,
 		}
 
 	case CredsCategory:
 		return &addCredsItemScreen{
-			ItemScreen: &models.ItemScreen{
-				ItemsManager: screen.itemsManager,
-				BackScreen:   screen,
-				Category:     screen.category,
-				NewTitle:     selectedItem.Title,
-				NewDesc:      selectedItem.Description,
+			itemScreen: &itemScreen{
+				itemsManager: screen.itemsManager,
+				backScreen:   screen,
+				category:     screen.category,
+				newTitle:     selectedItem.Title,
+				newDesc:      selectedItem.Description,
 			},
-			selectedItem: selectedItem,
 		}
 
 	case FileCategory:
 		return &addBinaryItemScreen{
-			ItemScreen: &models.ItemScreen{
-				ItemsManager: screen.itemsManager,
-				BackScreen:   screen,
-				Category:     screen.category,
-				NewTitle:     selectedItem.Title,
-				NewDesc:      selectedItem.Description,
+			itemScreen: &itemScreen{
+				itemsManager: screen.itemsManager,
+				backScreen:   screen,
+				category:     screen.category,
+				newTitle:     selectedItem.Title,
+				newDesc:      selectedItem.Description,
+				selectedItem: selectedItem,
 			},
-			selectedItem: screen.list.SelectedItem().(*models.MetaItem),
 		}
 	}
 
