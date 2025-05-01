@@ -2,7 +2,6 @@ package models
 
 import (
 	"fmt"
-	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"io"
 	"strings"
 
@@ -10,6 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
+
+	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
 type Screen interface {

@@ -111,7 +111,7 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 							err:        err,
 						}, nil
 					}
-					
+
 					if err = screen.postItemData(binaryData); err != nil {
 						return &ErrorScreen{
 							backScreen: screen,

@@ -6,11 +6,10 @@ import (
 	"log/slog"
 	"time"
 
-	"google.golang.org/grpc/credentials"
-
 	"github.com/golang-jwt/jwt/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 

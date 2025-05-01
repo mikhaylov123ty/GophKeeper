@@ -2,13 +2,12 @@ package server
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc/handlers"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage"
-
-	"net"
 )
 
 // Server - структура сервера

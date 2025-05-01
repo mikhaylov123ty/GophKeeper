@@ -2,7 +2,9 @@ package screens
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
+
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
