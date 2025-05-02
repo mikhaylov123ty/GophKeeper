@@ -2,11 +2,13 @@ package config_test
 
 import (
 	"encoding/json"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
 // TestAddress_Set tests the Address.Set method

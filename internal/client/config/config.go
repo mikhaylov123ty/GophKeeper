@@ -168,7 +168,6 @@ func GetAddress() *Address {
 }
 
 func GetKeys() *Keys {
-	fmt.Printf("config %+v\n", cfg)
 	return cfg.Keys
 }
 

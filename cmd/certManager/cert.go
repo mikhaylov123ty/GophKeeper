@@ -33,16 +33,17 @@ func main() {
 	}
 }
 
-// Генерация сертификата
+// generateCert generates a new certificate and key pair.  It creates a self-signed certificate
+// for testing purposes.  In a production environment, a Certificate Authority (CA) should be used.
 func generateCert() error {
-	// Шаблон сертификата
+	// Generate template
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()),
 		Subject: pkix.Name{
 			Organization: []string{"Ya Praktikum"},
 			Country:      []string{"RU"},
 		},
-		IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		IPAddresses: []net.IP{net.IPv4(0, 0, 0, 0), net.IPv6loopback},
 		DNSNames:    []string{"localhost"},
 		NotBefore:   time.Now(),
 		NotAfter:    time.Now().AddDate(0, 0, 1),
@@ -50,7 +51,7 @@ func generateCert() error {
 		KeyUsage:    x509.KeyUsageDigitalSignature & x509.KeyUsageKeyEncipherment,
 	}
 
-	// Генерация приватного ключа
+	// Generate private key
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return fmt.Errorf("failed generate private key: %w", err)
@@ -90,12 +91,12 @@ func generateCert() error {
 	}
 
 	// Запись приватного ключа
-	if err = os.WriteFile(keysPairDir+keyName, keyPEM.Bytes(), 0755); err != nil {
+	if err = os.WriteFile(keysPairDir+keyName, keyPEM.Bytes(), 0644); err != nil {
 		return fmt.Errorf("failed write tls private key: %w", err)
 	}
 
 	// Запись серификата
-	if err = os.WriteFile(keysPairDir+certName, certPEM.Bytes(), 0755); err != nil {
+	if err = os.WriteFile(keysPairDir+certName, certPEM.Bytes(), 0600); err != nil {
 		return fmt.Errorf("failed write tls public key: %w", err)
 	}
 

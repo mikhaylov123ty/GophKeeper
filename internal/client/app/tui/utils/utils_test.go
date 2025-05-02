@@ -6,12 +6,14 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
 var cfg *config.ClientConfig

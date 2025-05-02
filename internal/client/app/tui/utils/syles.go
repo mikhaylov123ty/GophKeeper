@@ -3,7 +3,7 @@ package utils
 import "github.com/charmbracelet/lipgloss"
 
 var (
-	CursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))                     // Bright purple
+	CursorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)          // Bright purple
 	SelectedStyle   = lipgloss.NewStyle().Padding(1).Foreground(lipgloss.Color("2")).Bold(true) // Green
 	UnselectedStyle = lipgloss.NewStyle().Padding(1).Foreground(lipgloss.Color("7"))            // White
 	BackgroundStyle = lipgloss.NewStyle().Background(lipgloss.Color("245"))                     // Grey background

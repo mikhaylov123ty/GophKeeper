@@ -53,6 +53,8 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		fmt.Println("starting server on port:", config.GetAddress().String())
+
 		if err = serverInstance.Start(); err != nil {
 			panic(err)
 		}

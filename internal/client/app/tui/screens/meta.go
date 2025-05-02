@@ -29,7 +29,7 @@ func (screen *viewMetaItemsScreen) View() string {
 	metaData := screen.itemsManager.GetMetaData(screen.category)
 
 	if len(metaData) == 0 {
-		return "No items to display.\n\nPress CTRL+Q to go back.\n"
+		return utils.SelectedStyle.Render("No items to display.\n\n") + utils.ItemDataFooter()
 	}
 
 	listItems := []list.Item{}

@@ -14,11 +14,20 @@ generateCert:
 goimports:
 	goimports -local github.com/mikhaylov123ty/GophKeeper -w ./internal/..
 
-build:
+buildClient:
 	go build -gcflags="-N -l" -o ./cmd/client/app ./cmd/client/main.go
 
-runBuild: build
-	./cmd/client//app -config cmd/client/config.json
+runBuildClient: buildClient
+	./cmd/client/app -config cmd/client/config.json
 
-run:
+run Client:
 	go run cmd/client/main.go -config ./cmd/client/config.json
+
+buildServer:
+	go build -gcflags="-N -l" -o ./cmd/server/app ./cmd/server/main.go
+
+runBuildServer: buildServer
+	./cmd/server/app -config cmd/server/config.json
+
+run Server:
+	go run cmd/server/main.go -config ./cmd/server/config.json

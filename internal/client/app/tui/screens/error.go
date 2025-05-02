@@ -29,10 +29,13 @@ func (screen *ErrorScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 func (screen *ErrorScreen) View() string {
 	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
 	return fmt.Sprintf(
-		"%sError%s\n"+
+		"%sError%s"+
 			"%s"+
-			"%s%s%s\n",
+			"%s%s%s\n\n"+
+			"%s",
 		utils.ColorBold, utils.ColorReset,
 		separator,
-		utils.ColorGreen, screen.err.Error(), utils.ColorReset)
+		utils.ColorGreen, screen.err.Error(), utils.ColorReset,
+		utils.ItemDataFooter(),
+	)
 }

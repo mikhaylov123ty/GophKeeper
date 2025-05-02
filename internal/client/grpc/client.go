@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"log/slog"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
@@ -52,7 +52,7 @@ func New() (*Client, error) {
 		AuthHandler:     pb.NewUserHandlersClient(conn),
 	}
 
-	slog.Info("Client Created", slog.String("address", config.GetAddress().String()))
+	slog.Info("Client Created", slog.String("address", ":"+config.GetAddress().GRPCPort))
 
 	return &instance, nil
 }

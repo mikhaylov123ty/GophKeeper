@@ -3,13 +3,13 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"google.golang.org/grpc/credentials"
 	"log/slog"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
@@ -35,8 +35,6 @@ func NewServer(
 	interceptors := []grpc.UnaryServerInterceptor{
 		instance.withLogger,
 		instance.withAuth,
-		//instance.withEncrypt
-		// WITH TLS
 	}
 
 	creds, err := credentials.NewServerTLSFromFile("public.crt", "private.key")
@@ -108,64 +106,5 @@ func (g *GRPCServer) withAuth(ctx context.Context, req any,
 		}
 	}
 
-	//TODO ADD CREATION TLS CERT AND SEND IT
-
 	return handler(ctx, req)
 }
-
-//// withDecrypt - перехватчик дешифровки тела запроса
-//func (g *GRPCServer) withDecrypt(ctx context.Context, req any,
-//	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
-//	// Проверка наличия флага приватного ключа
-//	if config.GetKeys().CryptoKey != "" {
-//		slog.InfoContext(ctx, "start decrypt gRPC request")
-//
-//		// Чтение pem файла
-//		var privatePEM []byte
-//		privatePEM, err = os.ReadFile(config.GetKeys().CryptoKey)
-//		if err != nil {
-//			return nil, status.Errorf(codes.NotFound, "unable to read private key: %v", err)
-//		}
-//
-//		// Поиск блока приватного ключа
-//		privateKeyBlock, _ := pem.Decode(privatePEM)
-//
-//		// Парсинг приватного ключа
-//		var privateKey *rsa.PrivateKey
-//		privateKey, err = x509.ParsePKCS1PrivateKey(privateKeyBlock.Bytes)
-//		if err != nil {
-//			return nil, status.Errorf(codes.InvalidArgument, "unable to parse private key: %v", err)
-//		}
-//		if err = privateKey.Validate(); err != nil {
-//			return nil, status.Errorf(codes.Unauthenticated, "invalid private key: %v", err)
-//		}
-//
-//		// Установка длины частей публичного ключа
-//		blockLen := privateKey.PublicKey.Size()
-//
-//		// Чтение метрик
-//		body := req.(*pb.PostUpdatesRequest).Metrics
-//
-//		// Дешифровка тела запроса частями
-//		var decryptedBytes []byte
-//		for start := 0; start < len(body); start += blockLen {
-//			end := start + blockLen
-//			if start+blockLen > len(body) {
-//				end = len(body)
-//			}
-//
-//			var decryptedChunk []byte
-//			decryptedChunk, err = rsa.DecryptPKCS1v15(rand.Reader, privateKey, body[start:end])
-//			if err != nil {
-//				return nil, status.Errorf(codes.Internal, "unable to decrypt request: %v", err)
-//			}
-//
-//			decryptedBytes = append(decryptedBytes, decryptedChunk...)
-//		}
-//
-//		// Подмена тела запроса
-//		req.(*pb.PostUpdatesRequest).Metrics = decryptedBytes
-//	}
-//
-//	return handler(ctx, req)
-//}

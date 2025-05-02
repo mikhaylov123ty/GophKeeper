@@ -13,11 +13,11 @@ var cfg *ServerConfig
 
 // ServerConfig - структура конфигурации сервера
 type ServerConfig struct {
-	Address    *Address
-	Logger     *Logger
-	DB         *DB
-	Keys       *Keys
-	configFile string
+	Address    *Address `json:"address"`
+	Logger     *Logger  `json:"logger"`
+	DB         *DB      `json:"db"`
+	Keys       *Keys    `json:"keys"`
+	ConfigFile string   `json:"config_file"`
 }
 
 type Address struct {
@@ -39,9 +39,13 @@ type DB struct {
 }
 
 type Keys struct {
-	HashKey   string
-	CryptoKey string
-	JWTKey    string
+	CryptoKeys *CryptoKeys `json:"crypto_keys"`
+	JWTKey     string      `json:"jwt_key"`
+}
+
+type CryptoKeys struct {
+	Certificate string `json:"certificate"`
+	PrivateKey  string `json:"private_key"`
 }
 
 // Init - конструктор конфигурации сервера
@@ -51,29 +55,35 @@ func Init() (*ServerConfig, error) {
 		Address: &Address{},
 		Logger:  &Logger{},
 		DB:      &DB{},
-		Keys:    &Keys{},
+		Keys: &Keys{
+			CryptoKeys: &CryptoKeys{},
+		},
 	}
 
 	// Парсинг флагов
 	config.parseFlags()
 
 	// Инициализация конфига из файла
-	if config.configFile != "" {
-		if err = config.initConfigFile(); err != nil {
+	if config.ConfigFile != "" {
+		if err = config.InitConfigFile(); err != nil {
 			return nil, fmt.Errorf("failed init config file: %w", err)
 		}
 	}
 
 	// Парсинг переменных окружения
-	if err = config.parseEnv(); err != nil {
+	if err = config.ParseEnv(); err != nil {
 		return nil, fmt.Errorf("error parsing environment variables: %w", err)
+	}
+
+	if err = config.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating config: %w", err)
 	}
 
 	cfg = config
 
-	fmt.Println("CONFIG DB", *cfg.DB)
-	fmt.Println("CONFIG Logger", *cfg.Logger)
-	fmt.Println("CONFIG address", *cfg.Address)
+	fmt.Printf("KEYS %+v\n", *config.Keys.CryptoKeys)
+	fmt.Printf("JWT %+v\n", config.Keys.JWTKey)
+	fmt.Printf("DB DSN %+v\n", config.DB.DSN)
 
 	return config, nil
 }
@@ -81,7 +91,7 @@ func Init() (*ServerConfig, error) {
 // Парсинг инструкций флагов сервера
 func (s *ServerConfig) parseFlags() {
 	// Базовые флаги
-	flag.StringVar(&s.Address.Host, "host", "localhost", "Host on which to listen. Example: \"localhost\"")
+	flag.StringVar(&s.Address.Host, "host", "", "Host on which to listen. Example: \"localhost\"")
 	flag.StringVar(&s.Address.GRPCPort, "grpc-port", "", "Port on which to listen gRPC requests. Example: \"4443\"")
 
 	// Флаги логирования
@@ -90,17 +100,15 @@ func (s *ServerConfig) parseFlags() {
 	// Флаги БД
 	flag.StringVar(&s.DB.DSN, "d", "", "Host which to connect to DB. Example: \"postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable\"")
 
-	// Флаги подписи и шифрования
-	flag.StringVar(&s.Keys.HashKey, "hash-key", "", "Key")
+	// Флаги приватного и публичного ключей
+	flag.StringVar(&s.Keys.CryptoKeys.PrivateKey, "private-key", "", "Path to private key file")
+	flag.StringVar(&s.Keys.CryptoKeys.Certificate, "certificate", "", "Path to public cert file")
 
 	// Флаги приватного и публичного ключей
-	flag.StringVar(&s.Keys.CryptoKey, "crypto-key", "", "Path to private crypto key file")
-
-	// Флаги приватного и публичного ключей
-	flag.StringVar(&s.Keys.CryptoKey, "jwt-key", "", "jwt key")
+	flag.StringVar(&s.Keys.JWTKey, "jwt-key", "", "jwt key")
 
 	// Флаг файла конфигурации
-	flag.StringVar(&s.configFile, "config", "", "Config file")
+	flag.StringVar(&s.ConfigFile, "config", "", "Config file")
 
 	_ = flag.Value(s.Address)
 	flag.Var(s.Address, "a", "Host and port on which to listen. Example: \"localhost:8081\" or \":8081\"")
@@ -109,7 +117,7 @@ func (s *ServerConfig) parseFlags() {
 }
 
 // Парсинг инструкций переменных окружений сервера
-func (s *ServerConfig) parseEnv() error {
+func (s *ServerConfig) ParseEnv() error {
 	var err error
 	if address := os.Getenv("ADDRESS"); address != "" {
 		if err = s.Address.Set(address); err != nil {
@@ -125,16 +133,16 @@ func (s *ServerConfig) parseEnv() error {
 		s.Logger.LogLevel = logLevel
 	}
 
-	if address := os.Getenv("DATABASE_DSN"); address != "" {
-		s.DB.DSN = address
+	if dsn := os.Getenv("DATABASE_DSN"); dsn != "" {
+		s.DB.DSN = dsn
 	}
 
-	if key := os.Getenv("HASH_KEY"); key != "" {
-		s.Keys.HashKey = key
+	if privateKey := os.Getenv("PRIVATE_KEY"); privateKey != "" {
+		s.Keys.CryptoKeys.PrivateKey = privateKey
 	}
 
-	if privateKey := os.Getenv("CRYPTO_KEY"); privateKey != "" {
-		s.Keys.CryptoKey = privateKey
+	if certificate := os.Getenv("CERTIFICATE"); certificate != "" {
+		s.Keys.CryptoKeys.Certificate = certificate
 	}
 
 	if jwtKey := os.Getenv("JWT_KEY"); jwtKey != "" {
@@ -142,15 +150,15 @@ func (s *ServerConfig) parseEnv() error {
 	}
 
 	if config := os.Getenv("CONFIG_FILE"); config != "" {
-		s.configFile = config
+		s.ConfigFile = config
 	}
 
 	return nil
 }
 
 // initConfigFile читает и инициализирует файл конфигурации
-func (s *ServerConfig) initConfigFile() error {
-	fileData, err := os.ReadFile(s.configFile)
+func (s *ServerConfig) InitConfigFile() error {
+	fileData, err := os.ReadFile(s.ConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -176,6 +184,10 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
+	if s.Address.Host == "" && cfgFile.Address.Host != "" {
+		s.Address.Host = cfgFile.Address.Host
+	}
+
 	if s.Address.GRPCPort == "" && cfgFile.Address.GRPCPort != "" {
 		s.Address.GRPCPort = cfgFile.Address.GRPCPort
 	}
@@ -197,6 +209,26 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 	}
 	if s.Logger.LogFormat == "" && cfgFile.Logger.LogFormat != "" {
 		s.Logger.LogFormat = cfgFile.Logger.LogFormat
+	}
+
+	return nil
+}
+
+func (s *ServerConfig) Validate() error {
+	if s.Keys.JWTKey == "" {
+		return fmt.Errorf("JWT key is required")
+	}
+
+	if s.Keys.CryptoKeys.PrivateKey == "" {
+		return fmt.Errorf("private key is required")
+	} else {
+		if _, err := os.ReadFile(s.Keys.CryptoKeys.PrivateKey); err != nil {
+			return fmt.Errorf("private file missing")
+		}
+	}
+
+	if s.Keys.CryptoKeys.Certificate == "" {
+		return fmt.Errorf("certificate is required")
 	}
 
 	return nil
@@ -234,4 +266,18 @@ func GetDB() *DB {
 
 func GetKeys() *Keys {
 	return cfg.Keys
+}
+
+func NewTestConfig() (*ServerConfig, error) {
+	config := &ServerConfig{
+		Address: &Address{},
+		Keys: &Keys{
+			CryptoKeys: &CryptoKeys{},
+		},
+		Logger: &Logger{},
+		DB:     &DB{},
+	}
+
+	cfg = config
+	return config, nil
 }

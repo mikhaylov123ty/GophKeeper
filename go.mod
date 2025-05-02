@@ -7,12 +7,12 @@ require (
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.4
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
-	github.com/golang-jwt/jwt/v4 v4.5.1
+	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.18.2
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.5.4
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.37.0
 	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2
 )
@@ -46,7 +46,7 @@ require (
 	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.uber.org/atomic v1.7.0 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect

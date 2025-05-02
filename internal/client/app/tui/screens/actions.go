@@ -89,7 +89,7 @@ func (cm ActionsMenu) View() string {
 	s := utils.TitleStyle.Render("Category Menu:\n\n")
 	for i, option := range cm.options {
 		if cm.cursor == i {
-			s += utils.SelectedStyle.Render(fmt.Sprintf("[x] %s\n", option)) // Selected option with color
+			s += utils.CursorStyle.Render(fmt.Sprintf("[x] %s\n", option)) // Selected option with color
 		} else {
 			s += utils.UnselectedStyle.Render(fmt.Sprintf("[ ] %s\n", option)) // Unselected option with color
 		}
