@@ -115,14 +115,10 @@ func (im *ItemsManager) SyncMeta() error {
 	if err != nil {
 		if e, ok := status.FromError(err); ok {
 			if e.Code() == codes.NotFound {
-				fmt.Println(`NOT FOUND`, e.Message())
 				return nil
-			} else {
-				fmt.Println(e.Code(), e.Message())
 			}
 		} else {
-			fmt.Printf("Не получилось распарсить ошибку %v", err)
-			return err
+			return fmt.Errorf("failed to get meta data: %w", err)
 		}
 	}
 

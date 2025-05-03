@@ -20,10 +20,9 @@ go build -o ./cmd/server/server ./cmd/server/main.go
 ```
 Скомпилированный файл будет лежать в папке проекта /cmd/server
 
-3. Сконфигурировать сервер
-
-###### Файл конфигурации
-Конфигурация находится в папке проекта /cmd/server вместе с исполняемым файлов
+4. Запуск сервера
+###### C файлом конфигурации
+Конфигурация находится в папке проекта /cmd/server вместе с исполняемым файлом
 ```
 cmd/server/config.json
 ```
@@ -33,12 +32,12 @@ cmd/server/config.json
 * JWT key - задать на свое усмотрение
 * Crypto keys - в корне проекта по умолчанию, изменить, если планируется перенести в другое место
 
-Если планируется запускать сервер через флаги, можно сразу переходить к П.4
-4. Запуск сервера
+Пример:
 ```
 ./cmd/server/server -config cmd/server/config.json
 ```
-Флаги запуска:
+
+###### С флагами запуска:
 ```
 -host -имя хоста сервера
 -grpc-port - порт gRPC сервера
@@ -54,7 +53,7 @@ cmd/server/config.json
 ```
 Пример:
 ```
--grpc-port 4443 -l info -d "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" -m "file://./migrations" -private-key "./private.key" -certificate "./public.key" -jwt-key 123
+./cmd/server/server -grpc-port 4443 -l info -d "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable" -m "file://./migrations" -private-key "./private.key" -certificate "./public.key" -jwt-key 123
 ```
 
 ## Запуск клиента
@@ -65,8 +64,13 @@ cmd/client/
 ```
 
 ###### С файлом конфигурации
+Конфигурация находится в папке проекта /cmd/server вместе с исполняемым файлов
 ```
-client -config ./cmd/client/config.json
+cmd/server/config.json
+```
+
+```
+./cmd/client/yourClient -config ./cmd/client/config.json
 ```
 Все необходимы поля уже заполнены, необходимо только скорректировать:
 * Public cert - в корне проекта по умолчанию, изменить, если планируется перенести в другое место
@@ -84,7 +88,7 @@ client -config ./cmd/client/config.json
 ```
 Пример:
 ```
-client -grpc-port 4443 -certificate ./public.crt -files-output "/Users/amikhaylov/Downloads/Output"
+./cmd/client/yourClient -grpc-port 4443 -certificate ./public.crt -files-output "/Users/amikhaylov/Downloads/Output"
 ```
 
 После запуска следовать инструкциям внизу экрана

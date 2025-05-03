@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"log/slog"
 	"sync"
@@ -52,13 +51,12 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		fmt.Println("starting server on port:", config.GetAddress().String())
+		slog.Info("starting server", slog.String("address", config.GetAddress().String()))
 
 		if err = serverInstance.Start(); err != nil {
 			panic(err)
 		}
 	}()
 
-	fmt.Println("Hello i'm server")
 	wg.Wait()
 }

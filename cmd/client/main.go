@@ -1,8 +1,7 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"log/slog"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app"
 	grpcClient "github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
@@ -15,9 +14,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("config initialized %+v\n", config)
 
-	fmt.Println("Hello i'm client")
+	slog.Info("config initialized",
+		slog.String("Address", config.Address.String()),
+		slog.String("Config File", config.ConfigFile),
+		slog.String("Cert", config.Keys.PublicCert),
+	)
 
 	grpc, err := grpcClient.New()
 	if err != nil {
@@ -26,7 +28,7 @@ func main() {
 
 	appSvc := app.New(grpc)
 
-	if err = appSvc.Run(context.Background()); err != nil {
+	if err = appSvc.Run(); err != nil {
 		panic(err)
 	}
 }

@@ -64,6 +64,8 @@ func New(dsn string, migrationsDir string) (*Storage, error) {
 }
 
 func (s *Storage) SaveUser(data *models.UserData) error {
+	slog.Debug("Save User Data", slog.Any("data", *data))
+
 	query, args, err := squirrel.Insert(usersTableName).
 		Values(data.ID, data.Login, data.Password, data.Created, data.Modified).
 		PlaceholderFormat(squirrel.Dollar).
@@ -83,6 +85,8 @@ func (s *Storage) SaveUser(data *models.UserData) error {
 }
 
 func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
+	slog.Debug("Get User Data by Login", slog.String("Login", login))
+
 	query, args, err := squirrel.Select("*").
 		From(usersTableName).
 		Where(squirrel.Eq{"login": login}).
@@ -114,6 +118,8 @@ func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
 }
 
 func (s *Storage) SaveItemData(item *models.ItemData) error {
+	slog.Debug("Save Item Data", slog.Any("data", *item))
+
 	query, args, err := squirrel.Insert(itemsDataTableName).
 		Values(item.ID, item.Data).
 		Suffix("ON CONFLICT(id) DO UPDATE SET data = $2").
@@ -134,6 +140,7 @@ func (s *Storage) SaveItemData(item *models.ItemData) error {
 }
 
 func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
+	slog.Debug("Get Item Data by ID", slog.String("ID", id.String()))
 	query, args, err := squirrel.Select("*").
 		From(itemsDataTableName).
 		Where(squirrel.Eq{"id": id}).
@@ -161,6 +168,8 @@ func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
 }
 
 func (s *Storage) DeleteItemDataByID(id uuid.UUID) error {
+	slog.Debug("Delete Item Data by ID", slog.String("ID", id.String()))
+
 	query, args, err := squirrel.Delete(itemsDataTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar).
@@ -180,7 +189,8 @@ func (s *Storage) DeleteItemDataByID(id uuid.UUID) error {
 }
 
 func (s *Storage) SaveMetaData(data *models.Meta) error {
-	fmt.Printf("META: %+v", *data)
+	slog.Debug("Save Meta Data", slog.Any("data", *data))
+
 	query, args, err := squirrel.Insert(metaTableName).
 		Values(data.ID, data.Title, data.Description, data.Type, data.DataID, data.UserID, data.Created, data.Modified).
 		Suffix("ON CONFLICT(id) DO UPDATE SET title = $2, description = $3, data_id = $5, modified_at = $7").
@@ -201,6 +211,8 @@ func (s *Storage) SaveMetaData(data *models.Meta) error {
 }
 
 func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
+	slog.Debug("Get Meta Data by user", slog.String("user ID", userID.String()))
+
 	query, args, err := squirrel.Select("*").
 		From(metaTableName).
 		Where(
@@ -248,6 +260,8 @@ func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 }
 
 func (s *Storage) DeleteMetaDataByID(id uuid.UUID) error {
+	slog.Debug("Delete Meta Data by ID", slog.String("ID", id.String()))
+
 	query, args, err := squirrel.Delete(metaTableName).
 		Where(squirrel.Eq{"id": id}).
 		PlaceholderFormat(squirrel.Dollar).

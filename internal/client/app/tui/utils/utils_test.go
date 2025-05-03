@@ -84,9 +84,7 @@ func TestEncryptData(t *testing.T) {
 				defer cleanup()
 
 				cfg.Keys.PublicCert = pubPath
-
-				fmt.Printf("cfg %+v\n", cfg)
-
+				
 			} else {
 				// For the case of empty cert, ensure no config set
 				cfg.Keys.PublicCert = ""

@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
@@ -37,7 +38,8 @@ func New(storageCommands storage.Commands) (*Server, error) {
 }
 
 func (s *Server) Start() error {
-	fmt.Println("starting server on port:", config.GetAddress().String())
+	slog.Info("starting server", slog.String("address", config.GetAddress().String()))
+
 	listen, err := net.Listen("tcp", config.GetAddress().String())
 	if err != nil {
 		return fmt.Errorf("failed to listen: %w", err)

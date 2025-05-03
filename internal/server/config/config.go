@@ -74,8 +74,6 @@ func Init() (*ServerConfig, error) {
 		return nil, fmt.Errorf("error parsing environment variables: %w", err)
 	}
 
-	fmt.Println(*config.Keys.CryptoKeys)
-
 	if err = config.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating config: %w", err)
 	}
@@ -187,7 +185,6 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
-	fmt.Println(cfgFile)
 	if s.Address.Host == "" && cfgFile.Address.Host != "" {
 		s.Address.Host = cfgFile.Address.Host
 	}
