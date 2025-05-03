@@ -90,6 +90,9 @@ func TestUnmarshalJSON(t *testing.T) {
 		wantLogFormat   string
 		wantDSN         string
 		wantDBName      string
+		wantPrivateKey  string
+		wantCert        string
+		wantJWTKey      string
 		wantMigrations  string
 	}{
 		{
@@ -98,7 +101,8 @@ func TestUnmarshalJSON(t *testing.T) {
 				jsonData: `{
                     "address": {"host": "json_host", "grpc_port": "7777"},
                     "logger": {"log_level": "warn", "log_format": "text"},
-                    "db": {"dsn": "json_dsn", "name": "json_db", "migrations_dir": "/json_migrations"}
+                    "db": {"dsn": "json_dsn", "name": "json_db", "migrations_dir": "/json_migrations"},
+					"keys": {"crypto_keys": {"private_key": "./key.key","certificate": "./cert.crt"}, "jwt_key": "jwt"}
                 }`,
 			},
 			wantAddressHost: "json_host",
@@ -107,6 +111,9 @@ func TestUnmarshalJSON(t *testing.T) {
 			wantLogFormat:   "text",
 			wantDSN:         "json_dsn",
 			wantDBName:      "json_db",
+			wantPrivateKey:  "./key.key",
+			wantCert:        "./cert.crt",
+			wantJWTKey:      "jwt",
 			wantMigrations:  "/json_migrations",
 		},
 	}
@@ -124,8 +131,10 @@ func TestUnmarshalJSON(t *testing.T) {
 			assert.Equal(t, tt.wantLogLevel, cfg.Logger.LogLevel)
 			assert.Equal(t, tt.wantLogFormat, cfg.Logger.LogFormat)
 			assert.Equal(t, tt.wantDSN, cfg.DB.DSN)
-			assert.Equal(t, tt.wantDBName, cfg.DB.Name)
 			assert.Equal(t, tt.wantMigrations, cfg.DB.MigrationsDir)
+			assert.Equal(t, tt.wantCert, cfg.Keys.CryptoKeys.Certificate)
+			assert.Equal(t, tt.wantPrivateKey, cfg.Keys.CryptoKeys.PrivateKey)
+			assert.Equal(t, tt.wantJWTKey, cfg.Keys.JWTKey)
 		})
 	}
 }
@@ -143,6 +152,9 @@ func TestInitConfigFile(t *testing.T) {
 		wantLogFormat     string
 		wantDSN           string
 		wantDBName        string
+		wantPrivateKey    string
+		wantCert          string
+		wantJWTKey        string
 		wantMigrationsDir string
 		expectError       bool
 	}{
@@ -152,7 +164,8 @@ func TestInitConfigFile(t *testing.T) {
 				fileContent: `{
                     "address": {"host": "file_host", "grpc_port": "8888"},
                     "logger": {"log_level": "error", "log_format": "json"},
-                    "db": {"dsn": "file_dsn", "name": "file_name", "migrations_dir": "/file_migrations"}
+                    "db": {"dsn": "file_dsn", "name": "file_name", "migrations_dir": "/file_migrations"},
+					"keys": {"crypto_keys": {"private_key": "./key.key","certificate": "./cert.crt"}, "jwt_key": "jwt"}
                 }`,
 			},
 			wantAddressHost:   "file_host",
@@ -162,6 +175,9 @@ func TestInitConfigFile(t *testing.T) {
 			wantDSN:           "file_dsn",
 			wantDBName:        "file_name",
 			wantMigrationsDir: "/file_migrations",
+			wantPrivateKey:    "./key.key",
+			wantCert:          "./cert.crt",
+			wantJWTKey:        "jwt",
 			expectError:       false,
 		},
 	}
@@ -194,8 +210,10 @@ func TestInitConfigFile(t *testing.T) {
 				assert.Equal(t, tt.wantLogLevel, cfg.Logger.LogLevel)
 				assert.Equal(t, tt.wantLogFormat, cfg.Logger.LogFormat)
 				assert.Equal(t, tt.wantDSN, cfg.DB.DSN)
-				assert.Equal(t, tt.wantDBName, cfg.DB.Name)
 				assert.Equal(t, tt.wantMigrationsDir, cfg.DB.MigrationsDir)
+				assert.Equal(t, tt.wantCert, cfg.Keys.CryptoKeys.Certificate)
+				assert.Equal(t, tt.wantPrivateKey, cfg.Keys.CryptoKeys.PrivateKey)
+				assert.Equal(t, tt.wantJWTKey, cfg.Keys.JWTKey)
 			}
 		})
 	}

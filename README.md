@@ -19,6 +19,7 @@ go run ./cmd/certManager/cert.go
 go build -o ./cmd/server/server ./cmd/server/main.go
 ```
 Скомпилированный файл будет лежать в папке проекта /cmd/server
+
 3. Сконфигурировать сервер
 
 ###### Файл конфигурации

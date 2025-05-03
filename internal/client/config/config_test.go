@@ -117,7 +117,7 @@ func TestInitConfigFile(t *testing.T) {
 // TestNew combines multiple parts
 func TestNew(t *testing.T) {
 	// Set flags
-	os.Args = []string{"cmd", "-host=127.0.0.1", "-grpc-port=8888", "-cert=mycert.pem", "-files-output=./temp/"}
+	os.Args = []string{"cmd", "-host=127.0.0.1", "-grpc-port=8888", "-certificate=mycert.pem", "-files-output=./temp/"}
 
 	// Clear environment variables
 	os.Unsetenv("ADDRESS")

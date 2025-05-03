@@ -187,6 +187,7 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
+	fmt.Println(cfgFile)
 	if s.Address.Host == "" && cfgFile.Address.Host != "" {
 		s.Address.Host = cfgFile.Address.Host
 	}
