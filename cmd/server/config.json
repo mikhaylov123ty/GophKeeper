@@ -1,14 +1,20 @@
 {
-  "db": {
-    "dsn": "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
-    "name": "postgres",
-    "migrations_dir": "file://./migrations"
+  "address": {
+    "host": "0.0.0.0",
+    "grpc_port": "4443"
   },
   "logger": {
     "log_level": "debug"
   },
-  "address": {
-    "host": "0.0.0.0",
-    "grpc_port": "4443"
+  "db": {
+    "dsn": "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
+    "migrations_dir": "file://./migrations"
+  },
+  "keys": {
+    "crypto_keys": {
+      "private_key": "./private.key",
+      "certificate": "./public.crt"
+    },
+    "jwt_key": "123"
   }
 }

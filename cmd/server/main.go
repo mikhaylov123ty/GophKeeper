@@ -41,7 +41,6 @@ func main() {
 	slog.Info("storage initialized",
 		slog.String("driver", "postgres"),
 		slog.String("dsn", config.GetDB().DSN),
-		slog.String("db_name", config.GetDB().Name),
 	)
 
 	serverInstance, err := server.New(storageService)

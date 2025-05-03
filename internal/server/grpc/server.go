@@ -3,9 +3,10 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"google.golang.org/grpc/credentials"
 	"log/slog"
 	"time"
+
+	"google.golang.org/grpc/credentials"
 
 	"github.com/golang-jwt/jwt/v4"
 	"google.golang.org/grpc"

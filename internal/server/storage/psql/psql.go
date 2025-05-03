@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/golang-migrate/migrate/v4"
@@ -26,7 +28,7 @@ type Storage struct {
 	db *sql.DB
 }
 
-func New(dsn string, dbName string, migrationsDir string) (*Storage, error) {
+func New(dsn string, migrationsDir string) (*Storage, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("could not open postgres database: %w", err)
@@ -35,6 +37,16 @@ func New(dsn string, dbName string, migrationsDir string) (*Storage, error) {
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("could not init postgres driver: %w", err)
+	}
+
+	parsedDSN, err := url.Parse(dsn)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse dsn: %w", err)
+	}
+
+	dbName, ok := strings.CutPrefix(parsedDSN.Path, "/")
+	if !ok {
+		return nil, fmt.Errorf("could not cut prefix database name")
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(

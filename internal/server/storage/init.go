@@ -25,7 +25,7 @@ type Commands interface {
 
 func NewInstance(cfg *config.DB) (Commands, error) {
 	slog.Debug("db config", slog.Any("cfg", *cfg))
-	conn, err := psql.New(cfg.DSN, cfg.Name, cfg.MigrationsDir)
+	conn, err := psql.New(cfg.DSN, cfg.MigrationsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create postgres database instance: %w", err)
 	}

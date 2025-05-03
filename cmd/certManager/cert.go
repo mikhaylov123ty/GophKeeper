@@ -46,7 +46,7 @@ func generateCert() error {
 		IPAddresses: []net.IP{net.IPv4(0, 0, 0, 0), net.IPv6loopback},
 		DNSNames:    []string{"localhost"},
 		NotBefore:   time.Now(),
-		NotAfter:    time.Now().AddDate(0, 0, 1),
+		NotAfter:    time.Now().AddDate(0, 1, 0),
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:    x509.KeyUsageDigitalSignature & x509.KeyUsageKeyEncipherment,
 	}

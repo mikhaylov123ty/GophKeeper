@@ -62,7 +62,7 @@ func (a *ClientConfig) parseFlags() {
 	flag.StringVar(&a.Address.GRPCPort, "grpc-port", "", "Port on which to listen gRPC requests. Example: \"443\"")
 
 	// Флаги подписи
-	flag.StringVar(&a.Keys.PublicCert, "cert", "", "TLS public cert file")
+	flag.StringVar(&a.Keys.PublicCert, "certificate", "", "TLS public cert file")
 
 	// Флаг файла конфигурации
 	flag.StringVar(&a.ConfigFile, "config", "", "Config file")

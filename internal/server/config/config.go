@@ -34,7 +34,6 @@ type Logger struct {
 // DB - структура конфигруации БД
 type DB struct {
 	DSN           string `json:"dsn"`
-	Name          string `json:"name"`
 	MigrationsDir string `json:"migrations_dir"`
 }
 
@@ -75,15 +74,13 @@ func Init() (*ServerConfig, error) {
 		return nil, fmt.Errorf("error parsing environment variables: %w", err)
 	}
 
+	fmt.Println(*config.Keys.CryptoKeys)
+
 	if err = config.Validate(); err != nil {
 		return nil, fmt.Errorf("error validating config: %w", err)
 	}
 
 	cfg = config
-
-	fmt.Printf("KEYS %+v\n", *config.Keys.CryptoKeys)
-	fmt.Printf("JWT %+v\n", config.Keys.JWTKey)
-	fmt.Printf("DB DSN %+v\n", config.DB.DSN)
 
 	return config, nil
 }
@@ -99,6 +96,7 @@ func (s *ServerConfig) parseFlags() {
 
 	// Флаги БД
 	flag.StringVar(&s.DB.DSN, "d", "", "Host which to connect to DB. Example: \"postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable\"")
+	flag.StringVar(&s.DB.MigrationsDir, "m", "", "Migrations directory. Example: \"file://./migrations\"")
 
 	// Флаги приватного и публичного ключей
 	flag.StringVar(&s.Keys.CryptoKeys.PrivateKey, "private-key", "", "Path to private key file")
@@ -135,6 +133,10 @@ func (s *ServerConfig) ParseEnv() error {
 
 	if dsn := os.Getenv("DATABASE_DSN"); dsn != "" {
 		s.DB.DSN = dsn
+	}
+
+	if migrationsDir := os.Getenv("MIGRATIONS_DIR"); migrationsDir != "" {
+		s.DB.MigrationsDir = migrationsDir
 	}
 
 	if privateKey := os.Getenv("PRIVATE_KEY"); privateKey != "" {
@@ -178,6 +180,7 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 		Address *Address `json:"address"`
 		DB      *DB      `json:"db"`
 		Logger  *Logger  `json:"logger"`
+		Keys    *Keys    `json:"keys"`
 	}
 
 	if err = json.Unmarshal(b, &cfgFile); err != nil {
@@ -196,11 +199,22 @@ func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 	if s.DB.DSN == "" && cfgFile.DB.DSN != "" {
 		s.DB.DSN = cfgFile.DB.DSN
 	}
-	if s.DB.Name == "" && cfgFile.DB.Name != "" {
-		s.DB.Name = cfgFile.DB.Name
-	}
+
 	if s.DB.MigrationsDir == "" && cfgFile.DB.MigrationsDir != "" {
 		s.DB.MigrationsDir = cfgFile.DB.MigrationsDir
+	}
+
+	//TLS keys file parsing
+	if s.Keys.CryptoKeys.PrivateKey == "" && cfgFile.Keys.CryptoKeys.PrivateKey != "" {
+		s.Keys.CryptoKeys.PrivateKey = cfgFile.Keys.CryptoKeys.PrivateKey
+	}
+	if s.Keys.CryptoKeys.Certificate == "" && cfgFile.Keys.CryptoKeys.Certificate != "" {
+		s.Keys.CryptoKeys.Certificate = cfgFile.Keys.CryptoKeys.Certificate
+	}
+
+	//JWT key file parsing
+	if s.Keys.JWTKey == "" && cfgFile.Keys.JWTKey != "" {
+		s.Keys.JWTKey = cfgFile.Keys.JWTKey
 	}
 
 	// Logger config file parsing
@@ -223,7 +237,7 @@ func (s *ServerConfig) Validate() error {
 		return fmt.Errorf("private key is required")
 	} else {
 		if _, err := os.ReadFile(s.Keys.CryptoKeys.PrivateKey); err != nil {
-			return fmt.Errorf("private file missing")
+			return fmt.Errorf("private file missing: %w", err)
 		}
 	}
 
