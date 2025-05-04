@@ -17,7 +17,7 @@ import (
 
 const (
 	binaryFields = 3
-	toMB         = 1024
+	toMB         = 1048576
 )
 
 type viewBinaryDataScreen struct {
@@ -65,7 +65,7 @@ func (screen *viewBinaryDataScreen) View() string {
 
 	body += fmt.Sprintf(
 		"\n%sTitle: %s%s\n"+
-			"%sSize: %d MB%s\n",
+			"%sSize: %.2f MB%s\n",
 		utils.ColorGreen, screen.itemData.Name, utils.ColorReset,
 		utils.ColorRed, screen.itemData.FileSize, utils.ColorReset,
 	)
@@ -89,13 +89,12 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 				if err != nil {
 					return &ErrorScreen{
 						backScreen: screen,
-						err:        err,
+						err:        fmt.Errorf("filepath: %s, error: %w", screen.newItemData.FilePath, err),
 					}, nil
 				}
 
-				//screen.newItemData.Binary.ContentType = mime.TypeByExtension(extension)
 				screen.newItemData.Binary.Name = strings.Join([]string{name, extension}, "")
-				screen.newItemData.Binary.FileSize = len(string(screen.newItemData.Binary.Content)) / toMB
+				screen.newItemData.Binary.FileSize = float64(len(string(screen.newItemData.Binary.Content))) / toMB
 
 				if screen.newItemData != nil {
 					var binaryData []byte

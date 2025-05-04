@@ -68,9 +68,9 @@ type Binary struct {
 // BinaryData represents a binary file with its metadata and content.
 // It includes the file name, type, data, and size.
 type BinaryData struct {
-	Name     string `json:"name"`
-	Content  []byte `json:"content"`
-	FileSize int    `json:"file_size"`
+	Name     string  `json:"name"`
+	Content  []byte  `json:"content"`
+	FileSize float64 `json:"file_size"`
 }
 
 // Model represents the primary application state,
@@ -132,19 +132,22 @@ func (d MetaItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil 
 // Render renders a MetaItem within a list, applying specific styles
 // for selected and non-selected items.
 func (d MetaItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	itemStyle := lipgloss.NewStyle().PaddingLeft(4)
-	selecteditemStyle := utils.CursorStyle.PaddingLeft(2)
+	itemStyle := lipgloss.NewStyle()
 	i, ok := listItem.(*MetaItem)
 	if !ok {
 		return
 	}
 
-	str := fmt.Sprintf("%d. Title: %s | Description: %s | Created: %s | Modified: %s\n", index+1, i.Title, i.Description, i.Created, i.Modified)
+	str := fmt.Sprintf("%d. Title: %s | Description: %s | Created: %s | Modified: %s", index+1, i.Title, i.Description, i.Created, i.Modified)
 
 	fn := itemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return selecteditemStyle.Render("[x] " + strings.Join(s, " "))
+			return utils.CursorStyle.Render(fmt.Sprintf("[x] %s", strings.Join(s, " ")))
+		}
+	} else {
+		fn = func(s ...string) string {
+			return utils.UnselectedStyle.Render(fmt.Sprintf("[ ] %s", strings.Join(s, " ")))
 		}
 	}
 

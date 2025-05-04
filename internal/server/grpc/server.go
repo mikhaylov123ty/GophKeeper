@@ -19,6 +19,11 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/grpc/handlers"
 )
 
+const (
+	mB           = 1048576
+	messageLimit = 50 * mB
+)
+
 // GRPCServer - структура инстанса gRPC сервера
 type GRPCServer struct {
 	Server *grpc.Server
@@ -47,6 +52,8 @@ func NewServer(
 	instance.Server = grpc.NewServer(
 		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(interceptors...),
+		grpc.MaxRecvMsgSize(messageLimit),
+		grpc.MaxSendMsgSize(messageLimit),
 	)
 
 	pb.RegisterItemDataHandlersServer(instance.Server, itemsDataHandler)

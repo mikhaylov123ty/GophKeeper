@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	grpcLib "google.golang.org/grpc"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
@@ -13,6 +14,11 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/grpc"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
+)
+
+const (
+	mB           = 1048576
+	messageLimit = 50 * mB
 )
 
 type ItemsManager struct {
@@ -54,6 +60,13 @@ func (im *ItemsManager) SaveMetaItem(category string, newItem *models.MetaItem) 
 
 // PostItemData sends item data and metadata to the associated gRPC service after encrypting the data.
 func (im *ItemsManager) PostItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
+	if len(data) == 0 {
+		return nil, fmt.Errorf("empty data")
+	}
+	if len(data) > 30*mB {
+		return nil, fmt.Errorf("data is too big, max size is 30mb")
+	}
+	
 	encryptedData, err := utils.EncryptData(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt data: %w", err)
@@ -66,7 +79,10 @@ func (im *ItemsManager) PostItemData(data []byte, dataID string, metaData *pb.Me
 			Data:     encryptedData,
 			DataId:   dataID,
 			MetaData: metaData,
-		})
+		},
+		grpcLib.MaxCallRecvMsgSize(messageLimit),
+		grpcLib.MaxCallSendMsgSize(messageLimit),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("post item failed:  %w,", err)
 	}
@@ -79,7 +95,10 @@ func (im *ItemsManager) PostItemData(data []byte, dataID string, metaData *pb.Me
 func (im *ItemsManager) GetItemData(dataID string) (string, error) {
 	response, err := im.grpcClient.Handlers.ItemDataHandler.GetItemData(context.Background(), &pb.GetItemDataRequest{
 		DataId: dataID,
-	})
+	},
+		grpcLib.MaxCallRecvMsgSize(messageLimit),
+		grpcLib.MaxCallSendMsgSize(messageLimit),
+	)
 	if err != nil {
 		return "", fmt.Errorf("could not get text data: %w", err)
 	}

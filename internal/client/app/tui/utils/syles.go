@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"github.com/charmbracelet/lipgloss"
 	"strings"
 )
@@ -59,10 +58,7 @@ func AuthFooter() string {
 
 func DataHeader() string {
 	separator := "\n" + strings.Repeat("=", 40) + "\n" // Creates a separator line for better readability
-	body := TitleStyle.Render(fmt.Sprintf(
-		"Information" +
-			separator,
-	))
+	body := TitleStyle.Render("Information", separator)
 
 	return body
 }
