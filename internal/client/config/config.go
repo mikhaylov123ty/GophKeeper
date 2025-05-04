@@ -58,7 +58,7 @@ func New() (*ClientConfig, error) {
 // parseFlags - Парсинг инструкций флагов агента
 func (a *ClientConfig) parseFlags() {
 	// Базовые флаги
-	flag.StringVar(&a.Address.Host, "host", "localhost", "Host on which to listen. Example: \"localhost\"")
+	flag.StringVar(&a.Address.Host, "host", "", "Host on which to listen. Example: \"localhost\"")
 	flag.StringVar(&a.Address.GRPCPort, "grpc-port", "", "Port on which to listen gRPC requests. Example: \"443\"")
 
 	// Флаги подписи
@@ -130,6 +130,9 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
 
+	if a.Address.Host == "" && cfgFile.Address.Host != "" {
+		a.Address.Host = cfgFile.Address.Host
+	}
 	if a.Address.GRPCPort == "" && cfgFile.Address.GRPCPort != "" {
 		a.Address.GRPCPort = cfgFile.Address.GRPCPort
 	}

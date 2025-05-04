@@ -19,6 +19,7 @@ func main() {
 		slog.String("Address", config.Address.String()),
 		slog.String("Config File", config.ConfigFile),
 		slog.String("Cert", config.Keys.PublicCert),
+		slog.String("Output Folder", config.OutputFolder),
 	)
 
 	grpc, err := grpcClient.New()

@@ -10,7 +10,7 @@ ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 
 RUN go build -o ./certManager ./cmd/certManager/cert.go
 
-RUN go build -o ./server ./cmd/server/main.go
+RUN go build -ldflags "-X main.buildVersion=v1 -X "main.buildDate=$(date +"%Y/%m/%d")"" -o ./server ./cmd/server/main.go
 
 
 

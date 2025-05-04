@@ -11,10 +11,13 @@ goimports:
 	goimports -local github.com/mikhaylov123ty/GophKeeper -w ./internal/..
 
 buildClient:
-	go build -o ./cmd/client/app ./cmd/client/main.go
+	go build -o ./cmd/client/GophKeeper ./cmd/client/main.go
+
+buildClientWin:
+	GOOS=windows GOARCH=amd64 go build -o ./cmd/client/GophKeeper.exe ./cmd/client/main.go
 
 runBuildClient: buildClient
-	./cmd/client/app -config cmd/client/config.json
+	./cmd/client/GophKeeper -config cmd/client/config.json
 
 run Client:
 	go run cmd/client/main.go -config ./cmd/client/config.json

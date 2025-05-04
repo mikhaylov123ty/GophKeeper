@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"log/slog"
 	"sync"
@@ -11,7 +12,15 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/pkg/logger"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+)
+
 func main() {
+	fmt.Printf("Server Build Version: %s\n", buildVersion)
+	fmt.Printf("Server Build Date: %s\n", buildDate)
+
 	cfg, err := config.Init()
 	if err != nil {
 		panic(err)

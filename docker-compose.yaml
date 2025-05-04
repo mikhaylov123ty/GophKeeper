@@ -50,8 +50,3 @@ volumes:
       device:  /Users/amikhaylov/Downloads/shared/
       type: none
       o: bind
-
-
-
-
-
