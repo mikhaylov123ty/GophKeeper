@@ -24,7 +24,8 @@ type ErrorScreen struct {
 func (screen *ErrorScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if msg.String() == "\x00" {
+		if msg.String() != "\x00" {
+			return screen.backScreen, nil
 		}
 	}
 	return screen.backScreen, nil

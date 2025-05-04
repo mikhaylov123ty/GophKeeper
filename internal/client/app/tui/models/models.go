@@ -7,7 +7,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/google/uuid"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
@@ -132,7 +131,6 @@ func (d MetaItemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil 
 // Render renders a MetaItem within a list, applying specific styles
 // for selected and non-selected items.
 func (d MetaItemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	itemStyle := lipgloss.NewStyle()
 	i, ok := listItem.(*MetaItem)
 	if !ok {
 		return
@@ -140,7 +138,7 @@ func (d MetaItemDelegate) Render(w io.Writer, m list.Model, index int, listItem 
 
 	str := fmt.Sprintf("%d. Title: %s | Description: %s | Created: %s | Modified: %s", index+1, i.Title, i.Description, i.Created, i.Modified)
 
-	fn := itemStyle.Render
+	var fn func(...string) string
 	if index == m.Index() {
 		fn = func(s ...string) string {
 			return utils.CursorStyle.Render(fmt.Sprintf("[x] %s", strings.Join(s, " ")))
