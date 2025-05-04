@@ -11,6 +11,7 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage/psql"
 )
 
+// Commands defines database operations for managing users, items, and metadata, including CRUD and lifecycle methods.
 type Commands interface {
 	SaveUser(*models.UserData) error
 	GetUserByLogin(string) (*models.UserData, error)
@@ -23,6 +24,7 @@ type Commands interface {
 	Close() error
 }
 
+// NewInstance initializes a new database instance with the provided configuration and applies migrations.
 func NewInstance(cfg *config.DB) (Commands, error) {
 	slog.Debug("db config", slog.Any("cfg", *cfg))
 	conn, err := psql.New(cfg.DSN, cfg.MigrationsDir)

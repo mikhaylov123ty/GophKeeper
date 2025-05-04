@@ -18,7 +18,11 @@ type ClientConfig struct {
 	Keys         *Keys
 	OutputFolder string
 }
+
+// Address represents a network location with a host and a gRPC port.
 type Address struct {
+
+	// Host specifies the network host address for the gRPC connection.
 	Host     string `json:"host"`
 	GRPCPort string `json:"grpc_port"`
 }
@@ -27,7 +31,7 @@ type Keys struct {
 	PublicCert string `json:"public_cert"`
 }
 
-// New - конструктор конфигурации агента
+// New initializes a new instance of ClientConfig, parsing flags, environment variables, and potentially a config file.
 func New() (*ClientConfig, error) {
 	var err error
 	config := &ClientConfig{
@@ -55,7 +59,7 @@ func New() (*ClientConfig, error) {
 	return config, nil
 }
 
-// parseFlags - Парсинг инструкций флагов агента
+// parseFlags configures the command-line flags and parses their values into the ClientConfig structure.
 func (a *ClientConfig) parseFlags() {
 	// Базовые флаги
 	flag.StringVar(&a.Address.Host, "host", "", "Host on which to listen. Example: \"localhost\"")
@@ -75,7 +79,7 @@ func (a *ClientConfig) parseFlags() {
 	flag.Parse()
 }
 
-// parseEnv - Парсинг инструкций переменных окружений агента
+// ParseEnv reads configuration values from environment variables and updates the ClientConfig instance accordingly.
 func (a *ClientConfig) ParseEnv() error {
 	if address := os.Getenv("ADDRESS"); address != "" {
 		if err := a.Address.Set(address); err != nil {
@@ -102,7 +106,7 @@ func (a *ClientConfig) ParseEnv() error {
 	return nil
 }
 
-// initConfigFile читает и инициализирует файл конфигурации
+// InitConfigFile reads the configuration file specified in ClientConfig, parses its contents, and initializes the structure.
 func (a *ClientConfig) InitConfigFile() error {
 	fileData, err := os.ReadFile(a.ConfigFile)
 	if err != nil {
@@ -116,8 +120,9 @@ func (a *ClientConfig) InitConfigFile() error {
 	return nil
 }
 
-// UnmarshalJSON реализует интерфейс Unmarshaler
-// позволяет десериализировать файл конфига с условиями
+// UnmarshalJSON parses JSON-encoded data and updates the ClientConfig object.
+// It conditionally updates empty fields using the values from the JSON structure.
+// Returns an error if the JSON data is invalid or fails to unmarshal.
 func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 	var err error
 	var cfgFile struct {
@@ -148,12 +153,12 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// String реализует интерфейс flag.Value
+// String formats the Address as a string in the format "host:port".
 func (a *Address) String() string {
 	return a.Host + ":" + a.GRPCPort
 }
 
-// Set реализует интерфейс flag.Value
+// Set parses a value in the format "host:port" and updates the Address fields Host and GRPCPort. Returns an error if invalid.
 func (a *Address) Set(value string) error {
 	values := strings.Split(value, ":")
 	if len(values) != 2 {
@@ -166,16 +171,20 @@ func (a *Address) Set(value string) error {
 	return nil
 }
 
+// GetAddress returns the configured Address instance for gRPC communication.
 func GetAddress() *Address {
 	return cfg.Address
 }
 
+// GetKeys retrieves the configured Keys instance, containing public certificate details, from the global configuration.
 func GetKeys() *Keys {
 	return cfg.Keys
 }
 
+// GetOutputFolder returns the output folder path configured in the ClientConfig.
 func GetOutputFolder() string { return cfg.OutputFolder }
 
+// NewTestConfig initializes a new ClientConfig instance with default Address and Keys and returns it.
 func NewTestConfig() (*ClientConfig, error) {
 	config := &ClientConfig{
 		Address: &Address{},

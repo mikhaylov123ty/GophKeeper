@@ -15,6 +15,11 @@ const (
 	BackOption = "Back"
 )
 
+// MainMenu represents the main interface of the UI, allowing navigation through categories and managing transitions.
+// categories holds the list of available menu categories for user selection.
+// cursor tracks the current position in the category list for navigation purposes.
+// itemsManager is responsible for handling item and metadata interactions within the application.
+// nextScreen defines the next screen or view to transition into based on the user's actions.
 type MainMenu struct {
 	categories   []string
 	cursor       int
@@ -22,6 +27,7 @@ type MainMenu struct {
 	nextScreen   models.Screen
 }
 
+// NewMainMenu initializes a MainMenu instance with a list of categories and an ItemsManager for handling items.
 func NewMainMenu(categories []string, itemsManager models.ItemsManager) *MainMenu {
 	return &MainMenu{
 		categories:   categories,
@@ -29,6 +35,7 @@ func NewMainMenu(categories []string, itemsManager models.ItemsManager) *MainMen
 	}
 }
 
+// Update handles user input to navigate the main menu, modify the cursor, or transition to the next screen or quit the application.
 func (m MainMenu) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -55,6 +62,7 @@ func (m MainMenu) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return m, nil
 }
 
+// View renders the main menu as a string, highlighting the selected category and appending navigation instructions.
 func (m MainMenu) View() string {
 	s := utils.TitleStyle.Render("Main Menu:\n\n")
 	for i, category := range m.categories {

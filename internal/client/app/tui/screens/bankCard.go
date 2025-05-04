@@ -45,6 +45,7 @@ func (screen *viewBankCardDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cm
 	return screen, nil
 }
 
+// View generates and returns a string representation of the bank card details screen, styled with colors and formatting.
 func (screen *viewBankCardDataScreen) View() string {
 	body := utils.DataHeader()
 
@@ -62,6 +63,7 @@ func (screen *viewBankCardDataScreen) View() string {
 	return body
 }
 
+// Update processes input messages, updates the screen state, and returns the updated screen and an optional command.
 func (screen *addBankCardItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.Type {
@@ -98,7 +100,7 @@ func (screen *addBankCardItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd
 	return screen, nil
 }
 
-// TODO UNIFY THIS, like run build func in method
+// View returns a string representation of the add bank card item screen, formatted with styled labels and values.
 func (screen *addBankCardItemScreen) View() string {
 	if screen.newItemData == nil {
 		screen.newItemData = &models.BankCardData{}
@@ -137,7 +139,12 @@ func (screen *addBankCardItemScreen) View() string {
 	return result
 }
 
+// handleInput processes a user input string to update the corresponding field based on the cursor position on the screen.
 func (screen *addBankCardItemScreen) handleInput(input string) {
+	if input == "\x00" {
+		return
+	}
+
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.CardNum, screen.newItemData.Expiry, screen.newItemData.CVV}
 
 	// Backspace logic

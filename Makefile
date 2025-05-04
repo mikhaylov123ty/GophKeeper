@@ -10,8 +10,8 @@ generateCert:
 goimports:
 	goimports -local github.com/mikhaylov123ty/GophKeeper -w ./internal/..
 
-buildClient:
-	go build -o ./cmd/client/GophKeeper ./cmd/client/main.go
+buildClientMac:
+	GOOS=darwin GOARCH=arm64 go build -o ./cmd/client/GophKeeper ./cmd/client/main.go
 
 buildClientWin:
 	GOOS=windows GOARCH=amd64 go build -o ./cmd/client/GophKeeper.exe ./cmd/client/main.go

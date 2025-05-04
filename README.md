@@ -86,9 +86,13 @@ cmd/server/config.json
 -a - альтернатива флагам -host + -grpc-port, принимает целиком адрес,
 прим. localhost:443
 ```
-Пример:
+Пример для Mac OS:
 ```
-./cmd/client/yourClient -grpc-port 4443 -certificate ./public.crt -files-output "/Users/amikhaylov/Downloads/Output"
+./cmd/client/yourClient -grpc-port 4443 -certificate ./public.crt -files-output "/Users/your user name/Downloads/Output"
+```
+Пример для Windows:
+```
+./cmd/client/yourClient -grpc-port 4443 -certificate ./public.crt -files-output "C:/Users/your user name/Downloads/Output"
 ```
 
 После запуска следовать инструкциям внизу экрана
@@ -116,8 +120,10 @@ POSTGRES_PASSWORD: postgres
 ```
 4. Поменять маппинг локальной директории в 50й строчке файла ```docker-compose.yaml``` 
 на свою локальную директорию
+
+Пример:
 ```
-device:  /Users/amikhaylov/Downloads/shared/
+device:  /Users/your user name/Downloads/shared/
 ```
 
 5. Запустить контейнер с сервисами БД, созданием серификатов, сервером

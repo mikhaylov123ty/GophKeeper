@@ -11,17 +11,19 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage"
 )
 
-// Server - структура сервера
+// Server represents a gRPC server with authentication capabilities, managing GRPCServer and auth configurations.
 type Server struct {
 	grpc *grpc.GRPCServer
 	auth *auth
 }
 
+// auth represents authentication configuration, managing cryptographic and hashing keys for secure operations.
 type auth struct {
 	cryptoKey string
 	hashKey   string
 }
 
+// New initializes and returns a new Server instance configured with the provided storage commands, or an error if setup fails.
 func New(storageCommands storage.Commands) (*Server, error) {
 	gRPC, err := grpc.NewServer(
 		handlers.NewTextHandler(storageCommands, storageCommands),
@@ -37,6 +39,7 @@ func New(storageCommands storage.Commands) (*Server, error) {
 	}, nil
 }
 
+// Start initializes the server listener and starts serving gRPC requests on the configured network address.
 func (s *Server) Start() error {
 	slog.Info("starting server", slog.String("address", config.GetAddress().String()))
 

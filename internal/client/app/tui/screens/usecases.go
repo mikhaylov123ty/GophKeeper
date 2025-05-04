@@ -9,6 +9,7 @@ import (
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
+// itemScreen manages the state and behavior of a screen for creating or editing items with metadata in the application.
 type itemScreen struct {
 	itemsManager models.ItemsManager
 	category     string
@@ -19,6 +20,7 @@ type itemScreen struct {
 	selectedItem *models.MetaItem
 }
 
+// postItemData sends item data and associated metadata to the items manager for processing and storage. Returns an error if failed.
 func (is *itemScreen) postItemData(itemData []byte) error {
 	var id uuid.UUID
 	var dataID string

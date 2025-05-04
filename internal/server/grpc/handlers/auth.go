@@ -18,20 +18,25 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 )
 
+// AuthHandler handles user authentication and implements the gRPC UserHandlersServer interface.
+// It relies on userCreator to save user data and userProvider to retrieve user details.
 type AuthHandler struct {
 	pb.UnimplementedUserHandlersServer
 	userCreator  userCreator
 	userProvider userProvider
 }
 
+// userCreator defines a contract for saving user data to a storage system.
 type userCreator interface {
 	SaveUser(*models.UserData) error
 }
 
+// userProvider defines the contract for retrieving user information by their login credentials.
 type userProvider interface {
 	GetUserByLogin(string) (*models.UserData, error)
 }
 
+// NewAuthHandler initializes and returns a new instance of AuthHandler with the provided userCreator and userProvider dependencies.
 func NewAuthHandler(userCreator userCreator, userProvider userProvider) *AuthHandler {
 	return &AuthHandler{
 		userCreator:  userCreator,
@@ -39,11 +44,15 @@ func NewAuthHandler(userCreator userCreator, userProvider userProvider) *AuthHan
 	}
 }
 
+// authClaims defines the structure for JWT claims related to authentication, including UserID and registered claims.
 type authClaims struct {
 	UserID string `json:"userID"`
 	jwt.RegisteredClaims
 }
 
+// PostUserData processes the authentication or registration of a user based on the provided login and password details.
+// It generates and returns a JWT if authentication is successful or registers the user if they don't already exist.
+// An error is returned if the login or password is invalid, mismatched, or if token generation fails.
 func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserDataRequest) (*pb.PostUserDataResponse, error) {
 	var res pb.PostUserDataResponse
 	if request.GetLogin() == "" || request.GetPassword() == "" {

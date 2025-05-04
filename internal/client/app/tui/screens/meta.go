@@ -11,6 +11,12 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 )
 
+// viewMetaItemsScreen represents a screen for viewing metadata items of a particular category.
+// category specifies the metadata category to be viewed.
+// itemsManager provides the methods required to manage metadata items.
+// backScreen defines the previous screen for handling navigation.
+// list is the UI model for displaying and interacting with metadata items.
+// listTitle represents the title displayed at the top of the list.
 type viewMetaItemsScreen struct {
 	category     string
 	itemsManager models.ItemsManager
@@ -19,6 +25,7 @@ type viewMetaItemsScreen struct {
 	listTitle    string
 }
 
+// View generates and returns the string representation of the viewMetaItemsScreen for rendering in the UI.
 func (screen *viewMetaItemsScreen) View() string {
 	if screen.list == nil {
 		listModel := list.New([]list.Item{}, models.MetaItemDelegate{}, 10, utils.ListHeight)
@@ -46,6 +53,7 @@ func (screen *viewMetaItemsScreen) View() string {
 	return s
 }
 
+// Update handles user input and updates the state of the viewMetaItemsScreen based on the received message.
 func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -98,6 +106,8 @@ func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	return screen, nil
 }
 
+// routeViewData maps the provided item data and category to the corresponding screen type for detailed view rendering.
+// Returns a specific data screen or error screen if the data cannot be unmarshalled or processed.
 func (screen *viewMetaItemsScreen) routeViewData(itemData string, category string) models.Screen {
 	switch category {
 	case TextCategory:
@@ -173,60 +183,36 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 	return screen
 }
 
+// routeEditData routes to the appropriate screen for editing an item based on its category and selected metadata item.
+// Returns an editing screen for the given category or ErrorScreen if the item is not found or invalid.
 func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen {
 	selectedItem, ok := screen.list.SelectedItem().(*models.MetaItem)
 	if !ok || selectedItem == nil {
 		return &ErrorScreen{backScreen: screen, err: fmt.Errorf("item not found")}
 	}
 
-	switch category {
-	case TextCategory:
-		return &addTextItemScreen{
-			itemScreen: &itemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     selectedItem.Title,
-				newDesc:      selectedItem.Description,
-				selectedItem: selectedItem,
-			},
-		}
-
-	case CardCategory:
-		return &addBankCardItemScreen{
-			itemScreen: &itemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     selectedItem.Title,
-				newDesc:      selectedItem.Description,
-				selectedItem: selectedItem,
-			},
-		}
-
-	case CredsCategory:
-		return &addCredsItemScreen{
-			itemScreen: &itemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     selectedItem.Title,
-				newDesc:      selectedItem.Description,
-			},
-		}
-
-	case FileCategory:
-		return &addBinaryItemScreen{
-			itemScreen: &itemScreen{
-				itemsManager: screen.itemsManager,
-				backScreen:   screen,
-				category:     screen.category,
-				newTitle:     selectedItem.Title,
-				newDesc:      selectedItem.Description,
-				selectedItem: selectedItem,
-			},
+	createItemScreen := func() *itemScreen {
+		return &itemScreen{
+			itemsManager: screen.itemsManager,
+			backScreen:   screen,
+			category:     screen.category,
+			newTitle:     selectedItem.Title,
+			newDesc:      selectedItem.Description,
+			selectedItem: selectedItem,
 		}
 	}
 
+	// Map category to corresponding screen
+	switch category {
+	case TextCategory:
+		return &addTextItemScreen{itemScreen: createItemScreen()}
+	case CardCategory:
+		return &addBankCardItemScreen{itemScreen: createItemScreen()}
+	case CredsCategory:
+		return &addCredsItemScreen{itemScreen: createItemScreen()}
+	case FileCategory:
+		return &addBinaryItemScreen{itemScreen: createItemScreen()}
+	}
+	
 	return screen
 }

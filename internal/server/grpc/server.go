@@ -21,15 +21,16 @@ import (
 
 const (
 	mB           = 1048576
-	messageLimit = 50 * mB
+	messageLimit = 60 * mB
 )
 
-// GRPCServer - структура инстанса gRPC сервера
+// GRPCServer represents a gRPC server instance, providing configuration and initialization of gRPC services.
 type GRPCServer struct {
 	Server *grpc.Server
 }
 
-// NewServer создает инстанс gRPC сервера
+// NewServer initializes and returns a new GRPCServer instance configured with TLS, interceptors, and registered handlers.
+// It requires handlers for items data, metadata, and authentication, returning an error if TLS setup fails.
 func NewServer(
 	itemsDataHandler *handlers.ItemsDataHandler,
 	metaDataHandler *handlers.MetaDataHandler,
@@ -63,7 +64,7 @@ func NewServer(
 	return instance, nil
 }
 
-// withLogger - перехватчик логирует запросы
+// withLogger is a gRPC server interceptor that logs incoming requests, execution time, and response status codes.
 func (g *GRPCServer) withLogger(ctx context.Context, req any,
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 	// Запуск таймера
@@ -82,6 +83,7 @@ func (g *GRPCServer) withLogger(ctx context.Context, req any,
 	return resp, err
 }
 
+// withAuth is a gRPC interceptor that adds JWT authentication for incoming requests, validating tokens if configured.
 func (g *GRPCServer) withAuth(ctx context.Context, req any,
 	info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp any, err error) {
 	if config.GetKeys().JWTKey != "" {

@@ -15,21 +15,30 @@ import (
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
+// MetaDataHandler provides methods to handle metadata operations such as retrieval and deletion.
+// It embeds pb.UnimplementedMetaDataHandlersServer for forward compatibility.
+// Utilizes metaDataProvider for fetching metadata and dataRemover for metadata removal.
 type MetaDataHandler struct {
 	pb.UnimplementedMetaDataHandlersServer
 	metaDataProvider metaDataProvider
 	dataRemover      dataRemover
 }
 
+// metaDataProvider defines an interface for retrieving metadata associated with a given user ID.
+// GetMetaDataByUser retrieves metadata associated with the provided user UUID and returns a slice of Meta objects or an error.
 type metaDataProvider interface {
 	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
 }
 
+// dataRemover defines methods to delete item and metadata by their unique identifier.
+// DeleteItemDataByID removes the associated item data using a UUID.
+// DeleteMetaDataByID removes the metadata associated with a UUID.
 type dataRemover interface {
 	DeleteItemDataByID(uuid.UUID) error
 	DeleteMetaDataByID(uuid.UUID) error
 }
 
+// NewMetaDataHandler creates and initializes a new MetaDataHandler with the provided metaDataProvider and dataRemover.
 func NewMetaDataHandler(metaDataProvider metaDataProvider, dataRemover dataRemover) *MetaDataHandler {
 	return &MetaDataHandler{
 		metaDataProvider: metaDataProvider,
@@ -72,6 +81,7 @@ func (m *MetaDataHandler) GetMetaData(ctx context.Context, request *pb.GetMetaDa
 		status.Errorf(codes.OK, "meta gathered")
 }
 
+// DeleteMetaData removes metadata and associated data by their unique IDs parsed from the request and returns a response.
 func (m *MetaDataHandler) DeleteMetaData(ctx context.Context, request *pb.DeleteMetaDataRequest) (*pb.DeleteMetaDataResponse, error) {
 	metaDataID, err := uuid.Parse(request.GetMetadataId())
 	if err != nil {

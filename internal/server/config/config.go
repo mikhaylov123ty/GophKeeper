@@ -11,7 +11,8 @@ import (
 
 var cfg *ServerConfig
 
-// ServerConfig - структура конфигурации сервера
+// ServerConfig represents the main server configuration structure.
+// It includes settings for address, logging, database, cryptographic keys, and configuration file location.
 type ServerConfig struct {
 	Address    *Address `json:"address"`
 	Logger     *Logger  `json:"logger"`
@@ -20,24 +21,28 @@ type ServerConfig struct {
 	ConfigFile string   `json:"config_file"`
 }
 
+// Address represents a network address with a host and a gRPC port.
 type Address struct {
 	Host     string `json:"host"`
 	GRPCPort string `json:"grpc_port"`
 }
 
-// Logger - структура конфигруации логгера
+// Logger represents the logging configuration, including the log level setting and output format specifier.
 type Logger struct {
 	LogLevel  string `json:"log_level"`
 	LogFormat string `json:"log_format"`
 }
 
-// DB - структура конфигруации БД
+// DB represents the database configuration, including the data source name and the migrations directory.
 type DB struct {
 	DSN           string `json:"dsn"`
 	MigrationsDir string `json:"migrations_dir"`
 }
 
+// Keys represents a container for cryptographic and JWT keys used for secure operations.
 type Keys struct {
+
+	// CryptoKeys represents a set of cryptographic keys including a private key and a corresponding certificate.
 	CryptoKeys *CryptoKeys `json:"crypto_keys"`
 	JWTKey     string      `json:"jwt_key"`
 }
@@ -47,7 +52,7 @@ type CryptoKeys struct {
 	PrivateKey  string `json:"private_key"`
 }
 
-// Init - конструктор конфигурации сервера
+// Init initializes and validates the server configuration, including flags, environment variables, and optional config file.
 func Init() (*ServerConfig, error) {
 	var err error
 	config := &ServerConfig{
@@ -83,7 +88,7 @@ func Init() (*ServerConfig, error) {
 	return config, nil
 }
 
-// Парсинг инструкций флагов сервера
+// parseFlags parses command-line flags and initializes the fields of ServerConfig accordingly.
 func (s *ServerConfig) parseFlags() {
 	// Базовые флаги
 	flag.StringVar(&s.Address.Host, "host", "", "Host on which to listen. Example: \"localhost\"")
@@ -112,7 +117,7 @@ func (s *ServerConfig) parseFlags() {
 	flag.Parse()
 }
 
-// Парсинг инструкций переменных окружений сервера
+// ParseEnv parses environment variables to configure the ServerConfig fields and returns an error if parsing fails.
 func (s *ServerConfig) ParseEnv() error {
 	var err error
 	if address := os.Getenv("ADDRESS"); address != "" {
@@ -156,7 +161,7 @@ func (s *ServerConfig) ParseEnv() error {
 	return nil
 }
 
-// initConfigFile читает и инициализирует файл конфигурации
+// InitConfigFile initializes the ServerConfig by reading and unmarshaling the configuration file specified by ConfigFile.
 func (s *ServerConfig) InitConfigFile() error {
 	fileData, err := os.ReadFile(s.ConfigFile)
 	if err != nil {
@@ -170,8 +175,10 @@ func (s *ServerConfig) InitConfigFile() error {
 	return nil
 }
 
-// UnmarshalJSON реализует интерфейс Unmarshaler
-// позволяет десериализировать файл конфига с условиями
+// UnmarshalJSON implements the json.Unmarshaler interface to customize the unmarshalling process for ServerConfig.
+// It merges configuration data from JSON into the current ServerConfig object while preserving prior field values.
+// This includes parsing sub-objects like Address, Logger, DB, and Keys, if they are provided in the JSON.
+// Returns an error if JSON unmarshalling fails or if there are inconsistencies in the provided data.
 func (s *ServerConfig) UnmarshalJSON(b []byte) error {
 	var err error
 	var cfgFile struct {
@@ -246,12 +253,12 @@ func (s *ServerConfig) Validate() error {
 	return nil
 }
 
-// String реализаует интерфейс flag.Value
+// String returns the Address in the "host:port" format.
 func (a *Address) String() string {
 	return a.Host + ":" + a.GRPCPort
 }
 
-// Set реализует интерфейса flag.Value
+// Set parses a string in the format "host:port" and updates the Address fields Host and GRPCPort. Returns an error if the format is invalid.
 func (a *Address) Set(value string) error {
 	values := strings.Split(value, ":")
 	if len(values) != 2 {
@@ -264,22 +271,27 @@ func (a *Address) Set(value string) error {
 	return nil
 }
 
+// GetAddress retrieves the server's network address configuration and returns it as an Address pointer.
 func GetAddress() *Address {
 	return cfg.Address
 }
 
+// GetLogger returns the Logger instance from the server configuration.
 func GetLogger() *Logger {
 	return cfg.Logger
 }
 
+// GetDB retrieves the database configuration from the global server configuration and returns it as a *DB pointer.
 func GetDB() *DB {
 	return cfg.DB
 }
 
+// GetKeys retrieves the configuration's cryptographic and JWT keys for secure operations.
 func GetKeys() *Keys {
 	return cfg.Keys
 }
 
+// NewTestConfig initializes a new ServerConfig instance with default values and assigns it to the global cfg variable.
 func NewTestConfig() (*ServerConfig, error) {
 	config := &ServerConfig{
 		Address: &Address{},

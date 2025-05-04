@@ -70,7 +70,7 @@ func (s *AuthScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 			return s, tea.Quit
 
 		default:
-			if len(msg.String()) == 1 {
+			if len(msg.String()) == 1 && msg.String() != "\x00" {
 				// Handle character input based on the currently focused field
 				if s.cursor == 0 { // Username field
 					s.username += msg.String()

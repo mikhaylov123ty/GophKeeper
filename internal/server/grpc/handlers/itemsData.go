@@ -15,6 +15,8 @@ import (
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
+// ItemsDataHandler handles requests for item data and metadata operations by implementing gRPC server methods.
+// It embeds an unimplemented gRPC server and utilizes injected itemDataCreator and itemDataProvider interfaces.
 type ItemsDataHandler struct {
 	pb.UnimplementedItemDataHandlersServer
 	itemDataCreator  itemDataCreator
@@ -22,17 +24,22 @@ type ItemsDataHandler struct {
 }
 
 // TODO ADD TX
+
+// itemDataCreator defines methods for creating and persisting item data and metadata.
+// SaveItemData stores a given instance of ItemData and returns an error if the operation fails.
+// SaveMetaData saves a given instance of Meta and returns an error if the operation fails.
 type itemDataCreator interface {
 	SaveItemData(*models.ItemData) error
 	SaveMetaData(*models.Meta) error
 }
 
-// TODO separate metadata to interface
-
+// itemDataProvider defines methods for retrieving item data by unique identifier.
 type itemDataProvider interface {
 	GetItemDataByID(uuid.UUID) (*models.ItemData, error)
 }
 
+// NewTextHandler creates a new instance of ItemsDataHandler with provided itemDataCreator and itemDataProvider dependencies.
+// It initializes the handler to support operations for managing item data and metadata.
 func NewTextHandler(itemDataCreator itemDataCreator, itemDataProvider itemDataProvider) *ItemsDataHandler {
 	return &ItemsDataHandler{
 		itemDataCreator:  itemDataCreator,
@@ -40,6 +47,7 @@ func NewTextHandler(itemDataCreator itemDataCreator, itemDataProvider itemDataPr
 	}
 }
 
+// PostItemData processes and stores item data and metadata provided in the request, returning a response with IDs and timestamps.
 func (h *ItemsDataHandler) PostItemData(ctx context.Context, request *pb.PostItemDataRequest) (*pb.PostItemDataResponse, error) {
 	var dataID uuid.UUID
 
@@ -105,6 +113,8 @@ func (h *ItemsDataHandler) PostItemData(ctx context.Context, request *pb.PostIte
 		},
 		status.Errorf(codes.OK, "text registered")
 }
+
+// GetItemData retrieves item data associated with a given data ID from the request and returns it in the response.
 func (h *ItemsDataHandler) GetItemData(ctx context.Context, request *pb.GetItemDataRequest) (*pb.GetItemDataResponse, error) {
 	dataID, err := uuid.Parse(request.GetDataId())
 	if err != nil {

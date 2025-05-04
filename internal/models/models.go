@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// UserData represents a user in the system with unique ID, login credentials, and timestamps for creation and modification.
 type UserData struct {
 	ID       uuid.UUID `json:"id"`
 	Login    string    `json:"login"`
@@ -14,6 +15,7 @@ type UserData struct {
 	Modified time.Time `json:"modified"`
 }
 
+// Meta represents metadata associated with an item or resource, including identification, ownership, and timestamps.
 type Meta struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
@@ -25,6 +27,7 @@ type Meta struct {
 	Modified    time.Time `json:"modified"`
 }
 
+// ItemData represents an entity containing a unique identifier and associated byte data.
 type ItemData struct {
 	ID   uuid.UUID `json:"id"`
 	Data []byte    `json:"data"`

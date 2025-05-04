@@ -16,16 +16,22 @@ const (
 	textFields = 3
 )
 
+// viewTextDataScreen represents a screen displaying a specific textual data item.
+// backScreen stores the previous screen for navigation purposes.
+// itemData holds the textual data to be displayed.
 type viewTextDataScreen struct {
 	backScreen models.Screen
 	itemData   *models.TextData
 }
 
+// addTextItemScreen represents a screen for adding or editing text-based items.
+// It extends itemScreen and includes specific data handling for TextData items.
 type addTextItemScreen struct {
 	*itemScreen
 	newItemData *models.TextData
 }
 
+// Update processes incoming messages, handles key events, and returns the updated screen and an optional command.
 func (screen *viewTextDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -37,6 +43,7 @@ func (screen *viewTextDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return screen, nil
 }
 
+// View renders the content of the viewTextDataScreen, displaying the data header, the text field, and a styled footer.
 func (screen *viewTextDataScreen) View() string {
 	body := utils.DataHeader()
 
@@ -50,10 +57,11 @@ func (screen *viewTextDataScreen) View() string {
 	return body
 }
 
+// Update processes incoming messages or events, updates the screen's state, and returns the updated screen and command.
 func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
-		switch keyMsg.String() {
-		case "enter":
+		switch keyMsg.Type {
+		case tea.KeyEnter:
 			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.Text != "" {
 				// Create new item and add to the manager
 				if screen.newItemData != nil {
@@ -65,6 +73,7 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 						}, nil
 					}
 
+					// Post item data to server
 					if err = screen.postItemData(textData); err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -76,13 +85,13 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 
 			return screen.backScreen, nil
 
-		case "ctrl+q":
+		case tea.KeyCtrlQ:
 			return screen.backScreen, nil
 
-		case "up":
+		case tea.KeyUp:
 			screen.cursor = (screen.cursor - 1 + textFields) % textFields
 
-		case "down":
+		case tea.KeyDown:
 			screen.cursor = (screen.cursor + 1) % textFields
 
 		default:
@@ -93,6 +102,7 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return screen, nil
 }
 
+// View renders the UI for the addTextItemScreen, displaying input fields and highlighting the current cursor position.
 func (screen *addTextItemScreen) View() string {
 	if screen.newItemData == nil {
 		screen.newItemData = &models.TextData{}
@@ -127,7 +137,12 @@ func (screen *addTextItemScreen) View() string {
 	return result
 }
 
+// handleInput processes user input to update the current field based on the cursor position and modifies screen state.
 func (screen *addTextItemScreen) handleInput(input string) {
+	if input == "\x00" {
+		return
+	}
+
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Text}
 
 	// Backspace logic

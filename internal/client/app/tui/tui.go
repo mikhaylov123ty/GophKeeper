@@ -18,9 +18,10 @@ import (
 
 const (
 	mB           = 1048576
-	messageLimit = 50 * mB
+	messageLimit = 60 * mB
 )
 
+// ItemsManager is responsible for managing metadata items, gRPC client interactions, and user authentication data.
 type ItemsManager struct {
 	metaItems  map[string][]*models.MetaItem
 	grpcClient *grpc.Client
@@ -60,13 +61,6 @@ func (im *ItemsManager) SaveMetaItem(category string, newItem *models.MetaItem) 
 
 // PostItemData sends item data and metadata to the associated gRPC service after encrypting the data.
 func (im *ItemsManager) PostItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
-	if len(data) == 0 {
-		return nil, fmt.Errorf("empty data")
-	}
-	if len(data) > 30*mB {
-		return nil, fmt.Errorf("data is too big, max size is 30mb")
-	}
-	
 	encryptedData, err := utils.EncryptData(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt data: %w", err)

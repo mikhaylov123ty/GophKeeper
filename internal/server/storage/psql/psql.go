@@ -24,6 +24,7 @@ const (
 	usersTableName     = "users"
 )
 
+// Storage represents a storage layer that handles database operations using an SQL database connection.
 type Storage struct {
 	db *sql.DB
 }
@@ -63,6 +64,7 @@ func New(dsn string, migrationsDir string) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
+// SaveUser inserts a new user record into the database or returns an error if the operation fails.
 func (s *Storage) SaveUser(data *models.UserData) error {
 	slog.Debug("Save User Data", slog.Any("data", *data))
 
@@ -84,6 +86,7 @@ func (s *Storage) SaveUser(data *models.UserData) error {
 	return nil
 }
 
+// GetUserByLogin retrieves a user by their login from the database and returns the corresponding UserData or an error.
 func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
 	slog.Debug("Get User Data by Login", slog.String("Login", login))
 
@@ -117,6 +120,7 @@ func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
 	return &user, nil
 }
 
+// SaveItemData inserts or updates an item record in the database using its ID as a unique key. Returns an error if it fails.
 func (s *Storage) SaveItemData(item *models.ItemData) error {
 	slog.Debug("Save Item Data", slog.Any("data", *item))
 
@@ -139,6 +143,7 @@ func (s *Storage) SaveItemData(item *models.ItemData) error {
 	return nil
 }
 
+// GetItemDataByID retrieves the item data by its unique ID from the items_data table and returns it or an error.
 func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
 	slog.Debug("Get Item Data by ID", slog.String("ID", id.String()))
 	query, args, err := squirrel.Select("*").
@@ -167,6 +172,7 @@ func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
 	return &res, nil
 }
 
+// DeleteItemDataByID removes an item record from the items_data table based on its unique ID. Returns an error if it fails.
 func (s *Storage) DeleteItemDataByID(id uuid.UUID) error {
 	slog.Debug("Delete Item Data by ID", slog.String("ID", id.String()))
 
@@ -188,6 +194,7 @@ func (s *Storage) DeleteItemDataByID(id uuid.UUID) error {
 	return nil
 }
 
+// SaveMetaData inserts or updates metadata in the database. Returns an error if the query execution fails.
 func (s *Storage) SaveMetaData(data *models.Meta) error {
 	slog.Debug("Save Meta Data", slog.Any("data", *data))
 
@@ -210,6 +217,7 @@ func (s *Storage) SaveMetaData(data *models.Meta) error {
 	return nil
 }
 
+// GetMetaDataByUser retrieves metadata records associated with a specific user ID from the database or returns an error.
 func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	slog.Debug("Get Meta Data by user", slog.String("user ID", userID.String()))
 
@@ -259,6 +267,7 @@ func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	return res, nil
 }
 
+// DeleteMetaDataByID removes a metadata record from the metas table by its unique ID. Returns an error if the operation fails.
 func (s *Storage) DeleteMetaDataByID(id uuid.UUID) error {
 	slog.Debug("Delete Meta Data by ID", slog.String("ID", id.String()))
 
@@ -280,10 +289,12 @@ func (s *Storage) DeleteMetaDataByID(id uuid.UUID) error {
 	return nil
 }
 
+// Close terminates the database connection and releases any associated resources. Returns an error if it fails.
 func (s *Storage) Close() error {
 	return s.db.Close()
 }
 
+// Ping checks the connection to the database and returns an error if the database is not reachable.
 func (s *Storage) Ping() error {
 	return s.db.Ping()
 }

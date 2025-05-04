@@ -16,16 +16,24 @@ const (
 	credsFields = 4
 )
 
+// viewCredsDataScreen is a screen type for displaying credential data within a terminal-based UI application.
+// backScreen holds the previous screen for navigation when exiting the current screen.
+// itemData is a pointer to CredsData containing login credentials to be displayed.
 type viewCredsDataScreen struct {
 	backScreen models.Screen
 	itemData   *models.CredsData
 }
 
+// addCredsItemScreen represents a screen for adding or editing credential items such as login and password.
+// It embeds itemScreen to provide common item-related functionality and includes newItemData for specific credential data.
 type addCredsItemScreen struct {
+
+	// itemScreen provides shared functionality for managing and posting item data in various screen types.
 	*itemScreen
 	newItemData *models.CredsData
 }
 
+// Update processes incoming messages and updates the current screen state, returning a new screen and an optional command.
 func (screen *viewCredsDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -38,6 +46,7 @@ func (screen *viewCredsDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	return screen, nil
 }
 
+// View generates and returns a formatted string displaying login and password data with styled headers and footers.
 func (screen *viewCredsDataScreen) View() string {
 	body := utils.DataHeader()
 
@@ -52,6 +61,7 @@ func (screen *viewCredsDataScreen) View() string {
 	return body
 }
 
+// Update handles user input and updates the state of the addCredsItemScreen accordingly, returning the next screen and command.
 func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
@@ -91,6 +101,7 @@ func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return screen, nil
 }
 
+// View renders the addCredsItemScreen, displaying input fields for title, description, login, and password with styled labels.
 func (screen *addCredsItemScreen) View() string {
 	if screen.newItemData == nil {
 		screen.newItemData = &models.CredsData{}
@@ -127,7 +138,12 @@ func (screen *addCredsItemScreen) View() string {
 	return result
 }
 
+// handleInput processes a user input string, updates the appropriate field based on the current cursor position, and modifies screen state.
 func (screen *addCredsItemScreen) handleInput(input string) {
+	if input == "\x00" {
+		return
+	}
+
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.Login, screen.newItemData.Password}
 
 	// Backspace logic

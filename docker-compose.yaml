@@ -37,6 +37,7 @@ services:
       PRIVATE_KEY: ${PRIVATE_KEY}
       CERTIFICATE: ${CERTIFICATE}
       DATABASE_DSN: ${DATABASE_DSN}
+      LOG_LEVEL: ${LOG_LEVEL}
     ports:
       - "4443:4443"
     volumes:

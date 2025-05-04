@@ -3,7 +3,6 @@ package screens
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,23 +12,30 @@ import (
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
 const (
 	binaryFields = 3
-	toMB         = 1048576
+	mB           = 1048576
+	contentLimit = 30
 )
 
+// viewBinaryDataScreen represents a screen for viewing binary data content in a terminal-based UI application.
+// backScreen stores the previous screen to return to after exiting the current view.
+// itemData holds the binary data and its associated metadata for display or operations.
 type viewBinaryDataScreen struct {
 	backScreen models.Screen
 	itemData   *models.BinaryData
 }
 
+// addBinaryItemScreen represents a screen used for adding or editing binary items, such as files, with metadata details.
 type addBinaryItemScreen struct {
 	*itemScreen
 	newItemData *models.Binary
 }
 
+// Update processes a message, handling key events and managing transitions between screens or error handling.
 func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -60,6 +66,7 @@ func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd)
 	return screen, nil
 }
 
+// View returns a string representation of the binary data screen, including its metadata and instructions for interaction.
 func (screen *viewBinaryDataScreen) View() string {
 	body := utils.DataHeader()
 
@@ -75,26 +82,35 @@ func (screen *viewBinaryDataScreen) View() string {
 	return body
 }
 
+// Update processes user input messages, handles navigation, data validation, and posting for the addBinaryItemScreen.
 func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	var err error
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
 		case "enter":
 			if screen.newTitle != "" && screen.newDesc != "" && screen.newItemData.FilePath != "" {
-				filename := filepath.Base(screen.newItemData.FilePath)
-				extension := filepath.Ext(screen.newItemData.FilePath)
+				filePath := filepath.Clean(screen.newItemData.FilePath)
+				filename := filepath.Base(filePath)
+				extension := filepath.Ext(filePath)
 				name := filename[:len(filename)-len(extension)]
 
-				screen.newItemData.Binary.Content, err = os.ReadFile(screen.newItemData.FilePath)
+				screen.newItemData.Binary.Content, err = os.ReadFile(filePath)
 				if err != nil {
 					return &ErrorScreen{
 						backScreen: screen,
-						err:        fmt.Errorf("filepath: %s, error: %w", screen.newItemData.FilePath, err),
+						err:        fmt.Errorf("filepath: %s, error: %w", filePath, err),
 					}, nil
 				}
 
 				screen.newItemData.Binary.Name = strings.Join([]string{name, extension}, "")
-				screen.newItemData.Binary.FileSize = float64(len(string(screen.newItemData.Binary.Content))) / toMB
+				screen.newItemData.Binary.FileSize = float64(len(string(screen.newItemData.Binary.Content))) / mB
+
+				if screen.newItemData.Binary.FileSize > float64(contentLimit) {
+					return &ErrorScreen{
+						backScreen: screen,
+						err:        fmt.Errorf("file size is too big: %.2fMB, max size is %dMB", screen.newItemData.Binary.FileSize, contentLimit),
+					}, nil
+				}
 
 				if screen.newItemData != nil {
 					var binaryData []byte
@@ -131,6 +147,7 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	return screen, nil
 }
 
+// View generates and returns the styled string representation of the addBinaryItemScreen for rendering.
 func (screen *addBinaryItemScreen) View() string {
 	if screen.newItemData == nil {
 		screen.newItemData = &models.Binary{}
@@ -164,7 +181,12 @@ func (screen *addBinaryItemScreen) View() string {
 	return result
 }
 
+// handleInput processes user keyboard input and updates the state of the screen, including text fields and navigation.
 func (screen *addBinaryItemScreen) handleInput(input string) {
+	if input == "\x00" {
+		return
+	}
+
 	fields := []string{screen.newTitle, screen.newDesc, screen.newItemData.FilePath}
 
 	// Backspace logic
@@ -183,4 +205,10 @@ func (screen *addBinaryItemScreen) handleInput(input string) {
 	screen.newTitle = fields[0]
 	screen.newDesc = fields[1]
 	screen.newItemData.FilePath = fields[2]
+
+	if screen.cursor == 2 && screen.newItemData.FilePath != "" {
+		if screen.newItemData.FilePath[0] == '[' && screen.newItemData.FilePath[len(screen.newItemData.FilePath)-1] == ']' {
+			screen.newItemData.FilePath = screen.newItemData.FilePath[1 : len(screen.newItemData.FilePath)-1]
+		}
+	}
 }
