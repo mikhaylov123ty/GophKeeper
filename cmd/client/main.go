@@ -1,3 +1,5 @@
+// The provided `main.go` file represents the entry point of the `GophKeeper` client's application.
+
 package main
 
 import (
@@ -9,6 +11,7 @@ import (
 	clientConfig "github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
+// The main function serves as the starting point of the application execution
 func main() {
 	config, err := clientConfig.New()
 	if err != nil {

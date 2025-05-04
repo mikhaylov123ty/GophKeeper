@@ -10,23 +10,29 @@ import (
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
-	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 )
 
 const (
 	cardFields = 5
 )
 
+// viewBankCardDataScreen represents a screen for viewing detailed bank card information.
+// backScreen is the previous screen to return to upon user request.
+// itemData holds the bank card data to be displayed on the screen.
 type viewBankCardDataScreen struct {
 	backScreen models.Screen
-	itemData   *dbModels.BankCardData
+	itemData   *models.BankCardData
 }
 
+// addBankCardItemScreen represents a screen for adding or editing bank card information within the application.
+// It embeds itemScreen to leverage shared functionality for managing items.
+// The newItemData field holds the bank card details being added or edited.
 type addBankCardItemScreen struct {
 	*itemScreen
-	newItemData *dbModels.BankCardData
+	newItemData *models.BankCardData
 }
 
+// Update processes the input message and determines the next screen state and command to execute.
 func (screen *viewBankCardDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -39,20 +45,18 @@ func (screen *viewBankCardDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cm
 	return screen, nil
 }
 
-// TODO UNIFY THIS, like run build func in method
 func (screen *viewBankCardDataScreen) View() string {
-	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
-	body := fmt.Sprintf(
-		"%sCard Information%s\n"+
-			"=======================%s"+
-			"%sCard Num: %s%s\n"+
+	body := utils.DataHeader()
+
+	body += fmt.Sprintf(
+		"\n%sCard Num: %s%s\n"+
 			"%sExpiry: %s%s\n"+
 			"%sCVV: %s%s\n",
-		utils.ColorBold, utils.ColorReset, separator,
 		utils.ColorGreen, screen.itemData.CardNum, utils.ColorReset,
 		utils.ColorYellow, screen.itemData.Expiry, utils.ColorReset,
 		utils.ColorRed, screen.itemData.CVV, utils.ColorReset,
 	)
+
 	body += utils.ItemDataFooter()
 
 	return body
@@ -97,7 +101,7 @@ func (screen *addBankCardItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd
 // TODO UNIFY THIS, like run build func in method
 func (screen *addBankCardItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &dbModels.BankCardData{}
+		screen.newItemData = &models.BankCardData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -116,7 +120,7 @@ func (screen *addBankCardItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.cursor] = utils.CursorStyle
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])

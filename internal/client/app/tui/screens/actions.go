@@ -17,6 +17,12 @@ const (
 	ExitCategory  = "Exit" // New exit category
 )
 
+// ActionsMenu represents a UI menu for managing actions within a specific category of items.
+// options defines the available menu options as a slice of strings.
+// cursor indicates the current position of the menu selection.
+// category specifies the category of items the menu is associated with.
+// itemsManager provides access to item operations like retrieving or modifying metadata.
+// backScreen holds a reference to the screen that should appear when exiting the menu.
 type ActionsMenu struct {
 	options      []string
 	cursor       int
@@ -25,6 +31,7 @@ type ActionsMenu struct {
 	backScreen   models.Screen
 }
 
+// Update handles user input to modify the state of the menu, updates the cursor position, and navigates to other screens.
 func (cm ActionsMenu) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -85,6 +92,7 @@ func (cm ActionsMenu) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return cm, nil
 }
 
+// View generates and returns a styled string representation of the current state of the category menu with navigation options.
 func (cm ActionsMenu) View() string {
 	s := utils.TitleStyle.Render("Category Menu:\n\n")
 	for i, option := range cm.options {

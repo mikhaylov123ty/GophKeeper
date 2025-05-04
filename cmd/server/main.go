@@ -1,3 +1,5 @@
+// The provided `main.go` file represents the entry point of the `GophKeeper` server's application.
+
 package main
 
 import (
@@ -17,6 +19,7 @@ var (
 	buildDate    = "N/A"
 )
 
+// The main function serves as the starting point of the application execution
 func main() {
 	fmt.Printf("Server Build Version: %s\n", buildVersion)
 	fmt.Printf("Server Build Date: %s\n", buildDate)

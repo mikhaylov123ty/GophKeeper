@@ -14,6 +14,8 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
+// EncryptData encrypts the input data with AES-GCM using a derived hash from the public certificate as the key.
+// If the public certificate is not configured, the function returns the input data without encryption.
 func EncryptData(data []byte) ([]byte, error) {
 	// Пропуск обработки, если флаг не задан
 	if config.GetKeys().PublicCert == "" {
@@ -48,6 +50,7 @@ func EncryptData(data []byte) ([]byte, error) {
 	return []byte(base64.StdEncoding.EncodeToString(ciphertext)), nil
 }
 
+// DeryptData decrypts the given byte array using AES-GCM with a key derived from a public certificate, or returns it as-is if no certificate is configured.
 func DeryptData(body []byte) ([]byte, error) {
 	if config.GetKeys().PublicCert == "" {
 		return body, nil
@@ -89,6 +92,7 @@ func DeryptData(body []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
+// createHash generates a 32-character base64-encoded SHA-256 hash from the provided byte slice.
 func createHash(key []byte) string {
 	hasher := sha256.New()
 	hasher.Write(key)

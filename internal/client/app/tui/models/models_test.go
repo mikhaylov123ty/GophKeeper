@@ -35,6 +35,54 @@ func createMetaItem(title, description, created, modified string) *MetaItem {
 	}
 }
 
+func TestCredsDataFields(t *testing.T) {
+	creds := CredsData{
+		Login:    "user123",
+		Password: "pass123",
+	}
+
+	assert.Equal(t, "user123", creds.Login)
+	assert.Equal(t, "pass123", creds.Password)
+}
+
+func TestTextDataFields(t *testing.T) {
+	text := TextData{
+		Text: "Sample text",
+	}
+
+	assert.Equal(t, "Sample text", text.Text)
+}
+
+func TestBankCardDataFields(t *testing.T) {
+	card := BankCardData{
+		CardNum: "4111111111111111",
+		Expiry:  "12/25",
+		CVV:     "123",
+	}
+
+	assert.Equal(t, "4111111111111111", card.CardNum)
+	assert.Equal(t, "12/25", card.Expiry)
+	assert.Equal(t, "123", card.CVV)
+}
+
+func TestBinaryAndBinaryData(t *testing.T) {
+	content := []byte{0x00, 0x01, 0x02}
+	binaryData := BinaryData{
+		Name: "file.txt",
+		//ContentType: "text/plain",
+		Content: content,
+	}
+	binary := Binary{
+		Binary:   binaryData,
+		FilePath: "path/to/file.txt",
+	}
+
+	assert.Equal(t, "file.txt", binary.Binary.Name)
+	//assert.Equal(t, "text/plain", binary.Binary.ContentType)
+	assert.Equal(t, content, binary.Binary.Content)
+	assert.Equal(t, "path/to/file.txt", binary.FilePath)
+}
+
 // Test the MetaItemDelegate.Render method
 func TestMetaItemDelegate_Render(t *testing.T) {
 	delegate := MetaItemDelegate{}

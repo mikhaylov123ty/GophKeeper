@@ -10,7 +10,6 @@ import (
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
-	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 )
 
 const (
@@ -19,12 +18,12 @@ const (
 
 type viewCredsDataScreen struct {
 	backScreen models.Screen
-	itemData   *dbModels.CredsData
+	itemData   *models.CredsData
 }
 
 type addCredsItemScreen struct {
 	*itemScreen
-	newItemData *dbModels.CredsData
+	newItemData *models.CredsData
 }
 
 func (screen *viewCredsDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -39,19 +38,18 @@ func (screen *viewCredsDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	return screen, nil
 }
 
-// TODO UNIFY
 func (screen *viewCredsDataScreen) View() string {
-	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
-	return fmt.Sprintf(
-		"%sCreds Information%s\n"+
-			"%s"+
-			"Login: %s%s\n"+
-			"Password: %s%s\n",
-		utils.ColorBold, utils.ColorReset,
-		separator,
-		utils.ColorGreen, screen.itemData.Login,
-		utils.ColorGreen, screen.itemData.Password,
-	) + utils.ItemDataFooter()
+	body := utils.DataHeader()
+
+	body += fmt.Sprintf(
+		"\n%sLogin: %s%s\n"+
+			"%sPassword: %s%s\n",
+		utils.ColorGreen, screen.itemData.Login, utils.ColorReset,
+		utils.ColorGreen, screen.itemData.Password, utils.ColorReset,
+	)
+	body += utils.ItemDataFooter()
+
+	return body
 }
 
 func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -93,10 +91,9 @@ func (screen *addCredsItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return screen, nil
 }
 
-// TODO UNIFY THIS
 func (screen *addCredsItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &dbModels.CredsData{}
+		screen.newItemData = &models.CredsData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -114,7 +111,7 @@ func (screen *addCredsItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.cursor] = utils.CursorStyle
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])

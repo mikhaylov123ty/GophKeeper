@@ -59,7 +59,7 @@ func (m MainMenu) View() string {
 	s := utils.TitleStyle.Render("Main Menu:\n\n")
 	for i, category := range m.categories {
 		if m.cursor == i {
-			s += utils.SelectedStyle.Render(fmt.Sprintf("[x] %s\n", string(category))) // Selected option with color
+			s += utils.CursorStyle.Render(fmt.Sprintf("[x] %s\n", category)) // Selected option with color
 		} else {
 			s += utils.UnselectedStyle.Render(fmt.Sprintf("[ ] %s\n", category)) // Unselected option with color
 		}

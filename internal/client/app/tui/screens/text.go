@@ -10,7 +10,6 @@ import (
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
-	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 )
 
 const (
@@ -19,12 +18,12 @@ const (
 
 type viewTextDataScreen struct {
 	backScreen models.Screen
-	itemData   *dbModels.TextData
+	itemData   *models.TextData
 }
 
 type addTextItemScreen struct {
 	*itemScreen
-	newItemData *dbModels.TextData
+	newItemData *models.TextData
 }
 
 func (screen *viewTextDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -38,17 +37,17 @@ func (screen *viewTextDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return screen, nil
 }
 
-// TODO move to models and unify
 func (screen *viewTextDataScreen) View() string {
-	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
-	return fmt.Sprintf(
-		"%sText Information%s\n"+
-			"=======================%s"+
-			"%sText: %s%s\n",
-		utils.ColorBold, utils.ColorReset,
-		separator,
+	body := utils.DataHeader()
+
+	body += fmt.Sprintf(
+		"\n%sText: %s%s\n",
 		utils.ColorGreen, screen.itemData.Text, utils.ColorReset,
-	) + utils.ItemDataFooter()
+	)
+
+	body += utils.ItemDataFooter()
+
+	return body
 }
 
 func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -94,10 +93,9 @@ func (screen *addTextItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return screen, nil
 }
 
-// TODO UNIFY THIS, like run build func in method
 func (screen *addTextItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &dbModels.TextData{}
+		screen.newItemData = &models.TextData{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -114,7 +112,7 @@ func (screen *addTextItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.cursor] = utils.CursorStyle
 
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])

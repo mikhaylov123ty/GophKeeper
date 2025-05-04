@@ -21,6 +21,8 @@ type ItemsManager struct {
 	userID     string
 }
 
+// NewItemManager - Initializes and returns a new instance of an `ItemManager`,
+// which is responsible for managing TUI interactions and connecting with gRPC services.
 func NewItemManager(grpcClient *grpc.Client) (*models.Model, error) {
 	im := ItemsManager{
 		metaItems:  map[string][]*models.MetaItem{},
@@ -40,14 +42,17 @@ func NewItemManager(grpcClient *grpc.Client) (*models.Model, error) {
 	return auth, nil
 }
 
+// GetMetaData retrieves metadata items associated with a specific category.
 func (im *ItemsManager) GetMetaData(category string) []*models.MetaItem {
 	return im.metaItems[category]
 }
 
+// SaveMetaItem saves a new metadata item into the `ItemsManager` under a specific category.
 func (im *ItemsManager) SaveMetaItem(category string, newItem *models.MetaItem) {
 	im.metaItems[category] = append(im.metaItems[category], newItem)
 }
 
+// PostItemData sends item data and metadata to the associated gRPC service after encrypting the data.
 func (im *ItemsManager) PostItemData(data []byte, dataID string, metaData *pb.MetaData) (*pb.PostItemDataResponse, error) {
 	encryptedData, err := utils.EncryptData(data)
 	if err != nil {
@@ -69,6 +74,8 @@ func (im *ItemsManager) PostItemData(data []byte, dataID string, metaData *pb.Me
 	return resp, err
 }
 
+// GetItemData retrieves the item data associated with the given data ID,
+// decrypts it using the utility functions, and returns the decrypted data as a string.
 func (im *ItemsManager) GetItemData(dataID string) (string, error) {
 	response, err := im.grpcClient.Handlers.ItemDataHandler.GetItemData(context.Background(), &pb.GetItemDataRequest{
 		DataId: dataID,
@@ -86,6 +93,7 @@ func (im *ItemsManager) GetItemData(dataID string) (string, error) {
 
 }
 
+// PostUserData sends user credentials to the authentication service, retrieves a user ID and JWT token, and stores them.
 func (im *ItemsManager) PostUserData(login string, password string) error {
 	res, err := im.grpcClient.Handlers.AuthHandler.PostUserData(context.Background(), &pb.PostUserDataRequest{
 		Login:    login,
@@ -109,6 +117,7 @@ func (im *ItemsManager) PostUserData(login string, password string) error {
 	return nil
 }
 
+// SyncMeta synchronizes metadata by retrieving and storing metadata items for the current user from the gRPC service.
 func (im *ItemsManager) SyncMeta() error {
 	metaItems, err := im.grpcClient.Handlers.MetaDataHandler.GetMetaData(context.Background(),
 		&pb.GetMetaDataRequest{UserId: im.userID})
@@ -140,6 +149,7 @@ func (im *ItemsManager) SyncMeta() error {
 	return nil
 }
 
+// DeleteItem removes a metadata item by its ID, category, and data ID, and updates the local metadata cache.
 func (im *ItemsManager) DeleteItem(metaItemID uuid.UUID, category string, dataID string) error {
 	resp, err := im.grpcClient.Handlers.MetaDataHandler.DeleteMetaData(context.Background(), &pb.DeleteMetaDataRequest{
 		MetadataId:   metaItemID.String(),

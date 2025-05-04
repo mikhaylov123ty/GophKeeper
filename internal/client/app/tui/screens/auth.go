@@ -10,6 +10,8 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
 )
 
+// AuthScreen represents a screen for handling user authentication in a terminal-based UI application.
+// It manages the input fields for username and password, navigation, and authentication logic.
 type AuthScreen struct {
 	username     string
 	password     string
@@ -18,7 +20,7 @@ type AuthScreen struct {
 	cursor       int
 }
 
-// NewAuthScreen initializes the AuthScreen
+// NewAuthScreen creates an AuthScreen instance wrapped in a Model, initializing it with the next screen and items manager.
 func NewAuthScreen(next models.Screen, itemsManager models.ItemsManager) *models.Model {
 	return &models.Model{
 		CurrentScreen: &AuthScreen{
@@ -28,18 +30,18 @@ func NewAuthScreen(next models.Screen, itemsManager models.ItemsManager) *models
 	}
 }
 
-// Update method for AuthScreen
+// Update processes incoming messages, updates the AuthScreen's state, and returns the next screen and an optional command.
 func (s *AuthScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyBackspace:
 			switch s.cursor {
-			case 0:
+			case 0: // username
 				if len(s.username) > 0 {
 					s.username = s.username[:len(s.username)-1]
 				}
-			case 1:
+			case 1: // password
 				if len(s.password) > 0 {
 					s.password = s.password[:len(s.password)-1]
 				}
@@ -82,16 +84,16 @@ func (s *AuthScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
 	return s, nil
 }
 
-// View method for AuthScreen
+// View generates a string representation of the AuthScreen for rendering, including input fields and footer instructions.
 func (s *AuthScreen) View() string {
 	var sb strings.Builder
 
-	sb.WriteString("Please log in:\n\n")
+	sb.WriteString(utils.TitleStyle.Render("Please log in:\n"))
 
 	// Render Username Field
-	sb.WriteString(fmt.Sprintf("Username: %s\n", utils.CursorStyle.Render(s.username)))
+	sb.WriteString(fmt.Sprintf("\nUsername: %s\n", utils.SelectedStyle.Render(s.username)))
 	// Render Password Field (masked)
-	sb.WriteString(fmt.Sprintf("Password: %s\n", utils.CursorStyle.Render(strings.Repeat("•", len(s.password)))))
+	sb.WriteString(fmt.Sprintf("Password: %s\n", utils.SelectedStyle.Render(strings.Repeat("•", len(s.password)))))
 	// Render Footer
 	sb.WriteString(utils.AuthFooter())
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
-	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 )
 
 type viewMetaItemsScreen struct {
@@ -99,11 +98,10 @@ func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 	return screen, nil
 }
 
-// TODO make common unmarhsaler
 func (screen *viewMetaItemsScreen) routeViewData(itemData string, category string) models.Screen {
 	switch category {
 	case TextCategory:
-		var textData dbModels.TextData
+		var textData models.TextData
 		if err := json.Unmarshal([]byte(itemData), &textData); err != nil {
 			return &ErrorScreen{
 				backScreen: screen,
@@ -113,13 +111,13 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 
 		return &viewTextDataScreen{
 			backScreen: screen,
-			itemData: &dbModels.TextData{
+			itemData: &models.TextData{
 				Text: textData.Text,
 			},
 		}
 
 	case CardCategory:
-		var cardData dbModels.BankCardData
+		var cardData models.BankCardData
 		if err := json.Unmarshal([]byte(itemData), &cardData); err != nil {
 			return &ErrorScreen{
 				backScreen: screen,
@@ -129,7 +127,7 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 
 		return &viewBankCardDataScreen{
 			backScreen: screen,
-			itemData: &dbModels.BankCardData{
+			itemData: &models.BankCardData{
 				CardNum: cardData.CardNum,
 				Expiry:  cardData.Expiry,
 				CVV:     cardData.CVV,
@@ -137,7 +135,7 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 		}
 
 	case CredsCategory:
-		var credsData dbModels.CredsData
+		var credsData models.CredsData
 		if err := json.Unmarshal([]byte(itemData), &credsData); err != nil {
 			return &ErrorScreen{
 				backScreen: screen,
@@ -147,14 +145,14 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 
 		return &viewCredsDataScreen{
 			backScreen: screen,
-			itemData: &dbModels.CredsData{
+			itemData: &models.CredsData{
 				Login:    credsData.Login,
 				Password: credsData.Password,
 			},
 		}
 
 	case FileCategory:
-		var binaryData dbModels.BinaryData
+		var binaryData models.BinaryData
 		if err := json.Unmarshal([]byte(itemData), &binaryData); err != nil {
 			return &ErrorScreen{
 				backScreen: screen,
@@ -164,10 +162,10 @@ func (screen *viewMetaItemsScreen) routeViewData(itemData string, category strin
 
 		return &viewBinaryDataScreen{
 			backScreen: screen,
-			itemData: &dbModels.BinaryData{
-				Name:        binaryData.Name,
-				ContentType: binaryData.ContentType,
-				Content:     binaryData.Content,
+			itemData: &models.BinaryData{
+				Name:     binaryData.Name,
+				Content:  binaryData.Content,
+				FileSize: binaryData.FileSize,
 			},
 		}
 	}

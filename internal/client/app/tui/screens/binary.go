@@ -3,7 +3,7 @@ package screens
 import (
 	"encoding/json"
 	"fmt"
-	"mime"
+	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,22 +13,21 @@ import (
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/models"
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app/tui/utils"
-	"github.com/mikhaylov123ty/GophKeeper/internal/client/config"
-	dbModels "github.com/mikhaylov123ty/GophKeeper/internal/models"
 )
 
 const (
 	binaryFields = 3
+	toMB         = 1024
 )
 
 type viewBinaryDataScreen struct {
 	backScreen models.Screen
-	itemData   *dbModels.BinaryData
+	itemData   *models.BinaryData
 }
 
 type addBinaryItemScreen struct {
 	*itemScreen
-	newItemData *dbModels.Binary
+	newItemData *models.Binary
 }
 
 func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -36,15 +35,7 @@ func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "d":
-			ext, err := mime.ExtensionsByType(screen.itemData.ContentType)
-			if err != nil {
-				return &ErrorScreen{
-					backScreen: screen,
-					err:        err,
-				}, nil
-			}
-
-			outputFile, err := os.Create(strings.Join([]string{config.GetOutputFolder(), screen.itemData.Name, ext[0]}, ""))
+			outputFile, err := os.Create(strings.Join([]string{config.GetOutputFolder(), screen.itemData.Name}, ""))
 			if err != nil {
 				return &ErrorScreen{
 					backScreen: screen,
@@ -70,17 +61,18 @@ func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd)
 }
 
 func (screen *viewBinaryDataScreen) View() string {
-	separator := "\n" + strings.Repeat("-", 40) + "\n" // Creates a separator line for better readability
-	return fmt.Sprintf(
-		"%sFile Information%s\n"+
-			"=======================%s"+
-			"%sTitle: %s%s\n"+
-			"%sType: %s%s\n",
-		utils.ColorBold, utils.ColorReset,
-		separator,
+	body := utils.DataHeader()
+
+	body += fmt.Sprintf(
+		"\n%sTitle: %s%s\n"+
+			"%sSize: %d MB%s\n",
 		utils.ColorGreen, screen.itemData.Name, utils.ColorReset,
-		utils.ColorYellow, screen.itemData.ContentType, utils.ColorReset,
-	) + utils.BinaryItemDataFooter()
+		utils.ColorRed, screen.itemData.FileSize, utils.ColorReset,
+	)
+
+	body += utils.BinaryItemDataFooter()
+
+	return body
 }
 
 func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) {
@@ -100,11 +92,14 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 						err:        err,
 					}, nil
 				}
-				screen.newItemData.Binary.ContentType = mime.TypeByExtension(extension)
-				screen.newItemData.Binary.Name = name
+
+				//screen.newItemData.Binary.ContentType = mime.TypeByExtension(extension)
+				screen.newItemData.Binary.Name = strings.Join([]string{name, extension}, "")
+				screen.newItemData.Binary.FileSize = len(string(screen.newItemData.Binary.Content)) / toMB
 
 				if screen.newItemData != nil {
-					binaryData, err := json.Marshal(screen.newItemData.Binary)
+					var binaryData []byte
+					binaryData, err = json.Marshal(screen.newItemData.Binary)
 					if err != nil {
 						return &ErrorScreen{
 							backScreen: screen,
@@ -139,7 +134,7 @@ func (screen *addBinaryItemScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 
 func (screen *addBinaryItemScreen) View() string {
 	if screen.newItemData == nil {
-		screen.newItemData = &dbModels.Binary{}
+		screen.newItemData = &models.Binary{}
 	}
 
 	// Define an array of elements to hold the rendered strings
@@ -156,7 +151,7 @@ func (screen *addBinaryItemScreen) View() string {
 		utils.UnselectedStyle,
 		utils.UnselectedStyle,
 	}
-	styles[screen.cursor] = utils.SelectedStyle
+	styles[screen.cursor] = utils.CursorStyle
 	// Build each line
 	addLine("Title:", screen.newTitle, styles[0])
 	addLine("Description:", screen.newDesc, styles[1])
