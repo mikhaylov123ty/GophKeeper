@@ -117,7 +117,7 @@ func TestInitConfigFile(t *testing.T) {
 // TestNew combines multiple parts
 func TestNew(t *testing.T) {
 	// Set flags
-	os.Args = []string{"cmd", "-host=127.0.0.1", "-grpc-port=8888", "-certificate=mycert.pem", "-files-output=./temp/"}
+	os.Args = []string{"cmd", "-host=127.0.0.1", "-grpc-port=8888", "-certificate=mycert.pem", "-files-output=./"}
 
 	// Clear environment variables
 	os.Unsetenv("ADDRESS")
@@ -132,5 +132,5 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "127.0.0.1", cfg.Address.Host)
 	assert.Equal(t, "8888", cfg.Address.GRPCPort)
 	assert.Equal(t, "mycert.pem", cfg.Keys.PublicCert)
-	assert.Equal(t, "./temp/", cfg.OutputFolder)
+	assert.Equal(t, "./", cfg.OutputFolder)
 }

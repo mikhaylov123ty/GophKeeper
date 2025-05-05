@@ -126,6 +126,7 @@ CERTIFICATE: ./public.crt
 DATABASE_DSN: postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
 MIGRATIONS_DIR: file://./migrations
 ADDRESS: 0.0.0.0:4443
+LOG_LEVEL: info
 
 POSTGRES_DB: postgres
 POSTGRES_USER: postgres
@@ -174,4 +175,15 @@ cmd/client/
 
 Docker контейнер - общая папка на локальном диске
 
-4. Сложить все в одну папку и запустить клиент по инструкции
+4. Сложить все в одну папку и скорректировать имя хоста сервера и output папку для сохранения скачаных файлов.
+
+Формат пути для Windows:
+```
+C:/Users/your user name/Downloads/GophKeeper/Output
+```
+Формат пути для MacOS и Linux
+
+```
+/Users/your user name/Downloads/GophKeeper/Output
+```
+В самом приложении соблюдать форматирование не нужно.

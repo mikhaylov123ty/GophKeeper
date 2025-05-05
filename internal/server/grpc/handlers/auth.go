@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/domain"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 )
@@ -28,12 +28,12 @@ type AuthHandler struct {
 
 // userCreator defines a contract for saving user data to a storage system.
 type userCreator interface {
-	SaveUser(*models.UserData) error
+	SaveUser(*domain.UserData) error
 }
 
 // userProvider defines the contract for retrieving user information by their login credentials.
 type userProvider interface {
-	GetUserByLogin(string) (*models.UserData, error)
+	GetUserByLogin(string) (*domain.UserData, error)
 }
 
 // NewAuthHandler initializes and returns a new instance of AuthHandler with the provided userCreator and userProvider dependencies.
@@ -76,7 +76,7 @@ func (a *AuthHandler) PostUserData(ctx context.Context, request *pb.PostUserData
 			return &res, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		storageUser = &models.UserData{
+		storageUser = &domain.UserData{
 			ID:       uuid.New(),
 			Login:    request.Login,
 			Password: string(pass),

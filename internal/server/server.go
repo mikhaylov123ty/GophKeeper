@@ -26,7 +26,7 @@ type auth struct {
 // New initializes and returns a new Server instance configured with the provided storage commands, or an error if setup fails.
 func New(storageCommands storage.Commands) (*Server, error) {
 	gRPC, err := grpc.NewServer(
-		handlers.NewTextHandler(storageCommands, storageCommands),
+		handlers.NewItemsDataHandler(storageCommands, storageCommands),
 		handlers.NewMetaDataHandler(storageCommands, storageCommands),
 		handlers.NewAuthHandler(storageCommands, storageCommands),
 	)

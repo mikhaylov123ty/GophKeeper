@@ -41,7 +41,7 @@ func (screen *viewBinaryDataScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "d":
-			outputFile, err := os.Create(strings.Join([]string{config.GetOutputFolder(), screen.itemData.Name}, ""))
+			outputFile, err := os.Create(strings.Join([]string{config.GetOutputFolder(), screen.itemData.Name}, "/"))
 			if err != nil {
 				return &ErrorScreen{
 					backScreen: screen,

@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/domain"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
@@ -23,24 +23,20 @@ type ItemsDataHandler struct {
 	itemDataProvider itemDataProvider
 }
 
-// TODO ADD TX
-
-// itemDataCreator defines methods for creating and persisting item data and metadata.
-// SaveItemData stores a given instance of ItemData and returns an error if the operation fails.
-// SaveMetaData saves a given instance of Meta and returns an error if the operation fails.
+// itemDataCreator defines an interface for saving item data and associated metadata.
+// It ensures atomic persistence operations.
 type itemDataCreator interface {
-	SaveItemData(*models.ItemData) error
-	SaveMetaData(*models.Meta) error
+	SaveItemData(*domain.ItemData, *domain.Meta) error
 }
 
 // itemDataProvider defines methods for retrieving item data by unique identifier.
 type itemDataProvider interface {
-	GetItemDataByID(uuid.UUID) (*models.ItemData, error)
+	GetItemDataByID(uuid.UUID) (*domain.ItemData, error)
 }
 
-// NewTextHandler creates a new instance of ItemsDataHandler with provided itemDataCreator and itemDataProvider dependencies.
+// NewItemsDataHandler creates a new instance of ItemsDataHandler with provided itemDataCreator and itemDataProvider dependencies.
 // It initializes the handler to support operations for managing item data and metadata.
-func NewTextHandler(itemDataCreator itemDataCreator, itemDataProvider itemDataProvider) *ItemsDataHandler {
+func NewItemsDataHandler(itemDataCreator itemDataCreator, itemDataProvider itemDataProvider) *ItemsDataHandler {
 	return &ItemsDataHandler{
 		itemDataCreator:  itemDataCreator,
 		itemDataProvider: itemDataProvider,
@@ -79,30 +75,24 @@ func (h *ItemsDataHandler) PostItemData(ctx context.Context, request *pb.PostIte
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user id %s", request.GetMetaData().UserId)
 	}
 
-	metaData := models.Meta{
+	metaData := domain.Meta{
 		ID:          metaID,
 		Title:       request.GetMetaData().Title,
 		Description: request.GetMetaData().Description,
 		Type:        request.GetMetaData().DataType,
 		DataID:      dataID,
 		UserID:      userID,
-		Created:     time.Now(), // Current time
-		Modified:    time.Now(), // Current time
+		Created:     time.Now(),
+		Modified:    time.Now(),
 	}
 
-	itemData := models.ItemData{
+	itemData := domain.ItemData{
 		ID:   dataID,
 		Data: request.GetData(),
 	}
 
-	// TODO open TX
-	if err = h.itemDataCreator.SaveItemData(&itemData); err != nil {
-		slog.ErrorContext(ctx, "could not save text", slog.String("error", err.Error()))
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	if err = h.itemDataCreator.SaveMetaData(&metaData); err != nil {
-		slog.ErrorContext(ctx, "could not save meta data", slog.String("error", err.Error()))
+	if err = h.itemDataCreator.SaveItemData(&itemData, &metaData); err != nil {
+		slog.ErrorContext(ctx, "could not save data", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
@@ -111,7 +101,7 @@ func (h *ItemsDataHandler) PostItemData(ctx context.Context, request *pb.PostIte
 			Created:  metaData.Created.Format(time.RFC3339),
 			Modified: metaData.Modified.Format(time.RFC3339),
 		},
-		status.Errorf(codes.OK, "text registered")
+		status.Errorf(codes.OK, "data registered")
 }
 
 // GetItemData retrieves item data associated with a given data ID from the request and returns it in the response.
@@ -124,14 +114,14 @@ func (h *ItemsDataHandler) GetItemData(ctx context.Context, request *pb.GetItemD
 	item, err := h.itemDataProvider.GetItemDataByID(dataID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			slog.ErrorContext(ctx, "no text found", slog.String("error", err.Error()))
+			slog.ErrorContext(ctx, "no data found", slog.String("error", err.Error()))
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
-		slog.ErrorContext(ctx, "could not get text", slog.String("error", err.Error()))
+		slog.ErrorContext(ctx, "could not get data", slog.String("error", err.Error()))
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &pb.GetItemDataResponse{
 			Data: item.Data},
-		status.Errorf(codes.OK, "text gathered")
+		status.Errorf(codes.OK, "data gathered")
 }

@@ -6,20 +6,19 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/domain"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/config"
 	"github.com/mikhaylov123ty/GophKeeper/internal/server/storage/psql"
 )
 
 // Commands defines database operations for managing users, items, and metadata, including CRUD and lifecycle methods.
 type Commands interface {
-	SaveUser(*models.UserData) error
-	GetUserByLogin(string) (*models.UserData, error)
-	SaveItemData(data *models.ItemData) error
-	GetItemDataByID(uuid.UUID) (*models.ItemData, error)
+	SaveUser(*domain.UserData) error
+	GetUserByLogin(string) (*domain.UserData, error)
+	SaveItemData(*domain.ItemData, *domain.Meta) error
+	GetItemDataByID(uuid.UUID) (*domain.ItemData, error)
 	DeleteItemDataByID(uuid.UUID) error
-	SaveMetaData(*models.Meta) error
-	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
+	GetMetaDataByUser(uuid.UUID) ([]*domain.Meta, error)
 	DeleteMetaDataByID(uuid.UUID) error
 	Close() error
 }

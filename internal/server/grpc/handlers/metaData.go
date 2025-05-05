@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/domain"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
@@ -27,7 +27,7 @@ type MetaDataHandler struct {
 // metaDataProvider defines an interface for retrieving metadata associated with a given user ID.
 // GetMetaDataByUser retrieves metadata associated with the provided user UUID and returns a slice of Meta objects or an error.
 type metaDataProvider interface {
-	GetMetaDataByUser(uuid.UUID) ([]*models.Meta, error)
+	GetMetaDataByUser(uuid.UUID) ([]*domain.Meta, error)
 }
 
 // dataRemover defines methods to delete item and metadata by their unique identifier.

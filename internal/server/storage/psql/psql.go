@@ -1,6 +1,7 @@
 package psql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -15,7 +16,7 @@ import (
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/domain"
 )
 
 const (
@@ -65,7 +66,7 @@ func New(dsn string, migrationsDir string) (*Storage, error) {
 }
 
 // SaveUser inserts a new user record into the database or returns an error if the operation fails.
-func (s *Storage) SaveUser(data *models.UserData) error {
+func (s *Storage) SaveUser(data *domain.UserData) error {
 	slog.Debug("Save User Data", slog.Any("data", *data))
 
 	query, args, err := squirrel.Insert(usersTableName).
@@ -87,7 +88,7 @@ func (s *Storage) SaveUser(data *models.UserData) error {
 }
 
 // GetUserByLogin retrieves a user by their login from the database and returns the corresponding UserData or an error.
-func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
+func (s *Storage) GetUserByLogin(login string) (*domain.UserData, error) {
 	slog.Debug("Get User Data by Login", slog.String("Login", login))
 
 	query, args, err := squirrel.Select("*").
@@ -106,7 +107,7 @@ func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
 		return nil, fmt.Errorf("could not execute get user query: %w", row.Err())
 	}
 
-	var user models.UserData
+	var user domain.UserData
 	if err = row.Scan(
 		&user.ID,
 		&user.Login,
@@ -120,11 +121,17 @@ func (s *Storage) GetUserByLogin(login string) (*models.UserData, error) {
 	return &user, nil
 }
 
-// SaveItemData inserts or updates an item record in the database using its ID as a unique key. Returns an error if it fails.
-func (s *Storage) SaveItemData(item *models.ItemData) error {
+// SaveItemData saves the provided item data and its associated metadata in the database within a transaction.
+// The method updates existing records or inserts new ones based on ID conflicts, and returns an error if any step fails.
+func (s *Storage) SaveItemData(item *domain.ItemData, meta *domain.Meta) error {
 	slog.Debug("Save Item Data", slog.Any("data", *item))
+	tx, err := s.db.BeginTx(context.Background(), nil)
+	if err != nil {
+		return fmt.Errorf("could not begin transaction: %w", err)
+	}
+	defer tx.Rollback()
 
-	query, args, err := squirrel.Insert(itemsDataTableName).
+	itemDataQuery, itemDataArgs, err := squirrel.Insert(itemsDataTableName).
 		Values(item.ID, item.Data).
 		Suffix("ON CONFLICT(id) DO UPDATE SET data = $2").
 		PlaceholderFormat(squirrel.Dollar).
@@ -133,18 +140,38 @@ func (s *Storage) SaveItemData(item *models.ItemData) error {
 		return fmt.Errorf("could not build save item data query: %w", err)
 	}
 
-	slog.Debug("saving item data", slog.String("query", query), slog.Any("args", args))
+	metaDataQuery, metaDataArgs, err := squirrel.Insert(metaTableName).
+		Values(meta.ID, meta.Title, meta.Description, meta.Type, meta.DataID, meta.UserID, meta.Created, meta.Modified).
+		Suffix("ON CONFLICT(id) DO UPDATE SET title = $2, description = $3, data_id = $5, modified_at = $7").
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return fmt.Errorf("could not build save meta query: %w", err)
+	}
 
-	_, err = s.db.Exec(query, args...)
+	slog.Debug("saving item data", slog.String("query", itemDataQuery), slog.Any("args", itemDataArgs))
+
+	_, err = tx.Exec(itemDataQuery, itemDataArgs...)
 	if err != nil {
 		return fmt.Errorf("could not save item data: %w", err)
+	}
+
+	slog.Debug("saving meta data", slog.String("query", metaDataQuery), slog.Any("args", metaDataArgs))
+
+	_, err = tx.Exec(metaDataQuery, metaDataArgs...)
+	if err != nil {
+		return fmt.Errorf("could not save meta data: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("could not commit transaction: %w", err)
 	}
 
 	return nil
 }
 
 // GetItemDataByID retrieves the item data by its unique ID from the items_data table and returns it or an error.
-func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
+func (s *Storage) GetItemDataByID(id uuid.UUID) (*domain.ItemData, error) {
 	slog.Debug("Get Item Data by ID", slog.String("ID", id.String()))
 	query, args, err := squirrel.Select("*").
 		From(itemsDataTableName).
@@ -161,7 +188,7 @@ func (s *Storage) GetItemDataByID(id uuid.UUID) (*models.ItemData, error) {
 	if row.Err() != nil {
 		return nil, fmt.Errorf("could not execute get item data by id query: %w", row.Err())
 	}
-	var res models.ItemData
+	var res domain.ItemData
 	if err = row.Scan(
 		&res.ID,
 		&res.Data,
@@ -194,31 +221,8 @@ func (s *Storage) DeleteItemDataByID(id uuid.UUID) error {
 	return nil
 }
 
-// SaveMetaData inserts or updates metadata in the database. Returns an error if the query execution fails.
-func (s *Storage) SaveMetaData(data *models.Meta) error {
-	slog.Debug("Save Meta Data", slog.Any("data", *data))
-
-	query, args, err := squirrel.Insert(metaTableName).
-		Values(data.ID, data.Title, data.Description, data.Type, data.DataID, data.UserID, data.Created, data.Modified).
-		Suffix("ON CONFLICT(id) DO UPDATE SET title = $2, description = $3, data_id = $5, modified_at = $7").
-		PlaceholderFormat(squirrel.Dollar).
-		ToSql()
-	if err != nil {
-		return fmt.Errorf("could not build save meta query: %w", err)
-	}
-
-	slog.Debug("saving meta data", slog.String("query", query), slog.Any("args", args))
-
-	_, err = s.db.Exec(query, args...)
-	if err != nil {
-		return fmt.Errorf("could not execute save meta query: %w", err)
-	}
-
-	return nil
-}
-
 // GetMetaDataByUser retrieves metadata records associated with a specific user ID from the database or returns an error.
-func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
+func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*domain.Meta, error) {
 	slog.Debug("Get Meta Data by user", slog.String("user ID", userID.String()))
 
 	query, args, err := squirrel.Select("*").
@@ -241,9 +245,9 @@ func (s *Storage) GetMetaDataByUser(userID uuid.UUID) ([]*models.Meta, error) {
 	}
 	defer rows.Close()
 
-	var res []*models.Meta
+	var res []*domain.Meta
 	for rows.Next() {
-		row := &models.Meta{}
+		row := &domain.Meta{}
 		if err = rows.Scan(
 			&row.ID,
 			&row.Title,
