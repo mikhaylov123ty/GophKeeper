@@ -54,6 +54,10 @@ func New() (*ClientConfig, error) {
 		return nil, fmt.Errorf("error parsing environment variables: %w", err)
 	}
 
+	if err = config.Validate(); err != nil {
+		return nil, fmt.Errorf("error validating config: %w", err)
+	}
+
 	cfg = config
 
 	return config, nil
@@ -148,6 +152,26 @@ func (a *ClientConfig) UnmarshalJSON(b []byte) error {
 
 	if a.OutputFolder == "" && cfgFile.OutputFolder != "" {
 		a.OutputFolder = cfgFile.OutputFolder
+	}
+
+	return nil
+}
+
+func (a *ClientConfig) Validate() error {
+	if a.Keys.PublicCert == "" {
+		return fmt.Errorf("certificate is required")
+	}
+
+	// Check if folder exists and is persistent
+	info, err := os.Stat(a.OutputFolder)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("output folder does not exist: %w", err)
+		}
+		return fmt.Errorf("error checking output folder: %w", err)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("output folder is not a directory")
 	}
 
 	return nil

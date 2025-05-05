@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/mikhaylov123ty/GophKeeper/internal/client/app"
@@ -11,8 +12,16 @@ import (
 	clientConfig "github.com/mikhaylov123ty/GophKeeper/internal/client/config"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+)
+
 // The main function serves as the starting point of the application execution
 func main() {
+	fmt.Printf("Client Build Version: %s\n", buildVersion)
+	fmt.Printf("Client Build Date: %s\n", buildDate)
+
 	config, err := clientConfig.New()
 	if err != nil {
 		panic(err)

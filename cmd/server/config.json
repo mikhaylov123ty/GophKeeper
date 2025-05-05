@@ -4,7 +4,7 @@
     "grpc_port": "4443"
   },
   "logger": {
-    "log_level": "debug"
+    "log_level": "info"
   },
   "db": {
     "dsn": "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
@@ -15,6 +15,6 @@
       "private_key": "./private.key",
       "certificate": "./public.crt"
     },
-    "jwt_key": "123"
+    "jwt_key": "your jwt key"
   }
 }

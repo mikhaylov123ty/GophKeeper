@@ -59,11 +59,11 @@ func main() {
 		panic(err)
 	}
 
+	//TODO add graceful shutdown
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		slog.Info("starting server", slog.String("address", config.GetAddress().String()))
 
 		if err = serverInstance.Start(); err != nil {
 			panic(err)

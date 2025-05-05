@@ -108,6 +108,7 @@ func (screen *viewMetaItemsScreen) Update(msg tea.Msg) (models.Screen, tea.Cmd) 
 
 // routeViewData maps the provided item data and category to the corresponding screen type for detailed view rendering.
 // Returns a specific data screen or error screen if the data cannot be unmarshalled or processed.
+// TODO build common unmarshaler func
 func (screen *viewMetaItemsScreen) routeViewData(itemData string, category string) models.Screen {
 	switch category {
 	case TextCategory:
@@ -213,6 +214,6 @@ func (screen *viewMetaItemsScreen) routeEditData(category string) models.Screen 
 	case FileCategory:
 		return &addBinaryItemScreen{itemScreen: createItemScreen()}
 	}
-	
+
 	return screen
 }

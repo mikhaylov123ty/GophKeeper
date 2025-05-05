@@ -48,6 +48,6 @@ volumes:
   app_data:
     driver: local
     driver_opts:
-      device:  /Users/amikhaylov/Downloads/shared/
+      device:  /Users/your user name/Downloads/shared/
       type: none
       o: bind

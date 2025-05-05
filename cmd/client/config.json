@@ -4,5 +4,5 @@
     "grpc_port": "4443"
   },
   "public_cert": "./public.crt",
-  "files_output_folder": "/Users/amikhaylov/Downloads/Output/"
+  "files_output_folder": "/Users/your user name/Downloads/Output/"
 }

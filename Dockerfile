@@ -18,7 +18,7 @@ FROM alpine
 
 WORKDIR /app
 
-COPY --from=gobuild /app/server ./gophKeeperServer
+COPY --from=gobuild /app/server ./GophServer
 COPY --from=gobuild /app/cmd/server/config.json ./config.json
 COPY --from=gobuild /app/./migrations ./migrations/
 
@@ -26,4 +26,4 @@ COPY --from=gobuild /app/certManager ./certManager
 
 EXPOSE 4443
 
-ENTRYPOINT ["/app/gophKeeperServer", "-config=./config.json"]
+ENTRYPOINT ["/app/GophServer", "-config=./config.json"]
