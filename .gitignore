@@ -1,2 +1,5 @@
 .idea
 .DS_Store
+private.key
+public.crt
+.env

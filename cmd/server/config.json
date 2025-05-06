@@ -1,13 +1,20 @@
 {
-  "db": {
-    "dsn": "postgres://postgres:postgres@localhost:5432/gopher_store?sslmode=disable",
-    "name": "gopher_store",
-    "migrations_dir": "file://./internal/server/storage/migrations"
+  "address": {
+    "host": "0.0.0.0",
+    "grpc_port": "4443"
   },
   "logger": {
-    "log_level": "debug"
+    "log_level": "info"
   },
-  "address": {
-    "grpc_port": ":4443"
+  "db": {
+    "dsn": "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable",
+    "migrations_dir": "file://./migrations"
+  },
+  "keys": {
+    "crypto_keys": {
+      "private_key": "./private.key",
+      "certificate": "./public.crt"
+    },
+    "jwt_key": "your jwt key"
   }
 }

@@ -12,60 +12,27 @@ message PostUserDataRequest {
 message PostUserDataResponse {
 	string error = 1; // ошибка
 	string jwt = 2;
+	string user_id = 3;
 }
 
-message PostTextDataRequest {
-	string text= 1;
-	string text_id = 2;
+message PostItemDataRequest {
+	bytes data = 1;
+	string data_id = 2;
+	MetaData meta_data = 3;
 }
 
-message PostTextDataResponse {
+message PostItemDataResponse {
+	string data_id = 1;
+	string created = 2;
+	string modified = 3;
+}
+
+message GetItemDataRequest {
 	string data_id = 1;
 }
 
-message GetTextDataRequest {
-	string text_id = 1;
-}
-
-message GetTextDataResponse {
-	string text = 1;
-}
-
-message PostBankCardDataRequest {
-	string card_num = 1;
-	string expiry = 2;
-	string cvv = 3;
-	string card_id = 4;
-}
-
-message PostBankCardDataResponse {
-	string data_id = 1;
-}
-
-message GetBankCardDataRequest {
-	string card_id = 1;
-}
-
-message GetBankCardDataResponse {
-	string card_num = 1;
-	string expiry = 2;
-	string cvv = 3;
-}
-
-message PostBinaryDataRequest {
-	string text= 1;
-}
-
-message PostBinaryDataResponse {
-	string error = 1;
-}
-
-message GetBinaryDataRequest {
-	string id = 1;
-}
-
-message GetBinaryDataResponse {
-	string text = 1;
+message GetItemDataResponse {
+	bytes data = 1;
 }
 
 message MetaData {
@@ -79,44 +46,34 @@ message MetaData {
 	string modified = 8;
 }
 
-message PostMetaDataRequest {
-	string id = 1;
-	string title = 2;
-	string description = 3;
-	string data_type =4;
-	string data_id = 5;
-	string user_id = 6;
-}
-
-message PostMetaDataResponse {
-	string id = 1;
-}
-
 message GetMetaDataRequest {
 	string user_id = 1;
-	string data_type = 2;
 }
 
 message GetMetaDataResponse {
 	repeated MetaData items = 1;
 }
 
+message DeleteMetaDataRequest {
+	string metadata_id = 1;
+	string metadata_type = 2;
+	string data_id = 3;
+}
+
+message DeleteMetaDataResponse {
+	string error = 1;
+}
+
 service UserHandlers {
 	rpc PostUserData(PostUserDataRequest) returns (PostUserDataResponse);
 }
 
-service TextHandlers{
-	rpc PostTextData(PostTextDataRequest) returns (PostTextDataResponse);
-	rpc GetTextData(GetTextDataRequest) returns (GetTextDataResponse);
-}
-
-service BankCardHandlers {
-	rpc PostBankCardData(PostBankCardDataRequest) returns (PostBankCardDataResponse);
-	rpc GetBankCardData(GetBankCardDataRequest) returns (GetBankCardDataResponse);
+service ItemDataHandlers{
+	rpc PostItemData(PostItemDataRequest) returns (PostItemDataResponse);
+	rpc GetItemData(GetItemDataRequest) returns (GetItemDataResponse);
 }
 
 service MetaDataHandlers {
-	rpc PostMetaData(PostMetaDataRequest) returns (PostMetaDataResponse);
 	rpc GetMetaData(GetMetaDataRequest) returns (GetMetaDataResponse);
+	rpc DeleteMetaData(DeleteMetaDataRequest) returns (DeleteMetaDataResponse);
 }
-//TODO add binary handler

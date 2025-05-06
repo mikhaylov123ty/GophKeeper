@@ -11,81 +11,48 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/mikhaylov123ty/GophKeeper/internal/models"
+	"github.com/mikhaylov123ty/GophKeeper/internal/domain"
 	pb "github.com/mikhaylov123ty/GophKeeper/internal/proto"
 )
 
+// MetaDataHandler provides methods to handle metadata operations such as retrieval and deletion.
+// It embeds pb.UnimplementedMetaDataHandlersServer for forward compatibility.
+// Utilizes metaDataProvider for fetching metadata and dataRemover for metadata removal.
 type MetaDataHandler struct {
 	pb.UnimplementedMetaDataHandlersServer
-	metaDataCreator  metaDataCreator
 	metaDataProvider metaDataProvider
+	dataRemover      dataRemover
 }
 
-type metaDataCreator interface {
-	SaveMetaData(*models.Meta) error
-}
-
+// metaDataProvider defines an interface for retrieving metadata associated with a given user ID.
+// GetMetaDataByUser retrieves metadata associated with the provided user UUID and returns a slice of Meta objects or an error.
 type metaDataProvider interface {
-	GetMetaDataByUser(uuid.UUID, string) ([]*models.Meta, error)
+	GetMetaDataByUser(uuid.UUID) ([]*domain.Meta, error)
 }
 
-func NewMetaDataHandler(metaDataCreator metaDataCreator, metaDataProvider metaDataProvider) *MetaDataHandler {
+// dataRemover defines methods to delete item and metadata by their unique identifier.
+// DeleteItemDataByID removes the associated item data using a UUID.
+// DeleteMetaDataByID removes the metadata associated with a UUID.
+type dataRemover interface {
+	DeleteItemDataByID(uuid.UUID) error
+	DeleteMetaDataByID(uuid.UUID) error
+}
+
+// NewMetaDataHandler creates and initializes a new MetaDataHandler with the provided metaDataProvider and dataRemover.
+func NewMetaDataHandler(metaDataProvider metaDataProvider, dataRemover dataRemover) *MetaDataHandler {
 	return &MetaDataHandler{
-		metaDataCreator:  metaDataCreator,
 		metaDataProvider: metaDataProvider,
+		dataRemover:      dataRemover,
 	}
 }
 
-func (m *MetaDataHandler) PostMetaData(ctx context.Context, request *pb.PostMetaDataRequest) (*pb.PostMetaDataResponse, error) {
-	var metaData models.Meta
-	var metaID uuid.UUID
-
-	if request.GetId() == "" {
-		metaID = uuid.New()
-	} else {
-		id, err := uuid.Parse(request.GetId())
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetId())
-		}
-		metaID = id
-	}
-
-	dataID, err := uuid.Parse(request.GetDataId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid data_id %s", request.GetDataId())
-	}
-
-	userID, err := uuid.Parse(request.GetUserId())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid user_id %s", request.GetUserId())
-	}
-
-	metaData.ID = metaID
-	metaData.Created = time.Now()
-	metaData.Modified = time.Now()
-	metaData.Title = request.GetTitle()
-	metaData.Description = request.GetDescription()
-	metaData.Type = request.GetDataType()
-	metaData.DataID = dataID
-	metaData.UserID = userID
-
-	if err = m.metaDataCreator.SaveMetaData(&metaData); err != nil {
-		slog.ErrorContext(ctx, "could not save metaData", slog.String("error", err.Error()))
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	var response pb.PostMetaDataResponse
-	response.Id = metaID.String()
-
-	return &response, status.Errorf(codes.OK, "meta registered")
-}
 func (m *MetaDataHandler) GetMetaData(ctx context.Context, request *pb.GetMetaDataRequest) (*pb.GetMetaDataResponse, error) {
 	userID, err := uuid.Parse(request.GetUserId())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid user_id %s", request.GetUserId())
 	}
 
-	metaDataItems, err := m.metaDataProvider.GetMetaDataByUser(userID, request.GetDataType())
+	metaDataItems, err := m.metaDataProvider.GetMetaDataByUser(userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			slog.ErrorContext(ctx, "no metaData found", slog.String("error", err.Error()))
@@ -112,4 +79,28 @@ func (m *MetaDataHandler) GetMetaData(ctx context.Context, request *pb.GetMetaDa
 	return &pb.GetMetaDataResponse{
 			Items: protoItems},
 		status.Errorf(codes.OK, "meta gathered")
+}
+
+// DeleteMetaData removes metadata and associated data by their unique IDs parsed from the request and returns a response.
+func (m *MetaDataHandler) DeleteMetaData(ctx context.Context, request *pb.DeleteMetaDataRequest) (*pb.DeleteMetaDataResponse, error) {
+	metaDataID, err := uuid.Parse(request.GetMetadataId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id %s", request.GetMetadataId())
+	}
+
+	dataID, err := uuid.Parse(request.GetDataId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid dataId %s", request.GetDataId())
+	}
+
+	if err = m.dataRemover.DeleteItemDataByID(dataID); err != nil {
+		slog.ErrorContext(ctx, "could not delete bank card", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	if err = m.dataRemover.DeleteMetaDataByID(metaDataID); err != nil {
+		slog.ErrorContext(ctx, "could not delete metaData", slog.String("error", err.Error()))
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &pb.DeleteMetaDataResponse{}, nil
 }

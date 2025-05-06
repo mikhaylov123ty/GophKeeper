@@ -1,3 +1,5 @@
+// The provided `main.go` file represents the entry point of the `GophKeeper` server's application.
+
 package main
 
 import (
@@ -12,7 +14,16 @@ import (
 	"github.com/mikhaylov123ty/GophKeeper/pkg/logger"
 )
 
+var (
+	buildVersion = "N/A"
+	buildDate    = "N/A"
+)
+
+// The main function serves as the starting point of the application execution
 func main() {
+	fmt.Printf("Server Build Version: %s\n", buildVersion)
+	fmt.Printf("Server Build Date: %s\n", buildDate)
+
 	cfg, err := config.Init()
 	if err != nil {
 		panic(err)
@@ -41,20 +52,23 @@ func main() {
 	slog.Info("storage initialized",
 		slog.String("driver", "postgres"),
 		slog.String("dsn", config.GetDB().DSN),
-		slog.String("db_name", config.GetDB().Name),
 	)
 
-	serverInstance := server.New(storageService)
+	serverInstance, err := server.New(storageService)
+	if err != nil {
+		panic(err)
+	}
 
+	//TODO add graceful shutdown
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+
 		if err = serverInstance.Start(); err != nil {
 			panic(err)
 		}
 	}()
 
-	fmt.Println("Hello i'm server")
 	wg.Wait()
 }
